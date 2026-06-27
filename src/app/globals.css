@@ -1,26 +1,188 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf6f0;
+  --foreground: #3a2a1d;
+  --cream: #faf6f0;
+  --paper: #f3ebdd;
+  --paper-deep: #ded6c3;
+  --sage: #8b9a7a;
+  --terracotta: #c9815b;
+  --caramel: #8a5a35;
+  --mist-blue: #b7c9d6;
+  --muted: #8a8178;
+  --line: rgba(58, 42, 29, 0.12);
+  --shadow-soft: 0 24px 80px rgba(95, 70, 44, 0.14);
+  --shadow-ticket: 0 18px 48px rgba(84, 55, 29, 0.2);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.88), transparent 34rem),
+    linear-gradient(135deg, #efe7dc 0%, #faf6f0 42%, #f1e5d7 100%);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "PingFang SC", "Hiragino Sans GB", sans-serif;
+}
+
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.font-display {
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", Georgia, serif;
+}
+
+.font-script {
+  font-family: "Snell Roundhand", "Savoye LET", "Brush Script MT", cursive;
+}
+
+.app-shell {
+  min-height: 100svh;
+  display: flex;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.95), transparent 30rem),
+    radial-gradient(circle at 16% 80%, rgba(201, 129, 91, 0.08), transparent 24rem),
+    linear-gradient(145deg, #f4ede4, #fbf7f1);
+}
+
+.phone-screen {
+  position: relative;
+  width: min(100vw, 393px);
+  min-height: 100svh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.72), transparent 18rem),
+    linear-gradient(180deg, #fbf8f3 0%, #f7efe5 100%);
+  color: var(--foreground);
+}
+
+@media (min-width: 430px) {
+  .phone-screen {
+    min-height: 852px;
+    margin: 24px 0;
+    border-radius: 44px;
+    box-shadow: 0 30px 100px rgba(70, 45, 25, 0.2);
+  }
+}
+
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  mix-blend-mode: multiply;
+  background-image:
+    radial-gradient(rgba(82, 55, 30, 0.08) 0.65px, transparent 0.65px),
+    radial-gradient(rgba(255, 255, 255, 0.75) 0.65px, transparent 0.65px);
+  background-position:
+    0 0,
+    8px 11px;
+  background-size: 18px 18px;
+}
+
+.glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 252, 247, 0.74);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(22px);
+}
+
+.paper-card {
+  position: relative;
+  border: 1px solid rgba(122, 92, 61, 0.12);
+  background:
+    linear-gradient(135deg, rgba(255, 252, 246, 0.92), rgba(237, 226, 208, 0.88)),
+    var(--paper);
+  box-shadow: var(--shadow-ticket);
+}
+
+.paper-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent 46%),
+    radial-gradient(rgba(88, 61, 34, 0.08) 0.7px, transparent 0.7px);
+  background-size:
+    auto,
+    15px 15px;
+  opacity: 0.75;
+}
+
+.ticket-edge {
+  clip-path: polygon(
+    0 7%,
+    2.4% 7%,
+    2.4% 0,
+    97.6% 0,
+    97.6% 7%,
+    100% 7%,
+    100% 93%,
+    97.6% 93%,
+    97.6% 100%,
+    2.4% 100%,
+    2.4% 93%,
+    0 93%
+  );
+}
+
+.barcode {
+  height: 28px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(58, 42, 29, 0.7) 0 2px,
+    transparent 2px 5px,
+    rgba(58, 42, 29, 0.5) 5px 7px,
+    transparent 7px 11px
+  );
+}
+
+.safe-bottom {
+  padding-bottom: max(22px, env(safe-area-inset-bottom));
+}
+
+@keyframes ticketFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--rotate, 0deg));
+  }
+  50% {
+    transform: translateY(-7px) rotate(var(--rotate, 0deg));
+  }
+}
+
+.ticket-float {
+  animation: ticketFloat 3.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
