@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Link from "next/link";
 import { motion, type Transition } from "framer-motion";
 import {
@@ -25,7 +25,65 @@ const ingredientLabels = [
   { name: "葱段", note: "清香提鲜", left: "43%", top: "78%" },
 ];
 
-const cardTransition: Transition = { duration: 0.45, ease: "easeOut" };
+const cardTransition: Transition = {
+  type: "spring",
+  stiffness: 260,
+  damping: 28,
+  mass: 0.8,
+};
+
+function getCoverFlowOffset(index: number, activeIndex: number, total: number) {
+  let offset = index - activeIndex;
+
+  if (offset > total / 2) {
+    offset -= total;
+  }
+
+  if (offset < -total / 2) {
+    offset += total;
+  }
+
+  return offset;
+}
+
+function getCardMotionState(offset: number) {
+  const distance = Math.abs(offset);
+  const direction = Math.sign(offset);
+
+  if (distance === 0) {
+    return {
+      x: 0,
+      y: 0,
+      rotate: 0,
+      scale: 1,
+      opacity: 1,
+      zIndex: 30,
+      filter: "blur(0px)",
+    };
+  }
+
+  if (distance === 1) {
+    return {
+      x: direction * 166,
+      y: 42,
+      rotate: direction * 5,
+      scale: 0.86,
+      opacity: 0.58,
+      zIndex: 20,
+      filter: "blur(0.4px)",
+    };
+  }
+
+  return {
+    x: direction * 220,
+    y: 66,
+    rotate: direction * 7,
+    scale: 0.72,
+    opacity: 0.32,
+    zIndex: 10,
+    filter: "blur(0.8px)",
+  };
+}
 
 function StationFoodMap({ compact = false }: { compact?: boolean }) {
   const sizeClass = compact ? "h-[190px]" : "h-[252px]";
@@ -118,7 +176,7 @@ function RecipeCard({
   return (
     <article
       className={`paper-card relative h-full overflow-hidden rounded-[28px] p-7 text-center transition ${
-        isActive ? "shadow-[0_26px_70px_rgba(72,49,30,0.22)]" : "opacity-75"
+        isActive ? "shadow-[0_26px_70px_rgba(72,49,30,0.22)]" : ""
       }`}
     >
       <div className="relative z-10">
@@ -159,6 +217,7 @@ function RecipeCard({
 
 export function ChickenStationScreen() {
   const [activeIndex, setActiveIndex] = useState(1);
+  const recipeCount = chickenStationRecipes.length;
   const activeRecipe =
     chickenStationRecipes[activeIndex] ?? chickenStationRecipes[1];
 
@@ -202,20 +261,19 @@ export function ChickenStationScreen() {
         <div className="relative mt-10 h-[466px]">
           {chickenStationRecipes.map((recipe, index) => {
             const isActive = index === activeIndex;
-            const isLeft = index < activeIndex;
-            const positionClass = isActive
-              ? "left-1/2 z-30 h-[450px] w-[270px] -translate-x-1/2"
-              : isLeft
-                ? "left-[-74px] z-10 h-[400px] w-[238px] rotate-[-5deg] scale-[0.9] blur-[0.4px]"
-                : "right-[-74px] z-10 h-[400px] w-[238px] rotate-[5deg] scale-[0.9] blur-[0.4px]";
-
+            const offset = getCoverFlowOffset(
+              index,
+              activeIndex,
+              recipeCount,
+            );
+            const cardMotionState = getCardMotionState(offset);
+            const cardBaseClass =
+              "absolute left-1/2 top-0 -ml-[135px] h-[450px] w-[270px]";
             const cardMotion = {
-              initial: { opacity: 0, y: 24 },
-              animate: {
-                opacity: isActive ? 1 : 0.66,
-                y: isActive ? 0 : 42,
-              },
+              initial: false,
+              animate: cardMotionState,
               transition: cardTransition,
+              style: { zIndex: cardMotionState.zIndex },
             };
 
             if (isActive) {
@@ -224,9 +282,14 @@ export function ChickenStationScreen() {
                   key={recipe.id}
                   href="/recipe/kung-pao-chicken"
                   aria-label="打开宫保鸡丁菜谱详情"
-                  className={`absolute top-0 ${positionClass}`}
+                  className={cardBaseClass}
+                  style={{ zIndex: cardMotionState.zIndex }}
                 >
-                  <motion.div {...cardMotion} className="h-full w-full">
+                  <motion.div
+                    {...cardMotion}
+                    whileTap={{ scale: 0.98 }}
+                    className="h-full w-full cursor-pointer"
+                  >
                     <RecipeCard recipe={recipe} isActive />
                   </motion.div>
                 </Link>
@@ -234,29 +297,46 @@ export function ChickenStationScreen() {
             }
 
             return (
-              <motion.button
-                key={recipe.id}
-                type="button"
-                aria-label={`切换到${recipe.title}`}
-                onClick={() => setActiveIndex(index)}
-                {...cardMotion}
-                className={`absolute top-0 ${positionClass} text-left`}
-              >
-                <RecipeCard recipe={recipe} isActive={false} />
-              </motion.button>
+              <Fragment key={recipe.id}>
+                <motion.div
+                  {...cardMotion}
+                  className={`${cardBaseClass} pointer-events-none text-left`}
+                >
+                  <RecipeCard recipe={recipe} isActive={false} />
+                </motion.div>
+                {Math.abs(offset) === 1 ? (
+                  <button
+                    type="button"
+                    aria-label={`切换到${recipe.title}`}
+                    onMouseDown={() => setActiveIndex(index)}
+                    onPointerDown={() => setActiveIndex(index)}
+                    onClick={() => setActiveIndex(index)}
+                    onPointerUp={() => setActiveIndex(index)}
+                    className={`absolute top-16 z-40 h-[326px] w-[108px] cursor-pointer rounded-[28px] bg-black/[0.001] ${
+                      offset < 0 ? "left-[-38px]" : "right-[-38px]"
+                    }`}
+                  />
+                ) : null}
+              </Fragment>
             );
           })}
         </div>
 
-        <div className="mt-2 flex justify-center gap-3">
+        <div className="relative z-50 mt-2 flex justify-center gap-3">
           {chickenStationRecipes.map((recipe, index) => (
-            <button
+            <motion.button
               key={`dot-${recipe.id}`}
               type="button"
               aria-label={`查看${recipe.title}`}
               onClick={() => setActiveIndex(index)}
+              animate={{
+                scale: index === activeIndex ? 1 : 0.94,
+              }}
+              transition={cardTransition}
               className={`h-2.5 rounded-full transition ${
-                index === activeIndex ? "w-6 bg-[#c28d58]" : "w-2.5 bg-[#ddd3c8]"
+                index === activeIndex
+                  ? "w-6 bg-[#c28d58]"
+                  : "w-2.5 bg-[#ddd3c8]"
               }`}
             />
           ))}
@@ -267,7 +347,7 @@ export function ChickenStationScreen() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="glass-panel mt-5 grid min-h-[100px] grid-cols-3 divide-x divide-[#ded2c5]/80 rounded-[26px] px-4 py-4"
+          className="glass-panel relative z-50 mt-5 grid min-h-[100px] grid-cols-3 divide-x divide-[#ded2c5]/80 rounded-[26px] px-4 py-4"
         >
           <div className="flex items-center gap-3">
             <Clock3 className="text-[#8a8178]" size={26} />
