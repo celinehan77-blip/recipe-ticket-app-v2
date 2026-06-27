@@ -17,30 +17,33 @@ type StationTicketProps = {
 
 const toneMap = {
   sage: {
-    bg: "from-[#f4eedf] via-[#efe6d2] to-[#e7ddc6]",
+    bg: "from-[#f6efe2] via-[#f3ebdd] to-[#e9dfca]",
     icon: "bg-[#8b9a7a]",
     text: "text-[#3a2a1d]",
-    muted: "text-[#776956]",
-    stamp: "text-[#9aa286]",
-    side: "bg-[#f5eddf]/54",
+    muted: "text-[#786958]",
+    stamp: "text-[#8b9a7a]/58",
+    side: "bg-[#f4ead9]/58",
+    shadow: "shadow-[0_18px_42px_rgba(75,52,31,0.18)]",
     Icon: Bird,
   },
   caramel: {
-    bg: "from-[#f4e2c8] via-[#efd1aa] to-[#e7c59d]",
+    bg: "from-[#eeddbf] via-[#e8d6b8] to-[#e5d0aa]",
     icon: "bg-[#8a5a35]",
     text: "text-[#3a2a1d]",
-    muted: "text-[#7b5a3f]",
-    stamp: "text-[#c89458]",
-    side: "bg-[#faead6]/48",
+    muted: "text-[#77553b]",
+    stamp: "text-[#8a5a35]/48",
+    side: "bg-[#eedbbd]/50",
+    shadow: "shadow-[0_15px_34px_rgba(75,52,31,0.14)]",
     Icon: Beef,
   },
   blue: {
-    bg: "from-[#e8f1f5] via-[#d7e7ef] to-[#c6dce8]",
-    icon: "bg-[#5e8298]",
-    text: "text-[#254357]",
-    muted: "text-[#5b7280]",
-    stamp: "text-[#8fb0c1]",
-    side: "bg-[#eef7fa]/45",
+    bg: "from-[#e8f0f1] via-[#dde8ea] to-[#d7e5ea]",
+    icon: "bg-[#6f8fa0]",
+    text: "text-[#2f5263]",
+    muted: "text-[#5f7681]",
+    stamp: "text-[#6f8fa0]/48",
+    side: "bg-[#e7f0f2]/46",
+    shadow: "shadow-[0_12px_28px_rgba(75,52,31,0.1)]",
     Icon: Fish,
   },
 } as const;
@@ -51,10 +54,8 @@ export function StationTicket({ station, isPrimary = false }: StationTicketProps
   const englishLines = station.englishTitle.toUpperCase().split(" ");
   const content = (
     <article
-      className={`ticket-edge paper-card flavor-ticket relative grid h-[142px] grid-cols-[1fr_80px] overflow-hidden rounded-[14px] bg-gradient-to-br ${tone.bg} ${
-        isPrimary
-          ? "shadow-[0_18px_42px_rgba(75,52,31,0.2)]"
-          : "shadow-[0_14px_34px_rgba(75,52,31,0.14)]"
+      className={`ticket-edge paper-card flavor-ticket relative grid h-[142px] grid-cols-[1fr_86px] overflow-hidden rounded-[14px] bg-gradient-to-br ${tone.bg} ${tone.shadow} ${
+        isPrimary ? "border-[#c9bca6]/60" : "border-[#c9bca6]/38"
       }`}
     >
       <span className="ticket-notch ticket-notch-left-top" />
@@ -105,30 +106,30 @@ export function StationTicket({ station, isPrimary = false }: StationTicketProps
           </div>
         </div>
 
-        <div className={`ticket-stamp mini-ticket-stamp absolute right-5 top-12 ${tone.stamp}`}>
+        <div className={`ticket-stamp mini-ticket-stamp absolute right-6 top-12 ${tone.stamp}`}>
           <span>{englishLines[0]}</span>
           <Icon size={18} />
           <span>STATION</span>
         </div>
       </div>
 
-      <div className={`relative z-10 border-l border-dashed border-[#8f7b68]/35 ${tone.side} px-4 py-4 text-center`}>
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em]">
+      <div className={`relative z-10 border-l border-dashed border-[#7d6956]/24 ${tone.side} px-3 py-3.5 text-center`}>
+        <p className="text-[9px] font-bold uppercase tracking-[0.13em]">
           Station
         </p>
-        <p className={`font-display mt-3 text-[38px] leading-none ${tone.text}`}>
+        <p className={`font-display mt-2.5 text-[37px] leading-none ${tone.text}`}>
           {station.stationNo}
         </p>
-        <div className="mx-auto my-3 h-px w-8 bg-[#806b55]/28" />
-        <p className="text-[9px] font-bold uppercase leading-3 tracking-[0.07em]">
+        <div className="mx-auto my-2.5 h-px w-8 bg-[#806b55]/22" />
+        <p className="text-[8px] font-bold uppercase leading-[11px] tracking-[0.06em]">
           {englishLines.map((line) => (
             <span key={line} className="block">
               {line}
             </span>
           ))}
         </p>
-        <ArrowRight className="mx-auto mt-3" size={18} />
-        <div className="barcode mx-auto mt-3 h-[22px] w-12" />
+        <ArrowRight className="mx-auto mt-2.5 text-current/70" size={17} />
+        <div className="barcode mx-auto mt-2.5 h-[20px] w-12 opacity-45" />
       </div>
     </article>
   );

@@ -20,18 +20,18 @@ export function TabBar({ current }: TabBarProps) {
               href={item.href}
               className={`relative flex h-[64px] flex-col items-center justify-center gap-1 rounded-[24px] text-[12px] transition ${
                 active
-                  ? "bg-white/64 text-[#5c3718] shadow-[0_14px_34px_rgba(78,52,29,0.12)]"
-                  : "text-[#b2a79d]"
+                  ? "bg-[#fffaf2]/66 text-[#3a2a1d] shadow-[0_12px_30px_rgba(78,52,29,0.1)]"
+                  : "text-[#8a8178]/72"
               }`}
             >
               <Icon
                 size={23}
                 strokeWidth={active ? 2.7 : 2.2}
-                className={active ? "fill-[#8a5a35]/15" : ""}
+                className={active ? "fill-[#8a5a35]/12" : ""}
               />
               <span className="font-medium">{item.label}</span>
               {active ? (
-                <span className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-[#8a5a35]" />
+                <span className="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-[#6f4a2e]" />
               ) : null}
             </Link>
           );

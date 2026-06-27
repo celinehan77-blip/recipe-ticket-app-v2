@@ -14,9 +14,9 @@ export function FlavorMapScreen() {
       <IosStatusBar />
 
       <section className="app-content tab-page-content overflow-hidden px-5 pt-6">
-        <div className="pointer-events-none absolute right-7 top-[128px] z-0 h-[92px] w-[72px] rounded-[9px] bg-[#eadcc8]/78 px-3 py-4 shadow-[0_18px_44px_rgba(84,58,36,0.1)]">
-          <span className="absolute left-1/2 top-[-12px] h-7 w-7 -translate-x-1/2 rounded-full bg-[#d4ab7d] shadow-[0_8px_16px_rgba(116,75,38,0.18)]" />
-          <MapPinned className="absolute right-3 top-3 text-[#8a5a35]/55" size={13} />
+        <div className="pointer-events-none absolute right-7 top-[128px] z-0 h-[92px] w-[72px] rounded-[9px] bg-[#eadcc8]/72 px-3 py-4 shadow-[0_18px_42px_rgba(84,58,36,0.09)]">
+          <span className="absolute left-1/2 top-[-12px] h-7 w-7 -translate-x-1/2 rounded-full bg-[#cfa06e] shadow-[0_8px_16px_rgba(116,75,38,0.16)]" />
+          <MapPinned className="absolute right-3 top-3 text-[#8a5a35]/48" size={13} />
           <p className="mt-4 text-[10px] font-semibold text-[#5e4633]">
             探索美食世界
           </p>
@@ -31,19 +31,19 @@ export function FlavorMapScreen() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
           >
-            <h1 className="font-display text-[45px] leading-none tracking-[0.1em] text-[#332518]">
+            <h1 className="font-display text-[45px] leading-none tracking-[0.1em] text-[#3a2a1d]">
               风味地图
             </h1>
-            <div className="mt-1 flex items-center gap-3 text-[#e1bd97]">
+            <div className="mt-1 flex items-center gap-3 text-[#c8a06d]/72">
               <span className="font-script text-[25px] leading-none">
                 Flavor Map
               </span>
-              <span className="h-px w-9 bg-[#e5c5a6]" />
+              <span className="h-px w-9 bg-[#c8a06d]/42" />
             </div>
           </motion.div>
 
-          <div className="mt-1 flex h-10 items-center rounded-full border border-[#e3d8cb] bg-white/42 p-1 text-[12px] font-semibold text-[#7a6250] shadow-[0_14px_35px_rgba(80,52,32,0.08)]">
-            <span className="flex h-8 items-center gap-1.5 rounded-full bg-[#6a5946] px-3 text-white shadow-[0_7px_16px_rgba(74,52,33,0.16)]">
+          <div className="mt-1 flex h-10 items-center rounded-full border border-[#d9cdbc]/55 bg-[#f3ebdd]/48 p-1 text-[12px] font-semibold text-[#8a8178] shadow-[0_12px_28px_rgba(80,52,32,0.07)]">
+            <span className="flex h-8 items-center gap-1.5 rounded-full bg-[#6f4a2e] px-3 text-[#faf6f0] shadow-[0_7px_16px_rgba(74,52,33,0.13)]">
               <Utensils size={14} />
               食材地图
             </span>
@@ -60,12 +60,12 @@ export function FlavorMapScreen() {
           transition={{ delay: 0.08, duration: 0.55 }}
           className="relative z-10 mt-7"
         >
-          <p className="text-[21px] font-medium leading-[1.48] tracking-[0.04em] text-[#4a3a2f]">
+          <p className="text-[21px] font-medium leading-[1.48] tracking-[0.04em] text-[#4b392b]">
             每一张票根
             <br />
             都是一道值得收藏的菜
           </p>
-          <div className="mt-3 h-[3px] w-15 rounded-full bg-gradient-to-r from-[#b78a5f] via-[#d7b98e] to-transparent" />
+          <div className="mt-3 h-[3px] w-15 rounded-full bg-gradient-to-r from-[#8a5a35] via-[#c8a06d]/70 to-transparent" />
         </motion.div>
 
         <div className="relative z-10 mt-20">
