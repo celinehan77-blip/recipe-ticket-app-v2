@@ -167,6 +167,157 @@ input {
   );
 }
 
+.loading-ticket {
+  position: absolute;
+  border: 1px solid rgba(124, 91, 56, 0.18);
+  border-radius: 14px;
+  background:
+    linear-gradient(116deg, rgba(255, 253, 246, 0.95) 0%, rgba(241, 231, 213, 0.94) 55%, rgba(231, 216, 194, 0.96) 100%),
+    repeating-linear-gradient(0deg, rgba(92, 65, 38, 0.045) 0 1px, transparent 1px 5px),
+    var(--paper);
+  clip-path: polygon(
+    0 8%,
+    4% 8%,
+    4% 0,
+    96% 0,
+    96% 8%,
+    100% 8%,
+    100% 92%,
+    96% 92%,
+    96% 100%,
+    4% 100%,
+    4% 92%,
+    0 92%
+  );
+  color: #3a2a1d;
+}
+
+.loading-ticket-main {
+  box-shadow:
+    0 24px 42px rgba(77, 52, 27, 0.2),
+    0 8px 18px rgba(77, 52, 27, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.loading-ticket-layer {
+  box-shadow:
+    0 15px 26px rgba(77, 52, 27, 0.16),
+    0 5px 12px rgba(77, 52, 27, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.loading-ticket-layer-soft {
+  box-shadow:
+    0 12px 22px rgba(77, 52, 27, 0.13),
+    0 4px 10px rgba(77, 52, 27, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+.loading-ticket-layer-light {
+  box-shadow:
+    0 10px 18px rgba(77, 52, 27, 0.11),
+    0 3px 8px rgba(77, 52, 27, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.loading-ticket::before {
+  content: "";
+  position: absolute;
+  inset: 12px 13px;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px dashed rgba(116, 84, 52, 0.2);
+  border-radius: 10px;
+}
+
+.loading-ticket::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image:
+    radial-gradient(rgba(83, 57, 33, 0.11) 0.55px, transparent 0.55px),
+    radial-gradient(rgba(255, 255, 255, 0.62) 0.7px, transparent 0.7px),
+    linear-gradient(90deg, rgba(129, 93, 54, 0.07), transparent 18%, transparent 78%, rgba(129, 93, 54, 0.06));
+  background-position:
+    0 0,
+    8px 9px,
+    0 0;
+  background-size:
+    13px 13px,
+    17px 17px,
+    auto;
+  opacity: 0.78;
+  mix-blend-mode: multiply;
+}
+
+.ticket-perforation {
+  position: absolute;
+  top: 25px;
+  bottom: 25px;
+  z-index: 3;
+  width: 11px;
+  pointer-events: none;
+  opacity: 0.66;
+  background:
+    radial-gradient(circle, #fbf8f3 0 3.3px, rgba(105, 75, 44, 0.18) 3.5px 4.2px, transparent 4.4px) center top / 11px 16px repeat-y;
+}
+
+.ticket-perforation-left {
+  left: -5px;
+}
+
+.ticket-perforation-right {
+  right: -5px;
+}
+
+.ticket-stamp {
+  z-index: 4;
+  display: grid;
+  height: 74px;
+  width: 74px;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  background: rgba(246, 237, 219, 0.16);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+  opacity: 0.86;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38),
+    0 1px 0 rgba(84, 55, 29, 0.06);
+}
+
+.ticket-stamp svg {
+  margin-top: -1px;
+}
+
+.stamp-arc {
+  align-self: end;
+}
+
+.stamp-bottom {
+  align-self: start;
+}
+
+.stamp-sage {
+  color: #68865e;
+}
+
+.stamp-caramel {
+  color: #a66d34;
+}
+
+.stamp-terracotta {
+  color: #c76545;
+}
+
 .barcode {
   height: 28px;
   background: repeating-linear-gradient(
