@@ -56,7 +56,9 @@ input {
 .app-shell {
   min-height: 100svh;
   display: flex;
+  align-items: center;
   justify-content: center;
+  padding: 0;
   background:
     radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.95), transparent 30rem),
     radial-gradient(circle at 16% 80%, rgba(201, 129, 91, 0.08), transparent 24rem),
@@ -66,7 +68,8 @@ input {
 .phone-screen {
   position: relative;
   width: min(100vw, 393px);
-  min-height: 100svh;
+  height: min(100svh, 852px);
+  max-height: 852px;
   overflow: hidden;
   background:
     radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.72), transparent 18rem),
@@ -76,11 +79,28 @@ input {
 
 @media (min-width: 430px) {
   .phone-screen {
-    min-height: 852px;
+    height: min(852px, calc(100svh - 48px));
     margin: 24px 0;
     border-radius: 44px;
     box-shadow: 0 30px 100px rgba(70, 45, 25, 0.2);
   }
+}
+
+.app-content {
+  position: relative;
+  z-index: 10;
+  height: calc(100% - 54px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.app-content::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-page-content {
+  padding-bottom: 118px;
 }
 
 .grain::before {

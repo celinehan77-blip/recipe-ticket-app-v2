@@ -28,10 +28,10 @@ const ingredientLabels = [
 const cardTransition: Transition = { duration: 0.45, ease: "easeOut" };
 
 function StationFoodMap({ compact = false }: { compact?: boolean }) {
-  const sizeClass = compact ? "h-[210px]" : "h-[286px]";
+  const sizeClass = compact ? "h-[190px]" : "h-[252px]";
 
   return (
-    <div className={`relative mx-auto mt-8 w-full ${sizeClass}`}>
+    <div className={`relative mx-auto mt-6 w-full ${sizeClass}`}>
       <div className="absolute left-1/2 top-1/2 h-24 w-28 -translate-x-1/2 -translate-y-1/2 rounded-[40px] bg-[#efb195] shadow-[inset_0_-8px_18px_rgba(177,94,67,0.18)]" />
       {[
         ["44%", "45%", "12deg"],
@@ -128,17 +128,17 @@ function RecipeCard({
           </span>
           <Bookmark className="fill-[#b47b42]/18 text-[#a86f38]" size={22} />
         </div>
-        <h2 className="font-display mt-7 text-[42px] leading-none tracking-[0.12em] text-[#3a2a1d]">
+        <h2 className="font-display mt-6 text-[39px] leading-none tracking-[0.12em] text-[#3a2a1d]">
           {recipe.title}
         </h2>
-        <p className="mt-4 text-[16px] leading-7 text-[#8a6f58]">
+        <p className="mt-3 text-[15px] leading-6 text-[#8a6f58]">
           {recipe.subtitle}
         </p>
         <div className="mx-auto mt-4 h-1 w-11 rounded-full bg-[#c4a07e]" />
 
         <StationFoodMap compact={!isActive} />
 
-        <div className="mt-7 grid grid-cols-3 divide-x divide-[#d8c9b8] text-[#4a3a2f]">
+        <div className="mt-6 grid grid-cols-3 divide-x divide-[#d8c9b8] text-[#4a3a2f]">
           <div className="flex items-center justify-center gap-2">
             <Clock3 size={19} />
             <span>{recipe.minutes}</span>
@@ -166,17 +166,17 @@ export function ChickenStationScreen() {
     <IphoneFrame>
       <IosStatusBar />
 
-      <section className="relative z-10 flex min-h-[calc(100svh-54px)] flex-col px-6 pb-8 pt-7">
+      <section className="app-content flex flex-col px-6 pb-8 pt-5">
         <div className="flex items-center justify-between">
           <Link
             href="/flavor-map"
             aria-label="返回风味地图"
-            className="grid h-14 w-14 place-items-center rounded-full bg-white/52 text-[#7b634e] shadow-[0_16px_40px_rgba(82,55,34,0.1)]"
+            className="grid h-12 w-12 place-items-center rounded-full bg-white/52 text-[#7b634e] shadow-[0_16px_40px_rgba(82,55,34,0.1)]"
           >
-            <ChevronLeft size={28} />
+            <ChevronLeft size={26} />
           </Link>
           <div className="text-left">
-            <h1 className="font-display text-[38px] leading-none text-[#3a2a1d]">
+            <h1 className="font-display text-[34px] leading-none text-[#3a2a1d]">
               Chicken Station
             </h1>
             <p className="mt-3 text-[18px] font-medium text-[#9a7655]">
@@ -199,15 +199,15 @@ export function ChickenStationScreen() {
           </div>
         </div>
 
-        <div className="relative mt-14 h-[520px]">
+        <div className="relative mt-10 h-[466px]">
           {chickenStationRecipes.map((recipe, index) => {
             const isActive = index === activeIndex;
             const isLeft = index < activeIndex;
             const positionClass = isActive
-              ? "left-1/2 z-30 h-[500px] w-[270px] -translate-x-1/2"
+              ? "left-1/2 z-30 h-[450px] w-[270px] -translate-x-1/2"
               : isLeft
-                ? "left-[-74px] z-10 h-[430px] w-[238px] rotate-[-5deg] scale-[0.92] blur-[0.4px]"
-                : "right-[-74px] z-10 h-[430px] w-[238px] rotate-[5deg] scale-[0.92] blur-[0.4px]";
+                ? "left-[-74px] z-10 h-[400px] w-[238px] rotate-[-5deg] scale-[0.9] blur-[0.4px]"
+                : "right-[-74px] z-10 h-[400px] w-[238px] rotate-[5deg] scale-[0.9] blur-[0.4px]";
 
             const cardMotion = {
               initial: { opacity: 0, y: 24 },
@@ -267,7 +267,7 @@ export function ChickenStationScreen() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="glass-panel mt-7 grid min-h-[112px] grid-cols-3 divide-x divide-[#ded2c5]/80 rounded-[26px] px-4 py-5"
+          className="glass-panel mt-5 grid min-h-[100px] grid-cols-3 divide-x divide-[#ded2c5]/80 rounded-[26px] px-4 py-4"
         >
           <div className="flex items-center gap-3">
             <Clock3 className="text-[#8a8178]" size={26} />

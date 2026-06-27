@@ -20,7 +20,7 @@ export function HomeScreen() {
     <IphoneFrame>
       <IosStatusBar />
 
-      <div className="relative z-10 flex min-h-[calc(100svh-54px)] flex-col px-7 pb-32">
+      <div className="app-content tab-page-content flex flex-col px-7">
         <div className="flex justify-end">
           <button
             aria-label="更多设置"
@@ -34,10 +34,10 @@ export function HomeScreen() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-          className="pt-28 text-center"
+          className="pt-20 text-center"
         >
           <LeafMark />
-          <h1 className="font-display mt-8 text-[38px] leading-[1.22] tracking-[0.06em] text-[#5a3a20]">
+          <h1 className="font-display mt-7 text-[38px] leading-[1.22] tracking-[0.06em] text-[#5a3a20]">
             收藏每一道
             <br />
             属于你的好味道
@@ -51,7 +51,7 @@ export function HomeScreen() {
           initial={{ opacity: 0, y: 28, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="glass-panel mt-12 rounded-[28px] p-5"
+          className="glass-panel mt-10 rounded-[28px] p-5"
         >
           <div className="flex h-[70px] items-center gap-4 rounded-[22px] border border-[#ded3c7]/70 bg-white/42 px-5 text-[#b4aaa1] shadow-inner">
             <Link2 size={23} />
@@ -88,7 +88,7 @@ export function HomeScreen() {
           <span>无广告</span>
         </motion.div>
 
-        <section className="mt-auto pt-16">
+        <section className="mt-auto pt-10">
           <div className="mb-4 flex items-end justify-between">
             <h2 className="font-display text-[21px] tracking-[0.08em] text-[#5a3a20]">
               最近生成

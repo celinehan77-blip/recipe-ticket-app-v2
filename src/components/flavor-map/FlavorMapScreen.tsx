@@ -13,8 +13,8 @@ export function FlavorMapScreen() {
     <IphoneFrame>
       <IosStatusBar />
 
-      <section className="relative z-10 px-5 pb-36 pt-10">
-        <div className="absolute right-8 top-[132px] h-[114px] w-[80px] rounded-[10px] bg-[#eadcc8]/80 p-4 shadow-[0_20px_50px_rgba(84,58,36,0.12)]">
+      <section className="app-content tab-page-content px-5 pt-8">
+        <div className="absolute right-8 top-[118px] h-[108px] w-[78px] rounded-[10px] bg-[#eadcc8]/80 p-4 shadow-[0_20px_50px_rgba(84,58,36,0.12)]">
           <span className="absolute left-1/2 top-[-13px] h-7 w-7 -translate-x-1/2 rounded-full bg-[#d4ab7d] shadow-[0_8px_16px_rgba(116,75,38,0.18)]" />
           <p className="mt-4 text-[11px] font-semibold text-[#5e4633]">探索美食世界</p>
           <p className="mt-1 text-[10px] text-[#9a826d]">从这里出发</p>
@@ -31,7 +31,7 @@ export function FlavorMapScreen() {
               风味地图
             </h1>
             <div className="mt-1 flex items-center gap-4 text-[#e1bd97]">
-              <span className="font-script text-[30px] leading-none">
+              <span className="font-script text-[28px] leading-none">
                 Flavor Map
               </span>
               <span className="h-px w-12 bg-[#e5c5a6]" />
@@ -54,7 +54,7 @@ export function FlavorMapScreen() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.55 }}
-          className="mt-11"
+          className="mt-9"
         >
           <p className="text-[22px] font-medium leading-[1.6] tracking-[0.04em] text-[#4a3a2f]">
             每一张票根
@@ -64,7 +64,7 @@ export function FlavorMapScreen() {
           <div className="mt-3 h-1 w-14 rounded-full bg-[#b78a5f]" />
         </motion.div>
 
-        <div className="mt-16">
+        <div className="mt-12">
           {stations.map((station, index) => (
             <motion.div
               key={station.id}
@@ -78,7 +78,7 @@ export function FlavorMapScreen() {
           ))}
         </div>
 
-        <div className="mt-7 flex items-center justify-center gap-3 text-[14px] font-medium text-[#95887a]">
+        <div className="mt-6 flex items-center justify-center gap-3 text-[14px] font-medium text-[#95887a]">
           <span className="h-px w-10 bg-[#dec9b4]" />
           <Route size={24} />
           <span>滑动探索更多站点</span>

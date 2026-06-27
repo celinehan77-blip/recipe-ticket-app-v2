@@ -23,7 +23,7 @@ export function TicketLoadingScreen() {
     <IphoneFrame>
       <IosStatusBar />
 
-      <section className="relative z-10 px-7 pb-12 pt-5 text-center">
+      <section className="app-content overflow-hidden px-7 pb-8 pt-4 text-center">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -37,25 +37,25 @@ export function TicketLoadingScreen() {
           </p>
         </motion.div>
 
-        <div className="relative mx-auto mt-9 h-[382px] w-[305px]">
+        <div className="relative mx-auto mt-8 h-[348px] w-[292px]">
           <motion.div
             initial={{ opacity: 0, y: 24, rotate: -2 }}
             animate={{ opacity: 1, y: 0, rotate: -2 }}
             transition={{ delay: 0.1, duration: 0.55 }}
-            className="paper-card ticket-edge ticket-float absolute inset-x-2 top-0 z-30 h-[148px] rounded-[16px] p-6 text-left"
+            className="paper-card ticket-edge ticket-float absolute inset-x-2 top-0 z-30 h-[142px] rounded-[16px] p-5 text-left"
             style={{ "--rotate": "-2deg" } as React.CSSProperties}
           >
             <div className="relative z-10 flex justify-between text-[10px] uppercase tracking-[0.14em] text-[#5c493a]">
               <span>Flavor Ticket</span>
               <span>No.20240520</span>
             </div>
-            <h2 className="font-display relative z-10 mt-5 text-center text-[29px] tracking-[0.1em]">
+            <h2 className="font-display relative z-10 mt-4 text-center text-[28px] tracking-[0.1em]">
               宫保鸡丁
             </h2>
             <p className="relative z-10 mt-1 text-center font-serif text-[15px]">
               Kung Pao Chicken
             </p>
-            <div className="relative z-10 mt-5 flex items-end justify-between border-t border-[#7e6044]/15 pt-3">
+            <div className="relative z-10 mt-4 flex items-end justify-between border-t border-[#7e6044]/15 pt-3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-[#7e6958]">
                   From
@@ -76,7 +76,7 @@ export function TicketLoadingScreen() {
             initial={{ opacity: 0, y: 26, rotate: 1.5 }}
             animate={{ opacity: 1, y: 0, rotate: 1.5 }}
             transition={{ delay: 0.35, duration: 0.55 }}
-            className="paper-card ticket-edge absolute inset-x-5 top-[126px] z-20 h-[116px] rounded-[15px] p-6 text-left"
+            className="paper-card ticket-edge absolute inset-x-5 top-[118px] z-20 h-[108px] rounded-[15px] p-5 text-left"
           >
             <div className="relative z-10">
               <p className="font-display text-[18px] tracking-[0.08em]">
@@ -86,7 +86,7 @@ export function TicketLoadingScreen() {
                 Ingredients Verified
               </p>
             </div>
-            <div className="absolute right-7 top-5 grid h-[64px] w-[64px] rotate-[-13deg] place-items-center rounded-full border-2 border-[#6f8b63] text-center text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-[#6f8b63]">
+            <div className="absolute right-6 top-5 grid h-[58px] w-[58px] rotate-[-13deg] place-items-center rounded-full border-2 border-[#6f8b63] text-center text-[8px] font-bold uppercase leading-3 tracking-[0.12em] text-[#6f8b63]">
               <span>Ingredient<br />Verified</span>
             </div>
           </motion.div>
@@ -95,7 +95,7 @@ export function TicketLoadingScreen() {
             initial={{ opacity: 0, y: 28, rotate: -1 }}
             animate={{ opacity: 1, y: 0, rotate: -1 }}
             transition={{ delay: 0.62, duration: 0.55 }}
-            className="paper-card ticket-edge absolute inset-x-3 top-[218px] z-10 h-[126px] rounded-[15px] p-6 text-left"
+            className="paper-card ticket-edge absolute inset-x-3 top-[204px] z-10 h-[116px] rounded-[15px] p-5 text-left"
           >
             <div className="relative z-10">
               <p className="font-display text-[18px] tracking-[0.08em]">
@@ -105,7 +105,7 @@ export function TicketLoadingScreen() {
                 Recipe Created
               </p>
             </div>
-            <div className="absolute right-7 top-6 grid h-[64px] w-[64px] rotate-[12deg] place-items-center rounded-full border-2 border-[#a96a31] text-[#a96a31]">
+            <div className="absolute right-6 top-6 grid h-[58px] w-[58px] rotate-[12deg] place-items-center rounded-full border-2 border-[#a96a31] text-[#a96a31]">
               <Soup size={24} />
             </div>
           </motion.div>
@@ -114,20 +114,20 @@ export function TicketLoadingScreen() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.9, duration: 0.45 }}
-            className="absolute bottom-1 right-8 z-40 grid h-[68px] w-[68px] rotate-[-10deg] place-items-center rounded-full border-2 border-[#c65f3f] text-[#c65f3f]"
+            className="absolute bottom-2 right-8 z-40 grid h-[62px] w-[62px] rotate-[-10deg] place-items-center rounded-full border-2 border-[#c65f3f] text-[#c65f3f]"
           >
             <Star size={25} className="fill-[#c65f3f]/10" />
           </motion.div>
         </div>
 
-        <div className="mx-auto mt-2 w-[245px] text-left">
+        <div className="mx-auto mt-1 w-[245px] text-left">
           {loadingSteps.map((step, index) => (
             <motion.div
               key={step.label}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.25 + index * 0.18, duration: 0.35 }}
-              className="relative flex items-center gap-4 py-2 text-[14px]"
+              className="relative flex items-center gap-4 py-1.5 text-[14px]"
             >
               {index < loadingSteps.length - 1 ? (
                 <span className="absolute left-[10px] top-7 h-6 w-px bg-[#d8cbbb]" />

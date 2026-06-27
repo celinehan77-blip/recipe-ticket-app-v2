@@ -8,8 +8,8 @@ type TabBarProps = {
 
 export function TabBar({ current }: TabBarProps) {
   return (
-    <nav className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-30 mx-auto flex w-full max-w-[393px] justify-center px-5">
-      <div className="glass-panel pointer-events-auto grid h-[86px] w-full grid-cols-5 items-center rounded-[34px] px-2">
+    <nav className="safe-bottom pointer-events-none absolute inset-x-0 bottom-0 z-30 mx-auto flex w-full justify-center px-5">
+      <div className="glass-panel pointer-events-auto grid h-[78px] w-full grid-cols-5 items-center rounded-[32px] px-2">
         {tabs.map((item) => {
           const Icon = item.icon;
           const active = item.key === current;
@@ -18,14 +18,14 @@ export function TabBar({ current }: TabBarProps) {
             <Link
               key={item.key}
               href={item.href}
-              className={`relative flex h-[72px] flex-col items-center justify-center gap-1.5 rounded-[26px] text-[12px] transition ${
+              className={`relative flex h-[64px] flex-col items-center justify-center gap-1 rounded-[24px] text-[12px] transition ${
                 active
                   ? "bg-white/64 text-[#5c3718] shadow-[0_14px_34px_rgba(78,52,29,0.12)]"
                   : "text-[#b2a79d]"
               }`}
             >
               <Icon
-                size={24}
+                size={23}
                 strokeWidth={active ? 2.7 : 2.2}
                 className={active ? "fill-[#8a5a35]/15" : ""}
               />
