@@ -22,11 +22,12 @@ import {
   isFavoriteRecipe,
   toggleFavoriteRecipe,
 } from "@/lib/localFavorites";
-import { kungPaoRecipe } from "@/lib/mockData";
-import type { Ingredient, IngredientGroup } from "@/types";
+import { getRecipeDetailBySlug, recipes } from "@/lib/mockData";
+import type { Ingredient, IngredientGroup, Recipe } from "@/types";
 
 type RecipeDetailScreenProps = {
   backHref: string;
+  recipeSlug: string;
 };
 
 const statIcons = [Clock3, BarChart3, Flame, ChefHat, Heart];
@@ -59,15 +60,10 @@ const bottomActions = [
   { label: "记笔记", icon: NotebookPen },
 ];
 
-const kungPaoRecipeNo = "01";
-
-const kungPaoStats = [
-  { label: "烹饪时间", value: String(kungPaoRecipe.timeMinutes), suffix: "分钟" },
-  { label: "难度等级", value: kungPaoRecipe.difficulty },
-  { label: "口味特点", value: kungPaoRecipe.flavor },
-  { label: "主食材", value: kungPaoRecipe.mainIngredient.split(" · ")[0] },
-  { label: "收藏人数", value: String(kungPaoRecipe.savedCount) },
-];
+function getRecipeNo(recipe: Recipe) {
+  const index = recipes.findIndex((item) => item.slug === recipe.slug);
+  return String(index + 1 || 1).padStart(2, "0");
+}
 
 function FoodStillLife() {
   return (
@@ -206,21 +202,73 @@ function StepThumb({ index }: { index: number }) {
   );
 }
 
-export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
+export function RecipeDetailScreen({
+  backHref,
+  recipeSlug,
+}: RecipeDetailScreenProps) {
+  const recipe = getRecipeDetailBySlug(recipeSlug);
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setIsFavorite(isFavoriteRecipe(kungPaoRecipe.slug));
+      if (recipe) {
+        setIsFavorite(isFavoriteRecipe(recipe.slug));
+      }
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [recipe]);
 
   const handleToggleFavorite = () => {
-    const nextFavoriteState = toggleFavoriteRecipe(kungPaoRecipe.slug);
+    if (!recipe) {
+      return;
+    }
+
+    const nextFavoriteState = toggleFavoriteRecipe(recipe.slug);
     setIsFavorite(nextFavoriteState.favorite);
   };
+
+  if (!recipe) {
+    return (
+      <IphoneFrame>
+        <IosStatusBar />
+        <div className="app-content px-5 pt-8">
+          <Link
+            href="/flavor-map"
+            aria-label="返回风味地图"
+            className="recipe-nav-button"
+          >
+            <ChevronLeft size={24} />
+          </Link>
+          <section className="paper-card mt-16 rounded-[28px] px-6 py-8 text-center">
+            <div className="relative z-10">
+              <h1 className="font-display text-[30px] tracking-[0.06em] text-[#3a2a1d]">
+                没有找到这道菜
+              </h1>
+              <p className="mt-3 text-[14px] leading-6 text-[#75695f]">
+                回到风味地图，重新选择一张菜谱票根
+              </p>
+              <Link
+                href="/flavor-map"
+                className="mx-auto mt-6 flex h-11 w-[142px] items-center justify-center rounded-full bg-[#8b9a7a] text-[14px] font-semibold text-[#fffaf2]"
+              >
+                返回风味地图
+              </Link>
+            </div>
+          </section>
+        </div>
+      </IphoneFrame>
+    );
+  }
+
+  const recipeNo = getRecipeNo(recipe);
+  const recipeStats = [
+    { label: "烹饪时间", value: String(recipe.timeMinutes), suffix: "分钟" },
+    { label: "难度等级", value: recipe.difficulty },
+    { label: "口味特点", value: recipe.flavor },
+    { label: "主食材", value: recipe.mainIngredient.split(" · ")[0] },
+    { label: "收藏人数", value: String(recipe.savedCount) },
+  ];
 
   const ingredientGroups: {
     id: IngredientGroup;
@@ -230,17 +278,17 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
     {
       id: "main",
       title: "主食材",
-      items: kungPaoRecipe.ingredients.filter((item) => item.group === "main"),
+      items: recipe.ingredients.filter((item) => item.group === "main"),
     },
     {
       id: "side",
       title: "配料",
-      items: kungPaoRecipe.ingredients.filter((item) => item.group === "side"),
+      items: recipe.ingredients.filter((item) => item.group === "side"),
     },
     {
       id: "seasoning",
       title: "调味料",
-      items: kungPaoRecipe.seasonings,
+      items: recipe.seasonings,
     },
   ];
 
@@ -287,17 +335,17 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
             className="relative z-20 mt-4 max-w-[214px]"
           >
             <p className="font-display text-[42px] leading-none text-[#c9b9a9]">
-              {kungPaoRecipeNo}
+              {recipeNo}
             </p>
             <div className="mt-1.5 h-px w-12 bg-[#8b9a7a]" />
             <h1 className="font-display mt-3 text-[38px] leading-none tracking-[0.08em] text-[#3a2a1d]">
-              {kungPaoRecipe.titleZh}
+              {recipe.titleZh}
             </h1>
             <p className="mt-2 font-serif text-[22px] leading-none text-[#8a5a35]">
-              {kungPaoRecipe.titleEn}
+              {recipe.titleEn}
             </p>
             <p className="mt-3 line-clamp-2 text-[13px] leading-5 text-[#75695f]">
-              {kungPaoRecipe.description}
+              {recipe.description}
             </p>
           </motion.div>
         </section>
@@ -308,7 +356,7 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
           transition={{ delay: 0.08, duration: 0.6 }}
           className="recipe-stats-card mx-5 mt-2 grid h-[68px] grid-cols-5 rounded-[22px] px-1.5 py-2"
         >
-          {kungPaoStats.map((stat, index) => {
+          {recipeStats.map((stat, index) => {
             const Icon = statIcons[index];
             return (
               <div
@@ -389,7 +437,7 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
           </div>
 
           <div className="recipe-steps-card rounded-[22px] px-3 py-2">
-            {kungPaoRecipe.steps.map((step, index) => (
+            {recipe.steps.map((step, index) => (
               <motion.div
                 key={step.id}
                 initial={{ opacity: 0, x: -12 }}
@@ -398,7 +446,7 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
                 transition={{ delay: index * 0.05, duration: 0.42 }}
                 className="relative flex h-[51px] items-center gap-2.5 border-b border-[#dfd1c1]/70 last:border-b-0"
               >
-                {index < kungPaoRecipe.steps.length - 1 ? (
+                {index < recipe.steps.length - 1 ? (
                   <span className="absolute left-[13px] top-[38px] h-[28px] border-l border-dashed border-[#c9bcae]" />
                 ) : null}
                 <span className="relative z-10 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full bg-[#8b9a7a] text-[12px] font-semibold text-[#fffaf2] shadow-[0_6px_12px_rgba(99,114,75,0.18)]">

@@ -46,7 +46,7 @@ export const stations: Station[] = [
     difficulty: "中等",
     categoryType: "pasture",
     accentColor: "caramel",
-    route: "/flavor-map",
+    route: "/station/pasture",
     icon: Beef,
   },
   {
@@ -60,7 +60,7 @@ export const stations: Station[] = [
     difficulty: "简单",
     categoryType: "seafood",
     accentColor: "blue",
-    route: "/flavor-map",
+    route: "/station/seafood",
     icon: Fish,
   },
 ];
@@ -290,6 +290,28 @@ export const kungPaoRecipe = recipeDetails["kung-pao-chicken"];
 export const chickenStationRecipes = recipes.filter(
   (recipe) => recipe.stationId === "station-chicken",
 );
+
+export function getStationBySlug(slug: string) {
+  return stations.find((station) => station.slug === slug) ?? null;
+}
+
+export function getRecipesByStationSlug(slug: string) {
+  const station = getStationBySlug(slug);
+
+  if (!station) {
+    return [];
+  }
+
+  return recipes.filter((recipe) => recipe.stationId === station.id);
+}
+
+export function getRecipeBySlug(slug: string) {
+  return recipes.find((recipe) => recipe.slug === slug) ?? null;
+}
+
+export function getRecipeDetailBySlug(slug: string) {
+  return recipeDetails[slug] ?? getRecipeBySlug(slug);
+}
 
 export const recentRecipes: RecentRecipe[] = [
   { title: recipes[1].titleZh, subtitle: "酸甜微辣 · 25 分钟" },

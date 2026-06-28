@@ -128,17 +128,13 @@ export function StationTicket({
     </article>
   );
 
-  if (station.slug === "chicken") {
-    return (
-      <Link
-        href={station.route}
-        aria-label="进入羽禽驿站"
-        className="block transition-transform duration-150 active:scale-[0.98]"
-      >
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
+  return (
+    <Link
+      href={station.route}
+      aria-label={`进入${station.nameZh}`}
+      className="block transition-transform duration-150 active:scale-[0.98]"
+    >
+      {content}
+    </Link>
+  );
 }

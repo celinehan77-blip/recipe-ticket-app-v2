@@ -14,8 +14,11 @@ import {
 } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
-import { chickenStationRecipes, stations } from "@/lib/mockData";
-import type { Recipe } from "@/types";
+import {
+  getRecipesByStationSlug,
+  getStationBySlug,
+} from "@/lib/mockData";
+import type { Recipe, Station } from "@/types";
 
 const ingredientLabels = [
   { name: "干辣椒", note: "香辣提味", left: "13%", top: "31%" },
@@ -215,16 +218,61 @@ function RecipeCard({
   );
 }
 
-export function ChickenStationScreen() {
-  const [activeIndex, setActiveIndex] = useState(1);
-  const station =
-    stations.find((item) => item.slug === "chicken") ?? stations[0];
-  const stationTitle = `${station.slug.charAt(0).toUpperCase()}${station.slug.slice(
-    1,
-  )} Station`;
-  const recipeCount = chickenStationRecipes.length;
-  const activeRecipe =
-    chickenStationRecipes[activeIndex] ?? chickenStationRecipes[1];
+type ChickenStationScreenProps = {
+  stationSlug: string;
+};
+
+function getStationTitle(station: Station) {
+  if (station.slug === "chicken") {
+    return "Chicken Station";
+  }
+
+  return station.nameEn;
+}
+
+export function ChickenStationScreen({
+  stationSlug,
+}: ChickenStationScreenProps) {
+  const station = getStationBySlug(stationSlug);
+  const recipes = getRecipesByStationSlug(stationSlug);
+  const initialIndex = station?.slug === "chicken" && recipes.length > 1 ? 1 : 0;
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
+
+  if (!station) {
+    return (
+      <IphoneFrame>
+        <IosStatusBar />
+        <section className="app-content flex flex-col px-6 pb-8 pt-5">
+          <Link
+            href="/flavor-map"
+            className="grid h-12 w-12 place-items-center rounded-full bg-white/52 text-[#7b634e] shadow-[0_16px_40px_rgba(82,55,34,0.1)]"
+          >
+            <ChevronLeft size={26} />
+          </Link>
+          <div className="paper-card mt-16 rounded-[28px] px-6 py-8 text-center">
+            <div className="relative z-10">
+              <h1 className="font-display text-[30px] tracking-[0.06em] text-[#3a2a1d]">
+                没有找到这个驿站
+              </h1>
+              <p className="mt-3 text-[14px] leading-6 text-[#75695f]">
+                回到风味地图，重新挑选一张味道票根
+              </p>
+              <Link
+                href="/flavor-map"
+                className="mx-auto mt-6 flex h-11 w-[142px] items-center justify-center rounded-full bg-[#8b9a7a] text-[14px] font-semibold text-[#fffaf2]"
+              >
+                返回风味地图
+              </Link>
+            </div>
+          </div>
+        </section>
+      </IphoneFrame>
+    );
+  }
+
+  const stationTitle = getStationTitle(station);
+  const recipeCount = recipes.length;
+  const activeRecipe = recipes[activeIndex] ?? recipes[0];
 
   return (
     <IphoneFrame>
@@ -264,7 +312,7 @@ export function ChickenStationScreen() {
         </div>
 
         <div className="relative mt-10 h-[466px]">
-          {chickenStationRecipes.map((recipe, index) => {
+          {recipes.map((recipe, index) => {
             const isActive = index === activeIndex;
             const offset = getCoverFlowOffset(
               index,
@@ -285,8 +333,8 @@ export function ChickenStationScreen() {
               return (
                 <Link
                   key={recipe.id}
-                  href="/recipe/kung-pao-chicken"
-                  aria-label="打开宫保鸡丁菜谱详情"
+                  href={`/recipe/${recipe.slug}`}
+                  aria-label={`打开${recipe.titleZh}菜谱详情`}
                   className={cardBaseClass}
                   style={{ zIndex: cardMotionState.zIndex }}
                 >
@@ -328,7 +376,7 @@ export function ChickenStationScreen() {
         </div>
 
         <div className="relative z-50 mt-2 flex justify-center gap-3">
-          {chickenStationRecipes.map((recipe, index) => (
+          {recipes.map((recipe, index) => (
             <motion.button
               key={`dot-${recipe.id}`}
               type="button"
@@ -348,7 +396,7 @@ export function ChickenStationScreen() {
         </div>
 
         <motion.div
-          key={activeRecipe.id}
+          key={activeRecipe?.id ?? "empty-recipe"}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
@@ -359,7 +407,7 @@ export function ChickenStationScreen() {
             <div>
               <p className="text-[12px] text-[#8a8178]">烹饪时间</p>
               <p className="mt-2 text-[21px] font-semibold text-[#6f7d55]">
-                {activeRecipe.timeMinutes} 分钟
+                {activeRecipe?.timeMinutes ?? 0} 分钟
               </p>
             </div>
           </div>
@@ -368,7 +416,7 @@ export function ChickenStationScreen() {
             <div>
               <p className="text-[12px] text-[#8a8178]">难度等级</p>
               <p className="mt-2 text-[21px] font-semibold text-[#6f7d55]">
-                {activeRecipe.difficulty}
+                {activeRecipe?.difficulty ?? "暂无"}
               </p>
             </div>
           </div>
@@ -377,7 +425,7 @@ export function ChickenStationScreen() {
             <div>
               <p className="text-[12px] text-[#8a8178]">主要食材</p>
               <p className="mt-2 text-[15px] font-semibold leading-6 text-[#4a3a2f]">
-                {activeRecipe.mainIngredient}
+                {activeRecipe?.mainIngredient ?? "暂无"}
               </p>
             </div>
           </div>
