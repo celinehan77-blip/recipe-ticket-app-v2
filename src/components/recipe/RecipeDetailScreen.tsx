@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +18,10 @@ import {
 } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
+import {
+  isFavoriteRecipe,
+  toggleFavoriteRecipe,
+} from "@/lib/localFavorites";
 import { kungPaoRecipe } from "@/lib/mockData";
 import type { Ingredient, IngredientGroup } from "@/types";
 
@@ -202,6 +207,21 @@ function StepThumb({ index }: { index: number }) {
 }
 
 export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsFavorite(isFavoriteRecipe(kungPaoRecipe.slug));
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const handleToggleFavorite = () => {
+    const nextFavoriteState = toggleFavoriteRecipe(kungPaoRecipe.slug);
+    setIsFavorite(nextFavoriteState.favorite);
+  };
+
   const ingredientGroups: {
     id: IngredientGroup;
     title: string;
@@ -241,9 +261,13 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
             <div className="flex gap-2.5">
               <button
                 aria-label="收藏"
+                onClick={handleToggleFavorite}
                 className="recipe-nav-button"
               >
-                <Bookmark size={20} />
+                <Bookmark
+                  size={20}
+                  className={isFavorite ? "fill-[#8a5a35]/18" : ""}
+                />
               </button>
               <button
                 aria-label="更多"
@@ -414,9 +438,14 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
               </button>
             );
           })}
-          <button className="flex h-11 w-32 items-center justify-center gap-1.5 rounded-full bg-[#8b9a7a] text-[14px] font-semibold tracking-[0.03em] text-[#fffaf2] shadow-[0_12px_24px_rgba(91,105,64,0.22)]">
-            <Bookmark size={18} />
-            加入收藏
+          <button
+            onClick={handleToggleFavorite}
+            className={`flex h-11 w-32 items-center justify-center gap-1.5 rounded-full text-[14px] font-semibold tracking-[0.03em] text-[#fffaf2] shadow-[0_12px_24px_rgba(91,105,64,0.22)] ${
+              isFavorite ? "bg-[#6f7d55]" : "bg-[#8b9a7a]"
+            }`}
+          >
+            <Bookmark size={18} className={isFavorite ? "fill-[#fffaf2]/24" : ""} />
+            {isFavorite ? "已收藏" : "加入收藏"}
           </button>
           {bottomActions.slice(2).map((action) => {
             const Icon = action.icon;

@@ -16,7 +16,7 @@ import type { LoadingStep, RecentRecipe, Recipe, Station, TabItem } from "@/type
 
 export const tabItems: TabItem[] = [
   { id: "home", label: "首页", route: "/", icon: Home },
-  { id: "favorites", label: "收藏", route: "/flavor-map", icon: Star },
+  { id: "favorites", label: "收藏", route: "/favorites", icon: Star },
   { id: "flavor-map", label: "风味地图", route: "/flavor-map", icon: Map },
   { id: "plan", label: "计划", route: "/flavor-map", icon: CalendarDays },
   { id: "profile", label: "我的", route: "/flavor-map", icon: UserRound },
