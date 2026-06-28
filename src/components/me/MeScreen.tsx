@@ -1,30 +1,90 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Bookmark, ChevronRight, Heart, Settings2, Sparkles } from "lucide-react";
+import {
+  Bookmark,
+  ChevronRight,
+  Heart,
+  Map,
+  NotebookTabs,
+  Sparkles,
+} from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
+import { getFavoriteRecipeSlugs } from "@/lib/localFavorites";
+import { readMockGenerationTask } from "@/lib/mockGenerationTask";
+import { recipes } from "@/lib/mockData";
 
-const profileSections = [
-  {
-    title: "我的菜谱",
-    icon: Bookmark,
-    rows: ["已收藏 1 道", "已生成 1 道"],
-  },
-  {
-    title: "偏好设置",
-    icon: Settings2,
-    rows: ["口味偏好", "常用食材", "饮食习惯"],
-  },
-  {
-    title: "版本说明",
-    icon: Sparkles,
-    rows: ["Recipe Ticket MVP", "Local Demo"],
-  },
-];
+type LocalProfileState = {
+  favoriteSlugs: string[];
+  generatedRecipeSlug: string | null;
+};
+
+const defaultLocalProfileState: LocalProfileState = {
+  favoriteSlugs: [],
+  generatedRecipeSlug: null,
+};
+
+function getRecipeTitle(slug: string | null) {
+  if (!slug) return "暂无";
+
+  return recipes.find((recipe) => recipe.slug === slug)?.titleZh ?? "暂无";
+}
 
 export function MeScreen() {
+  const [localProfile, setLocalProfile] = useState<LocalProfileState>(
+    defaultLocalProfileState,
+  );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const task = readMockGenerationTask();
+
+      setLocalProfile({
+        favoriteSlugs: getFavoriteRecipeSlugs(),
+        generatedRecipeSlug: task?.generatedRecipeSlug ?? null,
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const favoriteCount = localProfile.favoriteSlugs.length;
+  const generatedCount = localProfile.generatedRecipeSlug ? 1 : 0;
+  const recentGeneratedTitle = getRecipeTitle(localProfile.generatedRecipeSlug);
+  const recentFavoriteTitle = getRecipeTitle(
+    localProfile.favoriteSlugs[localProfile.favoriteSlugs.length - 1] ?? null,
+  );
+
+  const profileSections = useMemo(
+    () => [
+      {
+        title: "我的菜谱",
+        icon: Bookmark,
+        rows: [`已收藏 ${favoriteCount} 道`, `已生成 ${generatedCount} 道`],
+      },
+      {
+        title: "最近活动",
+        icon: NotebookTabs,
+        rows: [
+          `最近生成：${recentGeneratedTitle}`,
+          `来源：${generatedCount > 0 ? "Local Demo" : "暂无"}`,
+          `状态：${generatedCount > 0 ? "已完成" : "暂无"}`,
+          `最近收藏：${recentFavoriteTitle}`,
+        ],
+      },
+      {
+        title: "当前模式",
+        icon: Sparkles,
+        rows: ["Recipe Ticket MVP", "Local Demo", "数据仅保存在当前浏览器"],
+      },
+    ],
+    [favoriteCount, generatedCount, recentFavoriteTitle, recentGeneratedTitle],
+  );
+
   return (
     <IphoneFrame>
       <IosStatusBar />
@@ -47,35 +107,38 @@ export function MeScreen() {
           </p>
         </motion.header>
 
-        <motion.section
+        <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.45 }}
-          className="paper-card mt-7 rounded-[26px] px-4 py-4"
+          className="mt-7 space-y-2.5"
         >
-          <div className="relative z-10 space-y-2.5">
-            <div className="flex items-center gap-3 border-b border-[#d8cabb]/70 pb-4">
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[#fffaf2]/78 text-[#8a5a35] shadow-[0_12px_28px_rgba(78,52,29,0.1)]">
-                <Heart size={24} className="fill-[#8a5a35]/12" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-display text-[22px] leading-none tracking-[0.05em] text-[#3a2a1d]">
-                  日食笔记
-                </p>
-                <p className="mt-1.5 text-[12px] leading-5 text-[#8a8178]">
-                  本地演示账号
-                </p>
-              </div>
+          <section className="flex items-center gap-3 rounded-[24px] border border-[#d8cabb]/70 bg-[#fffaf2]/42 px-4 py-3">
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[#fffaf2]/78 text-[#8a5a35] shadow-[0_12px_28px_rgba(78,52,29,0.1)]">
+              <Heart size={24} className="fill-[#8a5a35]/12" />
             </div>
+            <div className="min-w-0">
+              <p className="font-display text-[22px] leading-none tracking-[0.05em] text-[#3a2a1d]">
+                日食笔记
+              </p>
+              <p className="mt-1.5 text-[12px] leading-5 text-[#8a8178]">
+                本地演示账号
+              </p>
+            </div>
+          </section>
 
-            {profileSections.map((section) => {
-              const Icon = section.icon;
+          {profileSections.map((section, index) => {
+            const Icon = section.icon;
 
-              return (
-                <article
-                  key={section.title}
-                  className="rounded-[22px] bg-[#fffaf2]/42 px-3.5 py-3"
-                >
+            return (
+              <motion.article
+                key={section.title}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 + index * 0.05, duration: 0.38 }}
+                className="paper-card rounded-[24px] px-3.5 py-3"
+              >
+                <div className="relative z-10">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
                       <span className="grid h-9 w-9 place-items-center rounded-full bg-[#f4eadc] text-[#8a5a35]">
@@ -98,11 +161,28 @@ export function MeScreen() {
                       </p>
                     ))}
                   </div>
-                </article>
-              );
-            })}
+                </div>
+              </motion.article>
+            );
+          })}
+
+          <div className="grid grid-cols-2 gap-2.5 pt-1">
+            <Link
+              href="/favorites"
+              className="flex h-12 items-center justify-center gap-1.5 rounded-[18px] bg-[#8b9a7a] text-[13px] font-semibold text-[#fffaf2] shadow-[0_12px_24px_rgba(91,105,64,0.18)]"
+            >
+              <Bookmark size={16} />
+              查看收藏
+            </Link>
+            <Link
+              href="/flavor-map"
+              className="flex h-12 items-center justify-center gap-1.5 rounded-[18px] bg-[#fffaf2]/62 text-[13px] font-semibold text-[#6a5748] shadow-[0_10px_22px_rgba(78,52,29,0.08)]"
+            >
+              <Map size={16} />
+              去风味地图
+            </Link>
           </div>
-        </motion.section>
+        </motion.div>
       </div>
 
       <TabBar current="profile" />
