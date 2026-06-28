@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { type FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -14,8 +16,28 @@ import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
 import { LeafMark } from "@/components/ui/LeafMark";
 import { recentRecipes } from "@/lib/mockData";
+import { saveMockGenerationTask } from "@/lib/mockGenerationTask";
 
 export function HomeScreen() {
+  const router = useRouter();
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleGenerateRecipe = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedSourceUrl = sourceUrl.trim();
+
+    if (!trimmedSourceUrl) {
+      setErrorMessage("请先粘贴小红书 / 抖音链接");
+      return;
+    }
+
+    setErrorMessage("");
+    saveMockGenerationTask(trimmedSourceUrl);
+    router.push("/loading");
+  };
+
   return (
     <IphoneFrame>
       <IosStatusBar />
@@ -47,7 +69,8 @@ export function HomeScreen() {
           </p>
         </motion.section>
 
-        <motion.section
+        <motion.form
+          onSubmit={handleGenerateRecipe}
           initial={{ opacity: 0, y: 28, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
@@ -55,13 +78,32 @@ export function HomeScreen() {
         >
           <div className="flex h-[70px] items-center gap-4 rounded-[22px] border border-[#ded3c7]/70 bg-white/42 px-5 text-[#b4aaa1] shadow-inner">
             <Link2 size={23} />
-            <span className="flex-1 text-left text-[18px] font-semibold tracking-[0.03em]">
-              粘贴小红书 / 抖音链接
-            </span>
+            <input
+              value={sourceUrl}
+              onChange={(event) => {
+                setSourceUrl(event.target.value);
+
+                if (errorMessage) {
+                  setErrorMessage("");
+                }
+              }}
+              aria-label="粘贴小红书 / 抖音链接"
+              placeholder="粘贴小红书 / 抖音链接"
+              className="min-w-0 flex-1 bg-transparent text-left text-[18px] font-semibold tracking-[0.03em] text-[#7c6f64] outline-none placeholder:text-[#b4aaa1]"
+            />
             <ScanLine size={24} className="text-[#7c5638]" />
           </div>
 
-          <Link href="/loading" className="block">
+          {errorMessage ? (
+            <p className="mt-2 text-left text-[13px] font-medium text-[#a15f45]">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            className="block w-full border-0 bg-transparent p-0 text-left"
+          >
             <motion.div
               whileTap={{ scale: 0.985 }}
               className="mt-5 flex h-[64px] items-center justify-center rounded-[20px] bg-gradient-to-r from-[#8a4f1f] via-[#955d28] to-[#8a4f1f] text-[20px] font-semibold tracking-[0.08em] text-white shadow-[0_18px_34px_rgba(104,61,24,0.28)]"
@@ -71,8 +113,8 @@ export function HomeScreen() {
                 <ArrowRight size={22} />
               </span>
             </motion.div>
-          </Link>
-        </motion.section>
+          </button>
+        </motion.form>
 
         <motion.div
           initial={{ opacity: 0 }}

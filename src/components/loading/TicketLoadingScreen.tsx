@@ -7,6 +7,10 @@ import { Check, CookingPot, Leaf, Plus, Star } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { loadingSteps } from "@/lib/mockData";
+import {
+  completeMockGenerationTask,
+  readMockGenerationTask,
+} from "@/lib/mockGenerationTask";
 
 const ticketMotion = {
   y: [0, -4, 0],
@@ -16,8 +20,11 @@ export function TicketLoadingScreen() {
   const router = useRouter();
 
   useEffect(() => {
+    readMockGenerationTask();
+
     const timer = window.setTimeout(() => {
-      router.push("/recipe/kung-pao-chicken?from=loading");
+      completeMockGenerationTask();
+      router.push("/recipe/kung-pao-chicken");
     }, 3000);
 
     return () => window.clearTimeout(timer);
