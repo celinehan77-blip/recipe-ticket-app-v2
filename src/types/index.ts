@@ -2,10 +2,69 @@ import type { LucideIcon } from "lucide-react";
 
 export type TabKey = "home" | "favorites" | "flavor-map" | "plan" | "profile";
 
+export type StationCategoryType = "poultry" | "pasture" | "seafood";
+
+export type StationAccentColor = "sage" | "caramel" | "blue";
+
+export type IngredientGroup = "main" | "side" | "seasoning";
+
+export type RecipeCoverType = "illustration" | "photo" | "ticket";
+
+export type Station = {
+  id: string;
+  slug: string;
+  nameZh: string;
+  nameEn: string;
+  description: string;
+  recipeCount: number;
+  averageTime: string;
+  difficulty: string;
+  categoryType: StationCategoryType;
+  accentColor: StationAccentColor;
+  route: string;
+  icon: LucideIcon;
+};
+
+export type Ingredient = {
+  id: string;
+  name: string;
+  amount: string;
+  group: IngredientGroup;
+  note: string;
+};
+
+export type RecipeStep = {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  icon: LucideIcon;
+  tips: string;
+};
+
+export type Recipe = {
+  id: string;
+  slug: string;
+  titleZh: string;
+  titleEn: string;
+  stationId: string;
+  coverType: RecipeCoverType;
+  timeMinutes: number;
+  difficulty: string;
+  flavor: string;
+  mainIngredient: string;
+  tags: string[];
+  description: string;
+  ingredients: Ingredient[];
+  seasonings: Ingredient[];
+  steps: RecipeStep[];
+  savedCount: number;
+};
+
 export type TabItem = {
-  key: TabKey;
+  id: TabKey;
   label: string;
-  href: string;
+  route: string;
   icon: LucideIcon;
 };
 
@@ -17,64 +76,4 @@ export type RecentRecipe = {
 export type LoadingStep = {
   label: string;
   active: boolean;
-};
-
-export type Station = {
-  id: string;
-  stationNo: string;
-  title: string;
-  englishTitle: string;
-  subtitle: string;
-  recipes: number;
-  averageTime: string;
-  difficulty: string;
-  tone: "sage" | "caramel" | "blue";
-};
-
-export type RecipeStat = {
-  label: string;
-  value: string;
-  suffix?: string;
-};
-
-export type IngredientItem = {
-  name: string;
-  amount: string;
-};
-
-export type IngredientGroup = {
-  id: "main" | "side" | "seasoning";
-  title: string;
-  items: IngredientItem[];
-};
-
-export type CookingStep = {
-  id: string;
-  title: string;
-  description: string;
-  minutes: string;
-};
-
-export type RecipeDetail = {
-  no: string;
-  title: string;
-  englishTitle: string;
-  description: string;
-  tag: string;
-  servings: string;
-  stats: RecipeStat[];
-  ingredientGroups: IngredientGroup[];
-  steps: CookingStep[];
-};
-
-export type StationRecipe = {
-  id: string;
-  title: string;
-  englishTitle: string;
-  subtitle: string;
-  minutes: string;
-  difficulty: string;
-  flavor: string;
-  tags: string[];
-  ingredients: string[];
 };

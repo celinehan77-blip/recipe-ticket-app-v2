@@ -77,7 +77,11 @@ export function FlavorMapScreen() {
               transition={{ delay: 0.18 + index * 0.12, duration: 0.55 }}
               className={index > 0 ? "-mt-[18px]" : ""}
             >
-              <StationTicket station={station} isPrimary={index === 0} />
+              <StationTicket
+                station={station}
+                stationNo={String(index + 1).padStart(2, "0")}
+                isPrimary={index === 0}
+              />
             </motion.div>
           ))}
         </div>

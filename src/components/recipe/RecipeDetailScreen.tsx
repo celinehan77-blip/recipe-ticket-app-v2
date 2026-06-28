@@ -18,7 +18,7 @@ import {
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { kungPaoRecipe } from "@/lib/mockData";
-import type { IngredientGroup } from "@/types";
+import type { Ingredient, IngredientGroup } from "@/types";
 
 type RecipeDetailScreenProps = {
   backHref: string;
@@ -54,12 +54,14 @@ const bottomActions = [
   { label: "记笔记", icon: NotebookPen },
 ];
 
-const stepSummaries = [
-  "鸡腿肉切丁，加入生抽、料酒、淀粉抓匀",
-  "生抽、老抽、糖、醋、料酒、淀粉调匀",
-  "热油下花椒炸香，加入干辣椒段",
-  "倒入鸡丁快速翻炒至变色",
-  "倒入宫保汁和花生，翻炒均匀",
+const kungPaoRecipeNo = "01";
+
+const kungPaoStats = [
+  { label: "烹饪时间", value: String(kungPaoRecipe.timeMinutes), suffix: "分钟" },
+  { label: "难度等级", value: kungPaoRecipe.difficulty },
+  { label: "口味特点", value: kungPaoRecipe.flavor },
+  { label: "主食材", value: kungPaoRecipe.mainIngredient.split(" · ")[0] },
+  { label: "收藏人数", value: String(kungPaoRecipe.savedCount) },
 ];
 
 function FoodStillLife() {
@@ -122,7 +124,7 @@ function FoodStillLife() {
   );
 }
 
-function IngredientArt({ id }: { id: IngredientGroup["id"] }) {
+function IngredientArt({ id }: { id: IngredientGroup }) {
   if (id === "main") {
     return (
       <div className="ingredient-photo relative mt-auto h-[46px] overflow-hidden rounded-[14px] bg-[#ead8c1]">
@@ -200,6 +202,28 @@ function StepThumb({ index }: { index: number }) {
 }
 
 export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
+  const ingredientGroups: {
+    id: IngredientGroup;
+    title: string;
+    items: Ingredient[];
+  }[] = [
+    {
+      id: "main",
+      title: "主食材",
+      items: kungPaoRecipe.ingredients.filter((item) => item.group === "main"),
+    },
+    {
+      id: "side",
+      title: "配料",
+      items: kungPaoRecipe.ingredients.filter((item) => item.group === "side"),
+    },
+    {
+      id: "seasoning",
+      title: "调味料",
+      items: kungPaoRecipe.seasonings,
+    },
+  ];
+
   return (
     <IphoneFrame>
       <IosStatusBar />
@@ -239,14 +263,14 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
             className="relative z-20 mt-4 max-w-[214px]"
           >
             <p className="font-display text-[42px] leading-none text-[#c9b9a9]">
-              {kungPaoRecipe.no}
+              {kungPaoRecipeNo}
             </p>
             <div className="mt-1.5 h-px w-12 bg-[#8b9a7a]" />
             <h1 className="font-display mt-3 text-[38px] leading-none tracking-[0.08em] text-[#3a2a1d]">
-              {kungPaoRecipe.title}
+              {kungPaoRecipe.titleZh}
             </h1>
             <p className="mt-2 font-serif text-[22px] leading-none text-[#8a5a35]">
-              {kungPaoRecipe.englishTitle}
+              {kungPaoRecipe.titleEn}
             </p>
             <p className="mt-3 line-clamp-2 text-[13px] leading-5 text-[#75695f]">
               {kungPaoRecipe.description}
@@ -260,7 +284,7 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
           transition={{ delay: 0.08, duration: 0.6 }}
           className="recipe-stats-card mx-5 mt-2 grid h-[68px] grid-cols-5 rounded-[22px] px-1.5 py-2"
         >
-          {kungPaoRecipe.stats.map((stat, index) => {
+          {kungPaoStats.map((stat, index) => {
             const Icon = statIcons[index];
             return (
               <div
@@ -291,13 +315,13 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
               <div className="mt-1 h-0.5 w-10 rounded-full bg-[#8b9a7a]" />
             </div>
             <button className="flex items-center gap-1 text-[13px] text-[#5a4636]">
-              {kungPaoRecipe.servings}
+              2 人份
               <ChevronDown size={15} />
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-2.5">
-            {kungPaoRecipe.ingredientGroups.map((group, index) => (
+            {ingredientGroups.map((group, index) => (
               /* Keep cards compact by showing the key visible items for the phone-first layout. */
               <motion.article
                 key={group.id}
@@ -363,11 +387,11 @@ export function RecipeDetailScreen({ backHref }: RecipeDetailScreenProps) {
                       {step.title}
                     </h3>
                     <span className="h-7 shrink-0 rounded-full bg-[#f4eadc] px-2.5 text-[11px] font-medium leading-7 text-[#6a5748]">
-                      {step.minutes}
+                      {step.duration}
                     </span>
                   </div>
                   <p className="mt-0.5 truncate text-[11px] leading-4 text-[#8a8178]">
-                    {stepSummaries[index]}
+                    {step.description}
                   </p>
                 </div>
               </motion.div>

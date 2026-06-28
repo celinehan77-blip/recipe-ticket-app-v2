@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
-import { chickenStationRecipes } from "@/lib/mockData";
-import type { StationRecipe } from "@/types";
+import { chickenStationRecipes, stations } from "@/lib/mockData";
+import type { Recipe } from "@/types";
 
 const ingredientLabels = [
   { name: "干辣椒", note: "香辣提味", left: "13%", top: "31%" },
@@ -170,7 +170,7 @@ function RecipeCard({
   recipe,
   isActive,
 }: {
-  recipe: StationRecipe;
+  recipe: Recipe;
   isActive: boolean;
 }) {
   return (
@@ -182,15 +182,15 @@ function RecipeCard({
       <div className="relative z-10">
         <div className="flex items-start justify-between">
           <span className="text-[12px] uppercase tracking-[0.22em] text-[#aa8060]">
-            {recipe.englishTitle}
+            {recipe.titleEn}
           </span>
           <Bookmark className="fill-[#b47b42]/18 text-[#a86f38]" size={22} />
         </div>
         <h2 className="font-display mt-6 text-[39px] leading-none tracking-[0.12em] text-[#3a2a1d]">
-          {recipe.title}
+          {recipe.titleZh}
         </h2>
         <p className="mt-3 text-[15px] leading-6 text-[#8a6f58]">
-          {recipe.subtitle}
+          {recipe.tags.join(" · ")}
         </p>
         <div className="mx-auto mt-4 h-1 w-11 rounded-full bg-[#c4a07e]" />
 
@@ -199,7 +199,7 @@ function RecipeCard({
         <div className="mt-6 grid grid-cols-3 divide-x divide-[#d8c9b8] text-[#4a3a2f]">
           <div className="flex items-center justify-center gap-2">
             <Clock3 size={19} />
-            <span>{recipe.minutes}</span>
+            <span>{recipe.timeMinutes} 分钟</span>
           </div>
           <div className="flex items-center justify-center gap-2">
             <BarChart3 size={19} />
@@ -217,6 +217,11 @@ function RecipeCard({
 
 export function ChickenStationScreen() {
   const [activeIndex, setActiveIndex] = useState(1);
+  const station =
+    stations.find((item) => item.slug === "chicken") ?? stations[0];
+  const stationTitle = `${station.slug.charAt(0).toUpperCase()}${station.slug.slice(
+    1,
+  )} Station`;
   const recipeCount = chickenStationRecipes.length;
   const activeRecipe =
     chickenStationRecipes[activeIndex] ?? chickenStationRecipes[1];
@@ -236,10 +241,10 @@ export function ChickenStationScreen() {
           </Link>
           <div className="text-left">
             <h1 className="font-display text-[34px] leading-none text-[#3a2a1d]">
-              Chicken Station
+              {stationTitle}
             </h1>
             <p className="mt-3 text-[18px] font-medium text-[#9a7655]">
-              128 Recipes
+              {station.recipeCount} Recipes
             </p>
           </div>
           <div className="flex gap-2">
@@ -307,7 +312,7 @@ export function ChickenStationScreen() {
                 {Math.abs(offset) === 1 ? (
                   <button
                     type="button"
-                    aria-label={`切换到${recipe.title}`}
+                    aria-label={`切换到${recipe.titleZh}`}
                     onMouseDown={() => setActiveIndex(index)}
                     onPointerDown={() => setActiveIndex(index)}
                     onClick={() => setActiveIndex(index)}
@@ -327,7 +332,7 @@ export function ChickenStationScreen() {
             <motion.button
               key={`dot-${recipe.id}`}
               type="button"
-              aria-label={`查看${recipe.title}`}
+              aria-label={`查看${recipe.titleZh}`}
               onClick={() => setActiveIndex(index)}
               animate={{
                 scale: index === activeIndex ? 1 : 0.94,
@@ -354,7 +359,7 @@ export function ChickenStationScreen() {
             <div>
               <p className="text-[12px] text-[#8a8178]">烹饪时间</p>
               <p className="mt-2 text-[21px] font-semibold text-[#6f7d55]">
-                {activeRecipe.minutes}
+                {activeRecipe.timeMinutes} 分钟
               </p>
             </div>
           </div>
@@ -372,7 +377,7 @@ export function ChickenStationScreen() {
             <div>
               <p className="text-[12px] text-[#8a8178]">主要食材</p>
               <p className="mt-2 text-[15px] font-semibold leading-6 text-[#4a3a2f]">
-                {activeRecipe.ingredients.join(" · ")}
+                {activeRecipe.mainIngredient}
               </p>
             </div>
           </div>
