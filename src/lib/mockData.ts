@@ -1,7 +1,6 @@
 import {
   Beef,
   Bird,
-  CalendarDays,
   ChefHat,
   CookingPot,
   Fish,
@@ -18,8 +17,7 @@ export const tabItems: TabItem[] = [
   { id: "home", label: "首页", route: "/", icon: Home },
   { id: "favorites", label: "收藏", route: "/favorites", icon: Star },
   { id: "flavor-map", label: "风味地图", route: "/flavor-map", icon: Map },
-  { id: "plan", label: "计划", route: "/flavor-map", icon: CalendarDays },
-  { id: "profile", label: "我的", route: "/flavor-map", icon: UserRound },
+  { id: "profile", label: "我的", route: "/me", icon: UserRound },
 ];
 
 export const stations: Station[] = [

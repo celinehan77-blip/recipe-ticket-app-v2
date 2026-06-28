@@ -9,7 +9,7 @@ type TabBarProps = {
 export function TabBar({ current }: TabBarProps) {
   return (
     <nav className="safe-bottom pointer-events-none absolute inset-x-0 bottom-0 z-30 mx-auto flex w-full justify-center px-5">
-      <div className="glass-panel pointer-events-auto grid h-[78px] w-full grid-cols-5 items-center rounded-[32px] px-2">
+      <div className="glass-panel pointer-events-auto grid h-[78px] w-full grid-cols-4 items-center rounded-[32px] px-2">
         {tabItems.map((item) => {
           const Icon = item.icon;
           const active = item.id === current;

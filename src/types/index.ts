@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type TabKey = "home" | "favorites" | "flavor-map" | "plan" | "profile";
+export type TabKey = "home" | "favorites" | "flavor-map" | "profile";
 
 export type StationCategoryType = "poultry" | "pasture" | "seafood";
 
