@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronRight, Compass, Flame, Star } from "lucide-react";
+import { ChevronRight, Compass, Flame, Search, Star } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
@@ -51,8 +51,16 @@ export function FavoritesScreen() {
           </p>
         </motion.header>
 
+        <Link
+          href="/search"
+          className="mt-5 flex h-12 items-center gap-3 rounded-[20px] border border-[#ded3c7]/70 bg-white/38 px-4 text-[14px] font-semibold text-[#8a6f58] shadow-[0_10px_24px_rgba(74,48,27,0.06)]"
+        >
+          <Search size={17} />
+          搜索已收藏的菜谱
+        </Link>
+
         {favoriteRecipes.length > 0 ? (
-          <section className="mt-6 space-y-3">
+          <section className="mt-5 space-y-3">
             {favoriteRecipes.map((recipe, index) => (
               <motion.article
                 key={recipe.slug}

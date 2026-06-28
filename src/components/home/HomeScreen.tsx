@@ -8,14 +8,13 @@ import {
   ArrowRight,
   Link2,
   ScanLine,
-  Settings2,
+  Search,
   ShieldCheck,
 } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
 import { LeafMark } from "@/components/ui/LeafMark";
-import { recentRecipes } from "@/lib/mockData";
 import { saveMockGenerationTask } from "@/lib/mockGenerationTask";
 
 export function HomeScreen() {
@@ -42,21 +41,12 @@ export function HomeScreen() {
     <IphoneFrame>
       <IosStatusBar />
 
-      <div className="app-content tab-page-content flex flex-col px-7">
-        <div className="flex justify-end">
-          <button
-            aria-label="更多设置"
-            className="grid h-10 w-10 place-items-center rounded-full bg-white/45 text-[#8a5a35] shadow-[0_14px_34px_rgba(74,48,27,0.08)]"
-          >
-            <Settings2 size={18} />
-          </button>
-        </div>
-
+      <div className="app-content tab-page-content flex flex-col justify-center px-7 pb-8">
         <motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-          className="pt-20 text-center"
+          className="text-center"
         >
           <LeafMark />
           <h1 className="font-display mt-7 text-[38px] leading-[1.22] tracking-[0.06em] text-[#5a3a20]">
@@ -116,6 +106,14 @@ export function HomeScreen() {
           </button>
         </motion.form>
 
+        <Link
+          href="/search"
+          className="mx-auto mt-4 flex h-10 items-center justify-center gap-2 rounded-full border border-[#ded3c7]/70 bg-white/34 px-4 text-[13px] font-semibold text-[#8a6f58] shadow-[0_10px_24px_rgba(74,48,27,0.06)]"
+        >
+          <Search size={15} />
+          找一道想做的菜
+        </Link>
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -129,33 +127,6 @@ export function HomeScreen() {
           <span>·</span>
           <span>无广告</span>
         </motion.div>
-
-        <section className="mt-auto pt-10">
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="font-display text-[21px] tracking-[0.08em] text-[#5a3a20]">
-              最近生成
-            </h2>
-            <Link
-              href="/flavor-map"
-              className="text-[13px] font-medium text-[#9a7b58]"
-            >
-              查看风味地图
-            </Link>
-          </div>
-          <div className="grid gap-2">
-            {recentRecipes.map((recipe) => (
-              <div
-                key={recipe.title}
-                className="flex items-center justify-between rounded-2xl border border-white/60 bg-white/38 px-4 py-3 text-sm text-[#78685c]"
-              >
-                <span className="font-display text-[17px] text-[#4d3521]">
-                  {recipe.title}
-                </span>
-                <span>{recipe.subtitle}</span>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
 
       <TabBar current="home" />

@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Bookmark,
   ChevronRight,
   Heart,
-  Map,
   NotebookTabs,
   Sparkles,
 } from "lucide-react";
@@ -165,23 +163,6 @@ export function MeScreen() {
               </motion.article>
             );
           })}
-
-          <div className="grid grid-cols-2 gap-2.5 pt-1">
-            <Link
-              href="/favorites"
-              className="flex h-12 items-center justify-center gap-1.5 rounded-[18px] bg-[#8b9a7a] text-[13px] font-semibold text-[#fffaf2] shadow-[0_12px_24px_rgba(91,105,64,0.18)]"
-            >
-              <Bookmark size={16} />
-              查看收藏
-            </Link>
-            <Link
-              href="/flavor-map"
-              className="flex h-12 items-center justify-center gap-1.5 rounded-[18px] bg-[#fffaf2]/62 text-[13px] font-semibold text-[#6a5748] shadow-[0_10px_22px_rgba(78,52,29,0.08)]"
-            >
-              <Map size={16} />
-              去风味地图
-            </Link>
-          </div>
         </motion.div>
       </div>
 
