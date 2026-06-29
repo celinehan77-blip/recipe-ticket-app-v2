@@ -15,7 +15,7 @@ export function FavoritesScreen() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setFavoriteRecipes(getFavoriteRecipes());
+      void getFavoriteRecipes().then(setFavoriteRecipes);
     }, 0);
 
     return () => window.clearTimeout(timer);

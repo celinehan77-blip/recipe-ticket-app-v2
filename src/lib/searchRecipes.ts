@@ -1,12 +1,14 @@
-import { getAllRecipes, getStationById } from "@/lib/data";
-import type { Recipe } from "@/types";
+import type { SerializableRecipe, SerializableStation } from "@/types";
 
 function normalizeSearchText(value: string) {
   return value.trim().toLowerCase();
 }
 
-function getStationSearchText(recipe: Recipe) {
-  const station = getStationById(recipe.stationId);
+function getStationSearchText(
+  recipe: SerializableRecipe,
+  stations: SerializableStation[],
+) {
+  const station = stations.find((item) => item.id === recipe.stationId);
 
   if (!station) {
     return "";
@@ -15,14 +17,18 @@ function getStationSearchText(recipe: Recipe) {
   return [station.nameZh, station.nameEn].join(" ");
 }
 
-export function searchRecipes(query: string) {
+export function searchRecipes(
+  query: string,
+  recipes: SerializableRecipe[],
+  stations: SerializableStation[],
+) {
   const normalizedQuery = normalizeSearchText(query);
 
   if (!normalizedQuery) {
     return [];
   }
 
-  return getAllRecipes().filter((recipe) => {
+  return recipes.filter((recipe) => {
     const searchText = [
       recipe.titleZh,
       recipe.titleEn,
@@ -31,7 +37,7 @@ export function searchRecipes(query: string) {
       recipe.description,
       `${recipe.timeMinutes} 分钟`,
       recipe.tags.join(" "),
-      getStationSearchText(recipe),
+      getStationSearchText(recipe, stations),
     ]
       .join(" ")
       .toLowerCase();

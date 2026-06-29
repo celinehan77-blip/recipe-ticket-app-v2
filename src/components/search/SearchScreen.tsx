@@ -8,14 +8,23 @@ import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
 import { searchRecipes } from "@/lib/searchRecipes";
+import type { SerializableRecipe, SerializableStation } from "@/types";
 
 const suggestedKeywords = ["鸡肉", "川味", "简单"];
 
-export function SearchScreen() {
+type SearchScreenProps = {
+  recipes: SerializableRecipe[];
+  stations: SerializableStation[];
+};
+
+export function SearchScreen({ recipes, stations }: SearchScreenProps) {
   const [query, setQuery] = useState("");
   const trimmedQuery = query.trim();
 
-  const results = useMemo(() => searchRecipes(query), [query]);
+  const results = useMemo(
+    () => searchRecipes(query, recipes, stations),
+    [query, recipes, stations],
+  );
 
   return (
     <IphoneFrame>

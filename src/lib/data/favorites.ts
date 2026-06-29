@@ -10,10 +10,12 @@ export function getFavoriteSlugs(): string[] {
   return getFavoriteRecipeSlugs();
 }
 
-export function getFavoriteRecipes(): Recipe[] {
-  return getFavoriteSlugs()
-    .map((slug) => getRecipeBySlug(slug))
-    .filter((recipe): recipe is Recipe => Boolean(recipe));
+export async function getFavoriteRecipes(): Promise<Recipe[]> {
+  const favoriteRecipes = await Promise.all(
+    getFavoriteSlugs().map((slug) => getRecipeBySlug(slug)),
+  );
+
+  return favoriteRecipes.filter((recipe): recipe is Recipe => Boolean(recipe));
 }
 
 export function isRecipeFavorite(slug: string): boolean {

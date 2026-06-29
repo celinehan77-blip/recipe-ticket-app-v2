@@ -1,10 +1,14 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
+import type {
+  SupabaseIngredientRow,
+  SupabaseRecipeRow,
+  SupabaseRecipeStepRow,
+} from "@/lib/data/supabase/mappers";
 
-export type SupabaseRecipeRow = Record<string, unknown>;
 export type SupabaseRecipeDetail = {
   recipe: SupabaseRecipeRow;
-  ingredients: Record<string, unknown>[];
-  steps: Record<string, unknown>[];
+  ingredients: SupabaseIngredientRow[];
+  steps: SupabaseRecipeStepRow[];
 };
 
 export async function getAllRecipesFromSupabase(): Promise<
@@ -18,7 +22,7 @@ export async function getAllRecipesFromSupabase(): Promise<
 
   const { data, error } = await supabase
     .from("recipes")
-    .select("*")
+    .select("*, stations(slug)")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -39,7 +43,7 @@ export async function getRecipeBySlugFromSupabase(
 
   const { data, error } = await supabase
     .from("recipes")
-    .select("*")
+    .select("*, stations(slug)")
     .eq("slug", slug)
     .maybeSingle();
 

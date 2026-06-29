@@ -19,16 +19,15 @@ import {
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
-  getAllRecipes,
-  getRecipeDetailBySlug,
   isRecipeFavorite,
   toggleRecipeFavorite,
 } from "@/lib/data";
-import type { Ingredient, IngredientGroup, Recipe } from "@/types";
+import type { Ingredient, IngredientGroup, SerializableRecipe } from "@/types";
 
 type RecipeDetailScreenProps = {
+  allRecipes: SerializableRecipe[];
   backHref: string;
-  recipeSlug: string;
+  recipe: SerializableRecipe | null;
 };
 
 const statIcons = [Clock3, BarChart3, Flame, ChefHat, Heart];
@@ -61,8 +60,8 @@ const bottomActions = [
   { label: "记笔记", icon: NotebookPen },
 ];
 
-function getRecipeNo(recipe: Recipe) {
-  const index = getAllRecipes().findIndex((item) => item.slug === recipe.slug);
+function getRecipeNo(recipe: SerializableRecipe, recipes: SerializableRecipe[]) {
+  const index = recipes.findIndex((item) => item.slug === recipe.slug);
   return String(index + 1 || 1).padStart(2, "0");
 }
 
@@ -204,10 +203,10 @@ function StepThumb({ index }: { index: number }) {
 }
 
 export function RecipeDetailScreen({
+  allRecipes,
   backHref,
-  recipeSlug,
+  recipe,
 }: RecipeDetailScreenProps) {
-  const recipe = getRecipeDetailBySlug(recipeSlug);
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
@@ -262,7 +261,7 @@ export function RecipeDetailScreen({
     );
   }
 
-  const recipeNo = getRecipeNo(recipe);
+  const recipeNo = getRecipeNo(recipe, allRecipes);
   const recipeStats = [
     { label: "烹饪时间", value: String(recipe.timeMinutes), suffix: "分钟" },
     { label: "难度等级", value: recipe.difficulty },

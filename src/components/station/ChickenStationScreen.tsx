@@ -14,11 +14,7 @@ import {
 } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
-import {
-  getRecipesByStationSlug,
-  getStationBySlug,
-} from "@/lib/data";
-import type { Recipe, Station } from "@/types";
+import type { SerializableRecipe, SerializableStation } from "@/types";
 
 const ingredientLabelPositions = [
   { left: "13%", top: "31%" },
@@ -93,7 +89,7 @@ function StationFoodMap({
   recipe,
 }: {
   compact?: boolean;
-  recipe: Recipe;
+  recipe: SerializableRecipe;
 }) {
   const sizeClass = compact ? "h-[190px]" : "h-[252px]";
   const ingredientLabels = [...recipe.ingredients, ...recipe.seasonings].slice(
@@ -183,7 +179,7 @@ function RecipeCard({
   recipe,
   isActive,
 }: {
-  recipe: Recipe;
+  recipe: SerializableRecipe;
   isActive: boolean;
 }) {
   return (
@@ -229,10 +225,11 @@ function RecipeCard({
 }
 
 type ChickenStationScreenProps = {
-  stationSlug: string;
+  station: SerializableStation | null;
+  recipes: SerializableRecipe[];
 };
 
-function getStationTitle(station: Station) {
+function getStationTitle(station: SerializableStation) {
   return station.nameEn;
 }
 
@@ -243,10 +240,9 @@ function normalizeActiveIndex(index: number, total: number) {
 }
 
 export function ChickenStationScreen({
-  stationSlug,
+  recipes,
+  station,
 }: ChickenStationScreenProps) {
-  const station = getStationBySlug(stationSlug);
-  const recipes = getRecipesByStationSlug(stationSlug);
   const [activeIndex, setActiveIndex] = useState(0);
   const safeActiveIndex = normalizeActiveIndex(activeIndex, recipes.length);
   const setSafeActiveIndex = (nextIndex: number) => {

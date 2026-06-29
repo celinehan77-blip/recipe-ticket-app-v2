@@ -1,6 +1,5 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
-
-export type SupabaseStationRow = Record<string, unknown>;
+import type { SupabaseStationRow } from "@/lib/data/supabase/mappers";
 
 export async function getAllStationsFromSupabase(): Promise<
   SupabaseStationRow[]

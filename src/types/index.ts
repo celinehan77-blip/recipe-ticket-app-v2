@@ -42,6 +42,8 @@ export type RecipeStep = {
   tips: string;
 };
 
+export type SerializableRecipeStep = Omit<RecipeStep, "icon">;
+
 export type Recipe = {
   id: string;
   slug: string;
@@ -59,6 +61,12 @@ export type Recipe = {
   seasonings: Ingredient[];
   steps: RecipeStep[];
   savedCount: number;
+};
+
+export type SerializableStation = Omit<Station, "icon">;
+
+export type SerializableRecipe = Omit<Recipe, "steps"> & {
+  steps: SerializableRecipeStep[];
 };
 
 export type TabItem = {

@@ -6,11 +6,13 @@ import { StationTicket } from "@/components/flavor-map/StationTicket";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
-import { getAllStations } from "@/lib/data";
+import type { SerializableStation } from "@/types";
 
-export function FlavorMapScreen() {
-  const stations = getAllStations();
+type FlavorMapScreenProps = {
+  stations: SerializableStation[];
+};
 
+export function FlavorMapScreen({ stations }: FlavorMapScreenProps) {
   return (
     <IphoneFrame>
       <IosStatusBar />

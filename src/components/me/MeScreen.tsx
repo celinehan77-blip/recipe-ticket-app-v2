@@ -21,17 +21,21 @@ import {
 type LocalProfileState = {
   favoriteSlugs: string[];
   generatedRecipeSlug: string | null;
+  recentFavoriteTitle: string;
+  recentGeneratedTitle: string;
 };
 
 const defaultLocalProfileState: LocalProfileState = {
   favoriteSlugs: [],
   generatedRecipeSlug: null,
+  recentFavoriteTitle: "暂无",
+  recentGeneratedTitle: "暂无",
 };
 
-function getRecipeTitle(slug: string | null) {
+async function getRecipeTitle(slug: string | null) {
   if (!slug) return "暂无";
 
-  return getRecipeBySlug(slug)?.titleZh ?? "暂无";
+  return (await getRecipeBySlug(slug))?.titleZh ?? "暂无";
 }
 
 export function MeScreen() {
@@ -41,12 +45,20 @@ export function MeScreen() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      void (async () => {
       const task = getLatestGenerationTask();
+      const favoriteSlugs = getFavoriteSlugs();
+      const generatedRecipeSlug = task?.generatedRecipeSlug ?? null;
+      const favoriteRecipeSlug =
+        favoriteSlugs[favoriteSlugs.length - 1] ?? null;
 
       setLocalProfile({
-        favoriteSlugs: getFavoriteSlugs(),
-        generatedRecipeSlug: task?.generatedRecipeSlug ?? null,
+        favoriteSlugs,
+        generatedRecipeSlug,
+        recentFavoriteTitle: await getRecipeTitle(favoriteRecipeSlug),
+        recentGeneratedTitle: await getRecipeTitle(generatedRecipeSlug),
       });
+      })();
     }, 0);
 
     return () => window.clearTimeout(timer);
@@ -54,10 +66,8 @@ export function MeScreen() {
 
   const favoriteCount = localProfile.favoriteSlugs.length;
   const generatedCount = localProfile.generatedRecipeSlug ? 1 : 0;
-  const recentGeneratedTitle = getRecipeTitle(localProfile.generatedRecipeSlug);
-  const recentFavoriteTitle = getRecipeTitle(
-    localProfile.favoriteSlugs[localProfile.favoriteSlugs.length - 1] ?? null,
-  );
+  const recentGeneratedTitle = localProfile.recentGeneratedTitle;
+  const recentFavoriteTitle = localProfile.recentFavoriteTitle;
 
   const profileSections = useMemo(
     () => [

@@ -1,5 +1,7 @@
 import { RecipeDetailScreen } from "@/components/recipe/RecipeDetailScreen";
-import { getAllRecipes } from "@/lib/data";
+import { getAllRecipes, getRecipeDetailBySlug } from "@/lib/data";
+import { serializeRecipe, serializeRecipes } from "@/lib/data/serializers";
+import { recipes as mockRecipes } from "@/lib/mockData";
 
 type RecipePageProps = {
   params: Promise<{
@@ -11,7 +13,7 @@ type RecipePageProps = {
 };
 
 export function generateStaticParams() {
-  return getAllRecipes().map((recipe) => ({
+  return mockRecipes.map((recipe) => ({
     slug: recipe.slug,
   }));
 }
@@ -23,6 +25,16 @@ export default async function RecipePage({
   const { slug } = await params;
   const search = searchParams ? await searchParams : {};
   const backHref = search.from === "loading" ? "/" : "/flavor-map";
+  const [recipe, recipes] = await Promise.all([
+    getRecipeDetailBySlug(slug),
+    getAllRecipes(),
+  ]);
 
-  return <RecipeDetailScreen backHref={backHref} recipeSlug={slug} />;
+  return (
+    <RecipeDetailScreen
+      allRecipes={serializeRecipes(recipes)}
+      backHref={backHref}
+      recipe={recipe ? serializeRecipe(recipe) : null}
+    />
+  );
 }

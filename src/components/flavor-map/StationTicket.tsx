@@ -1,12 +1,26 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, Clock3, Soup } from "lucide-react";
-import type { Station } from "@/types";
+import {
+  ArrowRight,
+  BarChart3,
+  Beef,
+  Bird,
+  Clock3,
+  Fish,
+  Soup,
+} from "lucide-react";
+import type { SerializableStation, StationCategoryType } from "@/types";
 
 type StationTicketProps = {
-  station: Station;
+  station: SerializableStation;
   stationNo: string;
   isPrimary?: boolean;
 };
+
+const stationIconMap = {
+  poultry: Bird,
+  pasture: Beef,
+  seafood: Fish,
+} satisfies Record<StationCategoryType, typeof Bird>;
 
 const toneMap = {
   sage: {
@@ -44,7 +58,7 @@ export function StationTicket({
   isPrimary = false,
 }: StationTicketProps) {
   const tone = toneMap[station.accentColor];
-  const Icon = station.icon;
+  const Icon = stationIconMap[station.categoryType];
   const englishLines = station.nameEn.toUpperCase().split(" ");
   const content = (
     <article
