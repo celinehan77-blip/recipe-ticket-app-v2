@@ -1,5 +1,5 @@
 import { ChickenStationScreen } from "@/components/station/ChickenStationScreen";
-import { stations } from "@/lib/mockData";
+import { getAllStations } from "@/lib/data";
 
 type StationPageProps = {
   params: Promise<{
@@ -8,7 +8,7 @@ type StationPageProps = {
 };
 
 export function generateStaticParams() {
-  return stations.map((station) => ({
+  return getAllStations().map((station) => ({
     slug: station.slug,
   }));
 }

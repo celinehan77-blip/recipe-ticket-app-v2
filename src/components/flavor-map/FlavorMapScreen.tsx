@@ -6,9 +6,11 @@ import { StationTicket } from "@/components/flavor-map/StationTicket";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
-import { stations } from "@/lib/mockData";
+import { getAllStations } from "@/lib/data";
 
 export function FlavorMapScreen() {
+  const stations = getAllStations();
+
   return (
     <IphoneFrame>
       <IosStatusBar />

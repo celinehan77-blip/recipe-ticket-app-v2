@@ -1,5 +1,5 @@
 import { RecipeDetailScreen } from "@/components/recipe/RecipeDetailScreen";
-import { recipes } from "@/lib/mockData";
+import { getAllRecipes } from "@/lib/data";
 
 type RecipePageProps = {
   params: Promise<{
@@ -11,7 +11,7 @@ type RecipePageProps = {
 };
 
 export function generateStaticParams() {
-  return recipes.map((recipe) => ({
+  return getAllRecipes().map((recipe) => ({
     slug: recipe.slug,
   }));
 }

@@ -19,10 +19,11 @@ import {
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
-  isFavoriteRecipe,
-  toggleFavoriteRecipe,
-} from "@/lib/localFavorites";
-import { getRecipeDetailBySlug, recipes } from "@/lib/mockData";
+  getAllRecipes,
+  getRecipeDetailBySlug,
+  isRecipeFavorite,
+  toggleRecipeFavorite,
+} from "@/lib/data";
 import type { Ingredient, IngredientGroup, Recipe } from "@/types";
 
 type RecipeDetailScreenProps = {
@@ -61,7 +62,7 @@ const bottomActions = [
 ];
 
 function getRecipeNo(recipe: Recipe) {
-  const index = recipes.findIndex((item) => item.slug === recipe.slug);
+  const index = getAllRecipes().findIndex((item) => item.slug === recipe.slug);
   return String(index + 1 || 1).padStart(2, "0");
 }
 
@@ -212,7 +213,7 @@ export function RecipeDetailScreen({
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (recipe) {
-        setIsFavorite(isFavoriteRecipe(recipe.slug));
+        setIsFavorite(isRecipeFavorite(recipe.slug));
       }
     }, 0);
 
@@ -224,7 +225,7 @@ export function RecipeDetailScreen({
       return;
     }
 
-    const nextFavoriteState = toggleFavoriteRecipe(recipe.slug);
+    const nextFavoriteState = toggleRecipeFavorite(recipe.slug);
     setIsFavorite(nextFavoriteState.favorite);
   };
 

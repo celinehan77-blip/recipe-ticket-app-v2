@@ -1,33 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight, Compass, Flame, Search, Star } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
-import { getFavoriteRecipeSlugs } from "@/lib/localFavorites";
-import { recipes } from "@/lib/mockData";
+import { getFavoriteRecipes } from "@/lib/data";
+import type { Recipe } from "@/types";
 
 export function FavoritesScreen() {
-  const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>([]);
+  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setFavoriteSlugs(getFavoriteRecipeSlugs());
+      setFavoriteRecipes(getFavoriteRecipes());
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, []);
-
-  const favoriteRecipes = useMemo(
-    () =>
-      favoriteSlugs
-        .map((slug) => recipes.find((recipe) => recipe.slug === slug))
-        .filter((recipe): recipe is (typeof recipes)[number] => Boolean(recipe)),
-    [favoriteSlugs],
-  );
 
   return (
     <IphoneFrame>

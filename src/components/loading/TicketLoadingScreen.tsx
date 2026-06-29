@@ -6,11 +6,11 @@ import { motion } from "framer-motion";
 import { Check, CookingPot, Leaf, Plus, Star } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
-import { loadingSteps } from "@/lib/mockData";
 import {
   completeMockGenerationTask,
-  readMockGenerationTask,
-} from "@/lib/mockGenerationTask";
+  getLatestGenerationTask,
+} from "@/lib/data";
+import { loadingSteps } from "@/lib/mockData";
 
 const ticketMotion = {
   y: [0, -4, 0],
@@ -20,7 +20,7 @@ export function TicketLoadingScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    readMockGenerationTask();
+    getLatestGenerationTask();
 
     const timer = window.setTimeout(() => {
       completeMockGenerationTask();

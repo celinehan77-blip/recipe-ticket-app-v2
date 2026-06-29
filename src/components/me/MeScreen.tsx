@@ -12,9 +12,11 @@ import {
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
-import { getFavoriteRecipeSlugs } from "@/lib/localFavorites";
-import { readMockGenerationTask } from "@/lib/mockGenerationTask";
-import { recipes } from "@/lib/mockData";
+import {
+  getFavoriteSlugs,
+  getLatestGenerationTask,
+  getRecipeBySlug,
+} from "@/lib/data";
 
 type LocalProfileState = {
   favoriteSlugs: string[];
@@ -29,7 +31,7 @@ const defaultLocalProfileState: LocalProfileState = {
 function getRecipeTitle(slug: string | null) {
   if (!slug) return "暂无";
 
-  return recipes.find((recipe) => recipe.slug === slug)?.titleZh ?? "暂无";
+  return getRecipeBySlug(slug)?.titleZh ?? "暂无";
 }
 
 export function MeScreen() {
@@ -39,10 +41,10 @@ export function MeScreen() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const task = readMockGenerationTask();
+      const task = getLatestGenerationTask();
 
       setLocalProfile({
-        favoriteSlugs: getFavoriteRecipeSlugs(),
+        favoriteSlugs: getFavoriteSlugs(),
         generatedRecipeSlug: task?.generatedRecipeSlug ?? null,
       });
     }, 0);

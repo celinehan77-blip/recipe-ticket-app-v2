@@ -1,4 +1,4 @@
-import { recipes, stations } from "@/lib/mockData";
+import { getAllRecipes, getStationById } from "@/lib/data";
 import type { Recipe } from "@/types";
 
 function normalizeSearchText(value: string) {
@@ -6,7 +6,7 @@ function normalizeSearchText(value: string) {
 }
 
 function getStationSearchText(recipe: Recipe) {
-  const station = stations.find((item) => item.id === recipe.stationId);
+  const station = getStationById(recipe.stationId);
 
   if (!station) {
     return "";
@@ -22,7 +22,7 @@ export function searchRecipes(query: string) {
     return [];
   }
 
-  return recipes.filter((recipe) => {
+  return getAllRecipes().filter((recipe) => {
     const searchText = [
       recipe.titleZh,
       recipe.titleEn,

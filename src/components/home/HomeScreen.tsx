@@ -15,7 +15,7 @@ import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
 import { LeafMark } from "@/components/ui/LeafMark";
-import { saveMockGenerationTask } from "@/lib/mockGenerationTask";
+import { createMockGenerationTask } from "@/lib/data";
 
 export function HomeScreen() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export function HomeScreen() {
     }
 
     setErrorMessage("");
-    saveMockGenerationTask(trimmedSourceUrl);
+    createMockGenerationTask(trimmedSourceUrl);
     router.push("/loading");
   };
 

@@ -17,7 +17,7 @@ import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
   getRecipesByStationSlug,
   getStationBySlug,
-} from "@/lib/mockData";
+} from "@/lib/data";
 import type { Recipe, Station } from "@/types";
 
 const ingredientLabelPositions = [

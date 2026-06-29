@@ -1,85 +1,69 @@
 # Supabase SQL Setup
 
-本目录用于后续接入 Supabase 前的数据库准备。
+这个目录只用于准备 Supabase 数据库结构和初始数据。
 
-当前只提供 SQL 文件，不会自动连接数据库，也不会改变现有前端逻辑。
+当前阶段前端页面仍然读取 `mockData + localStorage`，还不会读取 Supabase。
 
-## 文件用途
+## 文件说明
 
-- `schema.sql`：创建数据库表、索引和基础 RLS 权限策略。
-- `seed.sql`：插入当前 MVP 的初始 mock 数据。
-- `README.md`：说明如何在 Supabase 后台执行 SQL。
+- `schema.sql`：创建表、索引和 RLS 权限策略。
+- `seed.sql`：插入当前 MVP 的初始菜谱数据。
 
-## 执行位置
+## 执行步骤
 
-在 Supabase Dashboard 中执行：
+1. 去 Supabase 创建一个新项目。
+2. 打开 Supabase Dashboard。
+3. 进入左侧菜单的 SQL Editor。
+4. 新建一个 Query。
+5. 复制 `schema.sql` 的全部内容，粘贴进去并执行。
+6. 等 `schema.sql` 执行成功。
+7. 再新建一个 Query。
+8. 复制 `seed.sql` 的全部内容，粘贴进去并执行。
+9. 等 `seed.sql` 执行成功。
 
-1. 打开 Supabase 项目。
-2. 进入左侧菜单的 SQL Editor。
-3. 新建 Query。
-4. 粘贴 SQL 文件内容并运行。
+## 执行后检查
 
-## 执行顺序
+打开 Supabase 的 Table Editor，确认能看到这些表：
 
-请按顺序执行：
+- `stations`
+- `recipes`
+- `ingredients`
+- `recipe_steps`
 
-1. 先执行 `schema.sql`
-2. 再执行 `seed.sql`
+并确认：
 
-原因：
-- `schema.sql` 会先创建表结构。
-- `seed.sql` 依赖这些表，负责插入初始数据。
+- `stations` 里有 `chicken`、`pasture`、`seafood`。
+- `recipes` 里至少有 9 道 MVP 测试菜谱。
+- `ingredients` 里有每道菜的食材。
+- `recipe_steps` 里有每道菜的步骤。
 
-## 当前状态
+## 配置本地环境变量
 
-当前还没有接入前端。
-
-也就是说：
-- 前端仍然使用 `src/lib/mockData.ts`。
-- 收藏功能仍然使用 `localStorage`。
-- 生成任务仍然使用本地模拟逻辑。
-- 没有创建 Supabase client。
-- 没有真实 API。
-- 没有连接真实数据库。
-- 没有接 AI API。
-
-## 后续才会做的事
-
-后续阶段才会逐步：
-
-1. 创建 Supabase 项目。
-2. 执行 `schema.sql` 和 `seed.sql`。
-3. 配置前端环境变量。
-4. 创建 Supabase client。
-5. 将 `mockData` 替换为 Supabase 数据。
-6. 将收藏从 `localStorage` 切换到 `favorites` 表。
-7. 将生成任务从 `localStorage` 切换到 `generation_tasks` 表。
-8. 接入 AI 解析接口。
-
-## 后续需要的环境变量
-
-未来接入前端时需要配置：
+1. 在 Supabase 项目设置中复制 Project URL。
+2. 复制 anon public key。
+3. 在项目根目录创建 `.env.local`。
+4. 填入：
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_URL=你的 Supabase Project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=你的 Supabase anon public key
 ```
 
-注意：
-- 本轮不创建 `.env` 文件。
-- 不要把真实密钥提交到 Git。
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` 是前端可用的匿名 key，但仍需要配合 RLS 策略保护数据。
+5. 重启本地开发服务器：
 
-## 关于 RLS
+```bash
+npm run dev
+```
 
-RLS 是 Supabase 的行级权限控制，用来限制用户只能访问自己有权限的数据。
+## 当前阶段说明
 
-当前 `schema.sql` 已经为这些表开启基础 RLS：
+- 当前阶段页面仍然不会读取 Supabase。
+- 当前前端仍然使用 `mockData + localStorage`。
+- 下一阶段才会开始把 `stations / recipes` 切换到 Supabase 只读数据。
 
-- `profiles`
-- `recipes`
-- `favorites`
-- `generation_tasks`
+## 注意事项
 
-当前 `stations`、`ingredients`、`recipe_steps` 暂时保持公开读取思路，方便展示公开 mock 菜谱。后续如果要支持私有菜谱或草稿菜谱，再收紧这些表的权限。
-
+- 不要提交 `.env.local`。
+- 不要把真实 key 写进代码。
+- 不要把真实 key 写进 `.env.example`。
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` 可以暴露给前端，但必须配合 RLS 策略保护数据。

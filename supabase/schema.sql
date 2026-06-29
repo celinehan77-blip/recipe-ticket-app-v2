@@ -2,7 +2,7 @@
 -- Run this file in Supabase SQL Editor before running seed.sql.
 -- This file only prepares database structure; it does not connect the frontend.
 
-create extension if not exists pgcrypto;
+create extension if not exists "pgcrypto";
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -127,11 +127,14 @@ create index if not exists generation_tasks_created_at_idx on public.generation_
 
 -- RLS policies
 -- RLS = row level security. These policies are intentionally simple for MVP.
--- Stations, ingredients, and recipe_steps keep RLS disabled for now so public
--- recipe browsing can remain straightforward while the app still uses mock data.
+-- Public browsing tables allow read access. User-owned tables stay scoped to
+-- auth.uid(). Later private recipes can tighten these policies further.
 
 alter table public.profiles enable row level security;
+alter table public.stations enable row level security;
 alter table public.recipes enable row level security;
+alter table public.ingredients enable row level security;
+alter table public.recipe_steps enable row level security;
 alter table public.favorites enable row level security;
 alter table public.generation_tasks enable row level security;
 
@@ -147,6 +150,19 @@ on public.profiles
 for update
 using (auth.uid() = id)
 with check (auth.uid() = id);
+
+drop policy if exists "Profiles are insertable by owner" on public.profiles;
+create policy "Profiles are insertable by owner"
+on public.profiles
+for insert
+to authenticated
+with check (auth.uid() = id);
+
+drop policy if exists "Stations are publicly readable" on public.stations;
+create policy "Stations are publicly readable"
+on public.stations
+for select
+using (true);
 
 drop policy if exists "Recipes are publicly readable" on public.recipes;
 create policy "Recipes are publicly readable"
@@ -175,6 +191,18 @@ on public.recipes
 for delete
 to authenticated
 using (auth.uid() = user_id);
+
+drop policy if exists "Ingredients are publicly readable" on public.ingredients;
+create policy "Ingredients are publicly readable"
+on public.ingredients
+for select
+using (true);
+
+drop policy if exists "Recipe steps are publicly readable" on public.recipe_steps;
+create policy "Recipe steps are publicly readable"
+on public.recipe_steps
+for select
+using (true);
 
 drop policy if exists "Users can read own favorites" on public.favorites;
 create policy "Users can read own favorites"
@@ -218,4 +246,3 @@ for update
 to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
-
