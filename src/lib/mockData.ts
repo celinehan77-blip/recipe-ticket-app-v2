@@ -242,6 +242,106 @@ export const recipes: Recipe[] = [
     savedCount: 412,
   },
   {
+    id: "recipe-black-pepper-beef",
+    slug: "black-pepper-beef",
+    titleZh: "黑椒牛柳",
+    titleEn: "Black Pepper Beef",
+    stationId: "station-pasture",
+    coverType: "illustration",
+    timeMinutes: 28,
+    difficulty: "中等",
+    flavor: "黑椒香",
+    mainIngredient: "牛里脊 · 彩椒 · 洋葱 · 黑胡椒",
+    tags: ["黑椒浓郁", "牛肉嫩滑", "快手热炒"],
+    description: "牛柳滑嫩入味，黑椒香气明亮，彩椒和洋葱带出清甜。",
+    ingredients: [
+      { id: "black-pepper-main-beef", name: "牛里脊", amount: "300g", group: "main", note: "逆纹切条" },
+      { id: "black-pepper-side-pepper", name: "彩椒", amount: "1个", group: "side", note: "切条" },
+      { id: "black-pepper-side-onion", name: "洋葱", amount: "半个", group: "side", note: "增加甜味" },
+    ],
+    seasonings: [
+      { id: "black-pepper-season-pepper", name: "黑胡椒", amount: "1勺", group: "seasoning", note: "现磨更香" },
+      { id: "black-pepper-season-soy", name: "生抽", amount: "1勺", group: "seasoning", note: "调味" },
+    ],
+    steps: [
+      {
+        id: "black-pepper-step-01",
+        title: "腌制牛柳",
+        description: "牛柳加入生抽、黑胡椒和淀粉抓匀。",
+        duration: "8 分钟",
+        icon: ChefHat,
+        tips: "少量油封住牛肉表面，口感更嫩。",
+      },
+      {
+        id: "black-pepper-step-02",
+        title: "快炒配菜",
+        description: "彩椒和洋葱大火快速翻炒至断生。",
+        duration: "3 分钟",
+        icon: Flame,
+        tips: "保持脆感，不要炒太久。",
+      },
+      {
+        id: "black-pepper-step-03",
+        title: "合炒收香",
+        description: "牛柳回锅，加入黑椒汁翻炒均匀。",
+        duration: "4 分钟",
+        icon: CookingPot,
+        tips: "最后再补黑胡椒，香气更明显。",
+      },
+    ],
+    savedCount: 248,
+  },
+  {
+    id: "recipe-tomato-beef-brisket",
+    slug: "tomato-beef-brisket",
+    titleZh: "番茄牛腩",
+    titleEn: "Tomato Beef Brisket",
+    stationId: "station-pasture",
+    coverType: "illustration",
+    timeMinutes: 85,
+    difficulty: "中等",
+    flavor: "酸甜浓郁",
+    mainIngredient: "牛腩 · 番茄 · 土豆 · 洋葱",
+    tags: ["柔和酸香", "汤汁浓厚", "暖胃慢炖"],
+    description: "番茄炖出柔和酸甜，牛腩软烂，汤汁适合拌饭或配面。",
+    ingredients: [
+      { id: "tomato-beef-main-brisket", name: "牛腩", amount: "500g", group: "main", note: "焯水去腥" },
+      { id: "tomato-beef-side-tomato", name: "番茄", amount: "3个", group: "side", note: "炒出沙" },
+      { id: "tomato-beef-side-potato", name: "土豆", amount: "1个", group: "side", note: "增加厚度" },
+    ],
+    seasonings: [
+      { id: "tomato-beef-season-ketchup", name: "番茄膏", amount: "1勺", group: "seasoning", note: "加强酸甜" },
+      { id: "tomato-beef-season-soy", name: "生抽", amount: "2勺", group: "seasoning", note: "调味" },
+    ],
+    steps: [
+      {
+        id: "tomato-beef-step-01",
+        title: "炒香番茄",
+        description: "番茄和洋葱炒出汁水。",
+        duration: "8 分钟",
+        icon: Soup,
+        tips: "番茄炒软后汤底更浓。",
+      },
+      {
+        id: "tomato-beef-step-02",
+        title: "加入牛腩慢炖",
+        description: "放入牛腩和热水，小火炖至软烂。",
+        duration: "65 分钟",
+        icon: CookingPot,
+        tips: "用热水炖，肉质更稳定。",
+      },
+      {
+        id: "tomato-beef-step-03",
+        title: "加入土豆收汁",
+        description: "土豆入锅炖至软糯，收至汤汁浓厚。",
+        duration: "12 分钟",
+        icon: Star,
+        tips: "最后按口味补盐。",
+      },
+    ],
+    savedCount: 356,
+  },
+  {
     id: "recipe-steamed-fish",
     slug: "steamed-fish",
     titleZh: "清蒸鱼",
@@ -274,6 +374,106 @@ export const recipes: Recipe[] = [
       },
     ],
     savedCount: 196,
+  },
+  {
+    id: "recipe-garlic-vermicelli-shrimp",
+    slug: "garlic-vermicelli-shrimp",
+    titleZh: "蒜蓉粉丝虾",
+    titleEn: "Garlic Vermicelli Shrimp",
+    stationId: "station-seafood",
+    coverType: "illustration",
+    timeMinutes: 22,
+    difficulty: "简单",
+    flavor: "蒜香鲜甜",
+    mainIngredient: "鲜虾 · 粉丝 · 蒜蓉 · 葱花",
+    tags: ["蒜香浓郁", "鲜甜多汁", "宴客快手"],
+    description: "鲜虾铺在粉丝上蒸熟，蒜蓉酱汁渗入粉丝，鲜香轻盈。",
+    ingredients: [
+      { id: "garlic-shrimp-main-shrimp", name: "鲜虾", amount: "12只", group: "main", note: "开背去虾线" },
+      { id: "garlic-shrimp-side-vermicelli", name: "粉丝", amount: "1把", group: "side", note: "提前泡软" },
+      { id: "garlic-shrimp-side-garlic", name: "蒜蓉", amount: "4勺", group: "side", note: "炒香一半" },
+    ],
+    seasonings: [
+      { id: "garlic-shrimp-season-soy", name: "蒸鱼豉油", amount: "2勺", group: "seasoning", note: "提鲜" },
+      { id: "garlic-shrimp-season-oil", name: "热油", amount: "1勺", group: "seasoning", note: "激香" },
+    ],
+    steps: [
+      {
+        id: "garlic-shrimp-step-01",
+        title: "处理鲜虾",
+        description: "鲜虾开背去虾线，粉丝泡软铺底。",
+        duration: "8 分钟",
+        icon: ChefHat,
+        tips: "开背后更容易入味。",
+      },
+      {
+        id: "garlic-shrimp-step-02",
+        title: "铺蒜蓉上锅",
+        description: "蒜蓉铺在虾背上，大火蒸熟。",
+        duration: "6 分钟",
+        icon: CookingPot,
+        tips: "虾变红即可，避免过老。",
+      },
+      {
+        id: "garlic-shrimp-step-03",
+        title: "淋热油收香",
+        description: "撒葱花，淋入热油和蒸鱼豉油。",
+        duration: "1 分钟",
+        icon: Flame,
+        tips: "热油能激发蒜香和葱香。",
+      },
+    ],
+    savedCount: 274,
+  },
+  {
+    id: "recipe-pan-fried-ribbonfish",
+    slug: "pan-fried-ribbonfish",
+    titleZh: "香煎带鱼",
+    titleEn: "Pan-fried Ribbonfish",
+    stationId: "station-seafood",
+    coverType: "illustration",
+    timeMinutes: 26,
+    difficulty: "中等",
+    flavor: "咸香酥脆",
+    mainIngredient: "带鱼 · 姜片 · 葱段 · 椒盐",
+    tags: ["外酥里嫩", "咸香下饭", "家常海味"],
+    description: "带鱼煎至两面金黄，外层微酥，鱼肉细嫩，适合家常晚餐。",
+    ingredients: [
+      { id: "ribbonfish-main-fish", name: "带鱼", amount: "400g", group: "main", note: "切段擦干" },
+      { id: "ribbonfish-side-ginger", name: "姜片", amount: "6片", group: "side", note: "去腥" },
+      { id: "ribbonfish-side-scallion", name: "葱段", amount: "适量", group: "side", note: "增香" },
+    ],
+    seasonings: [
+      { id: "ribbonfish-season-salt", name: "盐", amount: "适量", group: "seasoning", note: "腌底味" },
+      { id: "ribbonfish-season-pepper", name: "椒盐", amount: "1勺", group: "seasoning", note: "出锅撒" },
+    ],
+    steps: [
+      {
+        id: "ribbonfish-step-01",
+        title: "腌制带鱼",
+        description: "带鱼用盐、姜片腌制去腥。",
+        duration: "10 分钟",
+        icon: ChefHat,
+        tips: "下锅前擦干表面更容易煎脆。",
+      },
+      {
+        id: "ribbonfish-step-02",
+        title: "煎至金黄",
+        description: "中火煎至两面金黄定型。",
+        duration: "10 分钟",
+        icon: Flame,
+        tips: "不要频繁翻动，避免破皮。",
+      },
+      {
+        id: "ribbonfish-step-03",
+        title: "撒椒盐出锅",
+        description: "撒椒盐和葱段，趁热装盘。",
+        duration: "1 分钟",
+        icon: Star,
+        tips: "趁热吃口感最好。",
+      },
+    ],
+    savedCount: 221,
   },
 ];
 
@@ -310,7 +510,68 @@ export function getRecipeBySlug(slug: string) {
 }
 
 export function getRecipeDetailBySlug(slug: string) {
-  return recipeDetails[slug] ?? getRecipeBySlug(slug);
+  const recipe = recipeDetails[slug] ?? getRecipeBySlug(slug);
+
+  if (!recipe) {
+    return null;
+  }
+
+  return {
+    ...recipe,
+    ingredients:
+      recipe.ingredients.length > 0
+        ? recipe.ingredients
+        : [
+            {
+              id: `${recipe.slug}-fallback-main`,
+              name: recipe.mainIngredient.split(" · ")[0] ?? "主食材",
+              amount: "适量",
+              group: "main" as const,
+              note: "按口味准备",
+            },
+          ],
+    seasonings:
+      recipe.seasonings.length > 0
+        ? recipe.seasonings
+        : [
+            {
+              id: `${recipe.slug}-fallback-seasoning`,
+              name: "基础调味",
+              amount: "适量",
+              group: "seasoning" as const,
+              note: "按口味调整",
+            },
+          ],
+    steps:
+      recipe.steps.length > 0
+        ? recipe.steps
+        : [
+            {
+              id: `${recipe.slug}-fallback-step-01`,
+              title: "准备食材",
+              description: `准备${recipe.mainIngredient}，并处理成适合烹饪的大小。`,
+              duration: "5 分钟",
+              icon: ChefHat,
+              tips: "提前整理好食材，烹饪时更顺手。",
+            },
+            {
+              id: `${recipe.slug}-fallback-step-02`,
+              title: "加热烹饪",
+              description: "根据食材特性加热至成熟，保持主要风味。",
+              duration: `${Math.max(recipe.timeMinutes - 8, 8)} 分钟`,
+              icon: CookingPot,
+              tips: "中途观察状态，避免过火。",
+            },
+            {
+              id: `${recipe.slug}-fallback-step-03`,
+              title: "调味出锅",
+              description: "最后调整味道，装盘后趁热享用。",
+              duration: "3 分钟",
+              icon: Star,
+              tips: "出锅前再确认咸淡。",
+            },
+          ],
+  };
 }
 
 export const recentRecipes: RecentRecipe[] = [

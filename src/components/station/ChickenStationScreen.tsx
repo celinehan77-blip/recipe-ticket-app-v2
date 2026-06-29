@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from "react";
 import Link from "next/link";
-import { motion, type Transition } from "framer-motion";
+import { motion, type PanInfo, type Transition } from "framer-motion";
 import {
   BarChart3,
   Bookmark,
@@ -20,12 +20,12 @@ import {
 } from "@/lib/mockData";
 import type { Recipe, Station } from "@/types";
 
-const ingredientLabels = [
-  { name: "干辣椒", note: "香辣提味", left: "13%", top: "31%" },
-  { name: "花生仁", note: "增香酥脆", left: "70%", top: "36%" },
-  { name: "鸡腿肉", note: "鲜嫩多汁", left: "12%", top: "65%" },
-  { name: "花椒", note: "麻香点睛", left: "70%", top: "68%" },
-  { name: "葱段", note: "清香提鲜", left: "43%", top: "78%" },
+const ingredientLabelPositions = [
+  { left: "13%", top: "31%" },
+  { left: "70%", top: "36%" },
+  { left: "12%", top: "65%" },
+  { left: "70%", top: "68%" },
+  { left: "43%", top: "78%" },
 ];
 
 const cardTransition: Transition = {
@@ -88,8 +88,18 @@ function getCardMotionState(offset: number) {
   };
 }
 
-function StationFoodMap({ compact = false }: { compact?: boolean }) {
+function StationFoodMap({
+  compact = false,
+  recipe,
+}: {
+  compact?: boolean;
+  recipe: Recipe;
+}) {
   const sizeClass = compact ? "h-[190px]" : "h-[252px]";
+  const ingredientLabels = [...recipe.ingredients, ...recipe.seasonings].slice(
+    0,
+    5,
+  );
 
   return (
     <div className={`relative mx-auto mt-6 w-full ${sizeClass}`}>
@@ -154,11 +164,11 @@ function StationFoodMap({ compact = false }: { compact?: boolean }) {
       <span className="absolute bottom-6 left-[48%] h-3 w-20 rotate-[48deg] rounded-full bg-[#6f9651]" />
 
       {!compact
-        ? ingredientLabels.map((item) => (
+        ? ingredientLabels.map((item, index) => (
             <div
               key={item.name}
               className="absolute text-[13px] leading-5 text-[#5f5043]"
-              style={{ left: item.left, top: item.top }}
+              style={ingredientLabelPositions[index]}
             >
               <p className="font-semibold">{item.name}</p>
               <p className="text-[11px] text-[#9b8d80]">{item.note}</p>
@@ -197,7 +207,7 @@ function RecipeCard({
         </p>
         <div className="mx-auto mt-4 h-1 w-11 rounded-full bg-[#c4a07e]" />
 
-        <StationFoodMap compact={!isActive} />
+        <StationFoodMap recipe={recipe} compact={!isActive} />
 
         <div className="mt-6 grid grid-cols-3 divide-x divide-[#d8c9b8] text-[#4a3a2f]">
           <div className="flex items-center justify-center gap-2">
@@ -223,11 +233,13 @@ type ChickenStationScreenProps = {
 };
 
 function getStationTitle(station: Station) {
-  if (station.slug === "chicken") {
-    return "Chicken Station";
-  }
-
   return station.nameEn;
+}
+
+function normalizeActiveIndex(index: number, total: number) {
+  if (total <= 0) return 0;
+
+  return (index + total) % total;
 }
 
 export function ChickenStationScreen({
@@ -235,8 +247,11 @@ export function ChickenStationScreen({
 }: ChickenStationScreenProps) {
   const station = getStationBySlug(stationSlug);
   const recipes = getRecipesByStationSlug(stationSlug);
-  const initialIndex = station?.slug === "chicken" && recipes.length > 1 ? 1 : 0;
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const safeActiveIndex = normalizeActiveIndex(activeIndex, recipes.length);
+  const setSafeActiveIndex = (nextIndex: number) => {
+    setActiveIndex(normalizeActiveIndex(nextIndex, recipes.length));
+  };
 
   if (!station) {
     return (
@@ -272,7 +287,24 @@ export function ChickenStationScreen({
 
   const stationTitle = getStationTitle(station);
   const recipeCount = recipes.length;
-  const activeRecipe = recipes[activeIndex] ?? recipes[0];
+  const activeRecipe = recipes[safeActiveIndex] ?? recipes[0];
+  const hasRecipes = recipeCount > 0;
+  const canSwitchRecipes = recipeCount > 1;
+  const recipeSummary = `${recipeCount} ${
+    recipeCount === 1 ? "Recipe" : "Recipes"
+  }`;
+
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (!canSwitchRecipes) return;
+
+    if (info.offset.x < -42) {
+      setSafeActiveIndex(safeActiveIndex + 1);
+    }
+
+    if (info.offset.x > 42) {
+      setSafeActiveIndex(safeActiveIndex - 1);
+    }
+  };
 
   return (
     <IphoneFrame>
@@ -292,7 +324,7 @@ export function ChickenStationScreen({
               {stationTitle}
             </h1>
             <p className="mt-3 text-[18px] font-medium text-[#9a7655]">
-              {station.recipeCount} Recipes
+              {hasRecipes ? recipeSummary : "No Recipes"}
             </p>
           </div>
           <div className="flex gap-2">
@@ -311,125 +343,154 @@ export function ChickenStationScreen({
           </div>
         </div>
 
-        <div className="relative mt-10 h-[466px]">
-          {recipes.map((recipe, index) => {
-            const isActive = index === activeIndex;
-            const offset = getCoverFlowOffset(
-              index,
-              activeIndex,
-              recipeCount,
-            );
-            const cardMotionState = getCardMotionState(offset);
-            const cardBaseClass =
-              "absolute left-1/2 top-0 -ml-[135px] h-[450px] w-[270px]";
-            const cardMotion = {
-              initial: false,
-              animate: cardMotionState,
-              transition: cardTransition,
-              style: { zIndex: cardMotionState.zIndex },
-            };
+        {!hasRecipes ? (
+          <div className="paper-card mt-16 rounded-[28px] px-6 py-8 text-center">
+            <div className="relative z-10">
+              <h2 className="font-display text-[28px] tracking-[0.06em] text-[#3a2a1d]">
+                这个驿站还没有菜谱
+              </h2>
+              <p className="mx-auto mt-3 max-w-[240px] text-[14px] leading-6 text-[#75695f]">
+                以后收藏或生成相关菜谱后，会出现在这里
+              </p>
+              <Link
+                href="/flavor-map"
+                className="mx-auto mt-6 flex h-11 w-[142px] items-center justify-center rounded-full bg-[#8b9a7a] text-[14px] font-semibold text-[#fffaf2]"
+              >
+                回到风味地图
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="relative mt-10 h-[466px]">
+              {recipes.map((recipe, index) => {
+                const isActive = index === safeActiveIndex;
+                const offset = getCoverFlowOffset(
+                  index,
+                  safeActiveIndex,
+                  recipeCount,
+                );
+                const cardMotionState = getCardMotionState(offset);
+                const cardBaseClass =
+                  "absolute left-1/2 top-0 -ml-[135px] h-[450px] w-[270px]";
+                const cardMotion = {
+                  initial: false,
+                  animate: cardMotionState,
+                  transition: cardTransition,
+                  style: { zIndex: cardMotionState.zIndex },
+                };
 
-            if (isActive) {
-              return (
-                <Link
-                  key={recipe.id}
-                  href={`/recipe/${recipe.slug}`}
-                  aria-label={`打开${recipe.titleZh}菜谱详情`}
-                  className={cardBaseClass}
-                  style={{ zIndex: cardMotionState.zIndex }}
-                >
-                  <motion.div
-                    {...cardMotion}
-                    whileTap={{ scale: 0.98 }}
-                    className="h-full w-full cursor-pointer"
-                  >
-                    <RecipeCard recipe={recipe} isActive />
-                  </motion.div>
-                </Link>
-              );
-            }
+                if (isActive) {
+                  return (
+                    <Link
+                      key={recipe.id}
+                      href={`/recipe/${recipe.slug}`}
+                      aria-label={`打开${recipe.titleZh}菜谱详情`}
+                      className={cardBaseClass}
+                      style={{ zIndex: cardMotionState.zIndex }}
+                    >
+                      <motion.div
+                        {...cardMotion}
+                        drag={canSwitchRecipes ? "x" : false}
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.18}
+                        onDragEnd={handleDragEnd}
+                        whileTap={{ scale: 0.98 }}
+                        className="h-full w-full cursor-pointer"
+                      >
+                        <RecipeCard recipe={recipe} isActive />
+                      </motion.div>
+                    </Link>
+                  );
+                }
 
-            return (
-              <Fragment key={recipe.id}>
-                <motion.div
-                  {...cardMotion}
-                  className={`${cardBaseClass} pointer-events-none text-left`}
-                >
-                  <RecipeCard recipe={recipe} isActive={false} />
-                </motion.div>
-                {Math.abs(offset) === 1 ? (
-                  <button
+                return (
+                  <Fragment key={recipe.id}>
+                    <motion.div
+                      {...cardMotion}
+                      className={`${cardBaseClass} pointer-events-none text-left`}
+                    >
+                      <RecipeCard recipe={recipe} isActive={false} />
+                    </motion.div>
+                    {Math.abs(offset) === 1 ? (
+                      <button
+                        type="button"
+                        aria-label={`切换到${recipe.titleZh}`}
+                        onMouseDown={() => setSafeActiveIndex(index)}
+                        onPointerDown={() => setSafeActiveIndex(index)}
+                        onClick={() => setSafeActiveIndex(index)}
+                        onPointerUp={() => setSafeActiveIndex(index)}
+                        className={`absolute top-16 z-40 h-[326px] w-[108px] cursor-pointer rounded-[28px] bg-black/[0.001] ${
+                          offset < 0 ? "left-[-38px]" : "right-[-38px]"
+                        }`}
+                      />
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+            </div>
+
+            {canSwitchRecipes ? (
+              <div className="relative z-50 mt-2 flex justify-center gap-3">
+                {recipes.map((recipe, index) => (
+                  <motion.button
+                    key={`dot-${recipe.id}`}
                     type="button"
-                    aria-label={`切换到${recipe.titleZh}`}
-                    onMouseDown={() => setActiveIndex(index)}
-                    onPointerDown={() => setActiveIndex(index)}
-                    onClick={() => setActiveIndex(index)}
-                    onPointerUp={() => setActiveIndex(index)}
-                    className={`absolute top-16 z-40 h-[326px] w-[108px] cursor-pointer rounded-[28px] bg-black/[0.001] ${
-                      offset < 0 ? "left-[-38px]" : "right-[-38px]"
+                    aria-label={`查看${recipe.titleZh}`}
+                    onClick={() => setSafeActiveIndex(index)}
+                    animate={{
+                      scale: index === safeActiveIndex ? 1 : 0.94,
+                    }}
+                    transition={cardTransition}
+                    className={`h-2.5 rounded-full transition ${
+                      index === safeActiveIndex
+                        ? "w-6 bg-[#c28d58]"
+                        : "w-2.5 bg-[#ddd3c8]"
                     }`}
                   />
-                ) : null}
-              </Fragment>
-            );
-          })}
-        </div>
+                ))}
+              </div>
+            ) : (
+              <div className="relative z-50 mt-2 h-2.5" />
+            )}
 
-        <div className="relative z-50 mt-2 flex justify-center gap-3">
-          {recipes.map((recipe, index) => (
-            <motion.button
-              key={`dot-${recipe.id}`}
-              type="button"
-              aria-label={`查看${recipe.titleZh}`}
-              onClick={() => setActiveIndex(index)}
-              animate={{
-                scale: index === activeIndex ? 1 : 0.94,
-              }}
-              transition={cardTransition}
-              className={`h-2.5 rounded-full transition ${
-                index === activeIndex
-                  ? "w-6 bg-[#c28d58]"
-                  : "w-2.5 bg-[#ddd3c8]"
-              }`}
-            />
-          ))}
-        </div>
-
-        <motion.div
-          key={activeRecipe?.id ?? "empty-recipe"}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="glass-panel relative z-50 mt-5 grid min-h-[100px] grid-cols-3 divide-x divide-[#ded2c5]/80 rounded-[26px] px-4 py-4"
-        >
-          <div className="flex items-center gap-3">
-            <Clock3 className="text-[#8a8178]" size={26} />
-            <div>
-              <p className="text-[12px] text-[#8a8178]">烹饪时间</p>
-              <p className="mt-2 text-[21px] font-semibold text-[#6f7d55]">
-                {activeRecipe?.timeMinutes ?? 0} 分钟
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center justify-center gap-3 px-3">
-            <BarChart3 className="text-[#8a8178]" size={26} />
-            <div>
-              <p className="text-[12px] text-[#8a8178]">难度等级</p>
-              <p className="mt-2 text-[21px] font-semibold text-[#6f7d55]">
-                {activeRecipe?.difficulty ?? "暂无"}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 pl-4">
-            <Soup className="text-[#8a8178]" size={26} />
-            <div>
-              <p className="text-[12px] text-[#8a8178]">主要食材</p>
-              <p className="mt-2 text-[15px] font-semibold leading-6 text-[#4a3a2f]">
-                {activeRecipe?.mainIngredient ?? "暂无"}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+            <motion.div
+              key={activeRecipe?.id ?? "empty-recipe"}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="glass-panel relative z-50 mt-5 grid min-h-[100px] grid-cols-3 divide-x divide-[#ded2c5]/80 rounded-[26px] px-4 py-4"
+            >
+              <div className="flex items-center gap-3">
+                <Clock3 className="text-[#8a8178]" size={26} />
+                <div>
+                  <p className="text-[12px] text-[#8a8178]">烹饪时间</p>
+                  <p className="mt-2 text-[21px] font-semibold text-[#6f7d55]">
+                    {activeRecipe?.timeMinutes ?? 0} 分钟
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-center gap-3 px-3">
+                <BarChart3 className="text-[#8a8178]" size={26} />
+                <div>
+                  <p className="text-[12px] text-[#8a8178]">难度等级</p>
+                  <p className="mt-2 text-[21px] font-semibold text-[#6f7d55]">
+                    {activeRecipe?.difficulty ?? "暂无"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pl-4">
+                <Soup className="text-[#8a8178]" size={26} />
+                <div>
+                  <p className="text-[12px] text-[#8a8178]">主要食材</p>
+                  <p className="mt-2 text-[15px] font-semibold leading-6 text-[#4a3a2f]">
+                    {activeRecipe?.mainIngredient ?? "暂无"}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
       </section>
     </IphoneFrame>
   );
