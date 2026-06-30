@@ -92,6 +92,38 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 这样做是为了先保证前端体验稳定，再逐步切换真实后端能力。
 
+## Deployment
+
+推荐部署平台：
+
+- Vercel
+
+部署前需要：
+
+- GitHub 仓库：`celinehan77-blip/recipe-ticket-app-v2`
+- Vercel 账号
+- Supabase 项目的 Project URL 和 anon public key
+
+在 Vercel Project Settings -> Environment Variables 中添加：
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+说明：
+
+- Supabase 目前只读接入 `stations / recipes` 相关公共菜谱数据。
+- 没有配置 Supabase 环境变量时，项目会 fallback 到 `mockData`。
+- 收藏与生成任务仍然使用 `localStorage`。
+- 不要把真实 Supabase URL 或 anon key 写进 GitHub。
+- Vercel 不会自动读取本地 `.env.local`，线上环境变量需要在 Vercel 后台单独配置。
+
+详细步骤：
+
+- `docs/VERCEL_DEPLOYMENT.md`
+- `docs/DEPLOYMENT_CHECKLIST.md`
+
 ## 后续计划
 
 - 登录 / Auth
