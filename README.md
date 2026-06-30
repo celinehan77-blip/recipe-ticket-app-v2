@@ -94,17 +94,25 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 ## Deployment
 
-推荐部署平台：
+当前部署平台：
 
-- Vercel
+- Netlify
 
 部署前需要：
 
 - GitHub 仓库：`celinehan77-blip/recipe-ticket-app-v2`
-- Vercel 账号
+- Netlify 账号
 - Supabase 项目的 Project URL 和 anon public key
 
-在 Vercel Project Settings -> Environment Variables 中添加：
+说明：
+
+- Vercel 因手机号验证暂时未使用。
+- Netlify 已连接 GitHub，会在 `main` 分支更新后自动部署。
+- 构建命令：`npm run build`
+- 发布目录：`.next`
+- Next.js 插件：`@netlify/plugin-nextjs`
+
+在 Netlify Site configuration -> Environment variables 中添加：
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
@@ -117,10 +125,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 - 没有配置 Supabase 环境变量时，项目会 fallback 到 `mockData`。
 - 收藏与生成任务仍然使用 `localStorage`。
 - 不要把真实 Supabase URL 或 anon key 写进 GitHub。
-- Vercel 不会自动读取本地 `.env.local`，线上环境变量需要在 Vercel 后台单独配置。
+- Netlify 不会自动读取本地 `.env.local`，线上环境变量需要在 Netlify 后台单独配置。
+- 环境变量更新后需要重新部署。
+- 如果 Supabase 不可用，线上页面会继续 fallback 到 `mockData`。
+
+线上 Supabase 诊断接口：
+
+- `/api/deploy-health`
 
 详细步骤：
 
+- `docs/NETLIFY_DEPLOYMENT.md`
 - `docs/VERCEL_DEPLOYMENT.md`
 - `docs/DEPLOYMENT_CHECKLIST.md`
 
