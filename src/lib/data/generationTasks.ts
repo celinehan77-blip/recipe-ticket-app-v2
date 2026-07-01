@@ -1,7 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   completeMockGenerationTask as completeStoredMockGenerationTask,
+  completeMockGenerationTaskWithSlug,
+  readLatestGeneratedRecipeSlug,
   readMockGenerationTask,
+  saveLatestGeneratedRecipeSlug,
   saveMockGenerationTask,
   type MockGenerationTask,
 } from "@/lib/mockGenerationTask";
@@ -47,6 +50,7 @@ function mapLocalTask(task: MockGenerationTask | null): GenerationTask | null {
 
 function mapSupabaseTask(
   task: SupabaseGenerationTaskRow | null,
+  generatedRecipeSlug = DEFAULT_GENERATED_RECIPE_SLUG,
 ): GenerationTask | null {
   if (!task) {
     return null;
@@ -54,9 +58,7 @@ function mapSupabaseTask(
 
   return {
     completedAt: task.completed_at,
-    generatedRecipeSlug: task.generated_recipe_id
-      ? DEFAULT_GENERATED_RECIPE_SLUG
-      : DEFAULT_GENERATED_RECIPE_SLUG,
+    generatedRecipeSlug,
     id: task.id,
     sourcePlatform: task.source_platform ?? "mock",
     sourceUrl: task.source_url,
@@ -77,7 +79,14 @@ export async function getLatestGenerationTask(): Promise<GenerationTask | null> 
     const cloudTask = await tryGetLatestGenerationTaskFromSupabase(user.id);
 
     if (cloudTask.ok && cloudTask.data) {
-      return mapSupabaseTask(cloudTask.data);
+      const cloudRecipeSlug = cloudTask.data.generated_recipe_id
+        ? await tryGetLatestGeneratedRecipeSlugFromSupabase(user.id)
+        : { data: null, ok: true };
+
+      return mapSupabaseTask(
+        cloudTask.data,
+        cloudRecipeSlug.data ?? DEFAULT_GENERATED_RECIPE_SLUG,
+      );
     }
   }
 
@@ -86,15 +95,20 @@ export async function getLatestGenerationTask(): Promise<GenerationTask | null> 
 
 export async function createMockGenerationTask(
   sourceUrl: string,
+  sourcePlatform = "mock",
 ): Promise<GenerationTask> {
-  const localTask = saveMockGenerationTask(sourceUrl);
+  const localTask = saveMockGenerationTask(sourceUrl, sourcePlatform);
   const user = await getCurrentUser();
 
   if (!user) {
     return mapLocalTask(localTask) as GenerationTask;
   }
 
-  const cloudTask = await tryCreateGenerationTaskInSupabase(user.id, sourceUrl);
+  const cloudTask = await tryCreateGenerationTaskInSupabase(
+    user.id,
+    sourceUrl,
+    sourcePlatform,
+  );
 
   if (!cloudTask.ok || !cloudTask.data) {
     return {
@@ -106,8 +120,14 @@ export async function createMockGenerationTask(
   return mapSupabaseTask(cloudTask.data) as GenerationTask;
 }
 
-export async function completeMockGenerationTask(): Promise<GenerationTask | null> {
+export async function completeMockGenerationTask(
+  generatedRecipeSlug?: string,
+): Promise<GenerationTask | null> {
   const user = await getCurrentUser();
+  const safeSlug =
+    generatedRecipeSlug ||
+    readLatestGeneratedRecipeSlug() ||
+    DEFAULT_GENERATED_RECIPE_SLUG;
 
   if (user) {
     const latestCloudTask = await tryGetLatestGenerationTaskFromSupabase(user.id);
@@ -115,21 +135,29 @@ export async function completeMockGenerationTask(): Promise<GenerationTask | nul
     if (latestCloudTask.ok && latestCloudTask.data?.id) {
       const completed = await tryCompleteGenerationTaskInSupabase(
         latestCloudTask.data.id,
-        DEFAULT_GENERATED_RECIPE_SLUG,
+        safeSlug,
       );
 
       if (completed.ok) {
+        saveLatestGeneratedRecipeSlug(safeSlug);
+
         return {
-          ...(mapSupabaseTask(latestCloudTask.data) as GenerationTask),
+          ...(mapSupabaseTask(latestCloudTask.data, safeSlug) as GenerationTask),
           completedAt: new Date().toISOString(),
-          generatedRecipeSlug: DEFAULT_GENERATED_RECIPE_SLUG,
+          generatedRecipeSlug: safeSlug,
           status: "completed",
         };
       }
     }
   }
 
-  completeStoredMockGenerationTask();
+  if (safeSlug === DEFAULT_GENERATED_RECIPE_SLUG) {
+    completeStoredMockGenerationTask();
+    saveLatestGeneratedRecipeSlug(safeSlug);
+  } else {
+    completeMockGenerationTaskWithSlug(safeSlug);
+  }
+
   return getLocalGenerationTask();
 }
 
@@ -146,5 +174,9 @@ export async function getLatestGeneratedRecipeSlug(): Promise<string> {
     }
   }
 
-  return getLocalGenerationTask()?.generatedRecipeSlug ?? DEFAULT_GENERATED_RECIPE_SLUG;
+  return (
+    readLatestGeneratedRecipeSlug() ??
+    getLocalGenerationTask()?.generatedRecipeSlug ??
+    DEFAULT_GENERATED_RECIPE_SLUG
+  );
 }

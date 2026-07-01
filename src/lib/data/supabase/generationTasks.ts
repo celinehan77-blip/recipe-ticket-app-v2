@@ -66,6 +66,7 @@ async function getRecipeSlugById(recipeId: string): Promise<string | null> {
 export async function tryCreateGenerationTaskInSupabase(
   userId: string,
   sourceUrl: string,
+  sourcePlatform = "mock",
 ): Promise<SupabaseResult<SupabaseGenerationTaskRow | null>> {
   const supabase = getSupabaseClient();
 
@@ -78,7 +79,7 @@ export async function tryCreateGenerationTaskInSupabase(
     .insert({
       user_id: userId,
       source_url: sourceUrl,
-      source_platform: "mock",
+      source_platform: sourcePlatform,
       status: "processing",
       generated_recipe_id: null,
       error_message: null,
@@ -96,8 +97,10 @@ export async function tryCreateGenerationTaskInSupabase(
 export async function createGenerationTaskInSupabase(
   userId: string,
   sourceUrl: string,
+  sourcePlatform = "mock",
 ): Promise<SupabaseGenerationTaskRow | null> {
-  return (await tryCreateGenerationTaskInSupabase(userId, sourceUrl)).data;
+  return (await tryCreateGenerationTaskInSupabase(userId, sourceUrl, sourcePlatform))
+    .data;
 }
 
 export async function tryCompleteGenerationTaskInSupabase(

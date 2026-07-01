@@ -5,16 +5,19 @@ import {
   recipes,
 } from "@/lib/mockData";
 import {
+  createRecipeFromParsedDraftInSupabase,
   getAllRecipesFromSupabase,
   getRecipeBySlugFromSupabase,
   getRecipeDetailBySlugFromSupabase,
   getRecipesByStationSlugFromSupabase,
 } from "@/lib/data/supabase/recipes";
+import { getCurrentUser } from "@/lib/auth/session";
 import {
   mapSupabaseRecipeDetailToRecipe,
   mapSupabaseRecipeToRecipe,
 } from "@/lib/data/supabase/mappers";
 import type { Recipe } from "@/types";
+import type { ParsedRecipeDraft, RecipeParseSourcePlatform } from "@/types/ai";
 
 export type RecipeCardData = Pick<
   Recipe,
@@ -28,6 +31,24 @@ export type RecipeCardData = Pick<
   | "tags"
   | "slug"
 >;
+
+export type CreateRecipeFromParsedDraftInput = {
+  draft: ParsedRecipeDraft;
+  sourcePlatform?: RecipeParseSourcePlatform;
+  sourceUrl?: string;
+  stationSlug?: string;
+};
+
+export type CreateRecipeFromParsedDraftResult = {
+  error: string | null;
+  fallbackSlug: string;
+  id: string | null;
+  ok: boolean;
+  slug: string;
+  usedFallback: boolean;
+};
+
+const DEFAULT_GENERATED_RECIPE_SLUG = "kung-pao-chicken";
 
 function sortRecipesByMockOrder(nextRecipes: Recipe[]): Recipe[] {
   return [...nextRecipes].sort((left, right) => {
@@ -134,4 +155,63 @@ export async function getRecipeCardData(
     tags: recipe.tags,
     slug: recipe.slug,
   };
+}
+
+export async function createRecipeFromParsedDraft({
+  draft,
+  sourcePlatform = "mock",
+  sourceUrl,
+  stationSlug,
+}: CreateRecipeFromParsedDraftInput): Promise<CreateRecipeFromParsedDraftResult> {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return {
+        error: "User is not signed in.",
+        fallbackSlug: DEFAULT_GENERATED_RECIPE_SLUG,
+        id: null,
+        ok: false,
+        slug: DEFAULT_GENERATED_RECIPE_SLUG,
+        usedFallback: true,
+      };
+    }
+
+    const result = await createRecipeFromParsedDraftInSupabase({
+      draft,
+      sourcePlatform,
+      sourceUrl,
+      stationSlug,
+      userId: user.id,
+    });
+
+    if (!result.ok || !result.slug) {
+      return {
+        error: result.error,
+        fallbackSlug: DEFAULT_GENERATED_RECIPE_SLUG,
+        id: result.id,
+        ok: false,
+        slug: DEFAULT_GENERATED_RECIPE_SLUG,
+        usedFallback: true,
+      };
+    }
+
+    return {
+      error: null,
+      fallbackSlug: DEFAULT_GENERATED_RECIPE_SLUG,
+      id: result.id,
+      ok: true,
+      slug: result.slug,
+      usedFallback: false,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Recipe creation failed.",
+      fallbackSlug: DEFAULT_GENERATED_RECIPE_SLUG,
+      id: null,
+      ok: false,
+      slug: DEFAULT_GENERATED_RECIPE_SLUG,
+      usedFallback: true,
+    };
+  }
 }

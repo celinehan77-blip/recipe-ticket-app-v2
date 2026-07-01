@@ -2,24 +2,55 @@ export type MockGenerationTaskStatus = "processing" | "completed";
 
 export type MockGenerationTask = {
   sourceUrl: string;
-  generatedRecipeSlug: "kung-pao-chicken";
+  generatedRecipeSlug: string;
   status: MockGenerationTaskStatus;
-  sourcePlatform: "mock";
+  sourcePlatform: string;
   createdAt: string;
 };
 
 const MOCK_GENERATION_TASK_KEY = "recipe-ticket:mock-generation-task";
+const LATEST_GENERATED_RECIPE_SLUG_KEY =
+  "recipe-ticket:latest-generated-recipe-slug";
+const DEFAULT_GENERATED_RECIPE_SLUG = "kung-pao-chicken";
 
 function canUseLocalStorage() {
   return typeof window !== "undefined" && "localStorage" in window;
 }
 
-export function saveMockGenerationTask(sourceUrl: string) {
+export function saveLatestGeneratedRecipeSlug(slug: string): boolean {
+  if (!canUseLocalStorage()) {
+    return false;
+  }
+
+  try {
+    window.localStorage.setItem(LATEST_GENERATED_RECIPE_SLUG_KEY, slug);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function readLatestGeneratedRecipeSlug() {
+  if (!canUseLocalStorage()) {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(LATEST_GENERATED_RECIPE_SLUG_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function saveMockGenerationTask(
+  sourceUrl: string,
+  sourcePlatform = "mock",
+) {
   const task: MockGenerationTask = {
     sourceUrl,
-    generatedRecipeSlug: "kung-pao-chicken",
+    generatedRecipeSlug: DEFAULT_GENERATED_RECIPE_SLUG,
     status: "processing",
-    sourcePlatform: "mock",
+    sourcePlatform,
     createdAt: new Date().toISOString(),
   };
 
@@ -68,6 +99,30 @@ export function completeMockGenerationTask() {
     window.localStorage.setItem(
       MOCK_GENERATION_TASK_KEY,
       JSON.stringify({ ...task, status: "completed" }),
+    );
+  } catch {
+    return;
+  }
+}
+
+export function completeMockGenerationTaskWithSlug(generatedRecipeSlug: string) {
+  const task = readMockGenerationTask();
+  const safeSlug = generatedRecipeSlug || DEFAULT_GENERATED_RECIPE_SLUG;
+
+  saveLatestGeneratedRecipeSlug(safeSlug);
+
+  if (!task || !canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      MOCK_GENERATION_TASK_KEY,
+      JSON.stringify({
+        ...task,
+        generatedRecipeSlug: safeSlug,
+        status: "completed",
+      }),
     );
   } catch {
     return;

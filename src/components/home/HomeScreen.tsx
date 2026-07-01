@@ -17,11 +17,17 @@ import { TabBar } from "@/components/layout/TabBar";
 import { LeafMark } from "@/components/ui/LeafMark";
 import {
   clearLatestParsedDraft,
+  completeMockGenerationTask,
   createMockGenerationTask,
+  createRecipeFromParsedDraft,
   isParsedRecipeDraft,
   saveLatestParsedDraft,
 } from "@/lib/data";
-import type { RecipeParseResult, RecipeParseSourcePlatform } from "@/types/ai";
+import type {
+  ParsedRecipeDraft,
+  RecipeParseResult,
+  RecipeParseSourcePlatform,
+} from "@/types/ai";
 
 const PARSE_TIMEOUT_MS = 3500;
 
@@ -53,10 +59,19 @@ function getSourcePlatform(value: string): RecipeParseSourcePlatform {
   return isLikelyUrl(value) ? "mock" : "manual";
 }
 
-async function parseRecipeSource(sourceValue: string) {
+type ParsedSourceResult = {
+  draft: ParsedRecipeDraft;
+  sourcePlatform: RecipeParseSourcePlatform;
+  sourceUrl?: string;
+};
+
+async function parseRecipeSource(
+  sourceValue: string,
+): Promise<ParsedSourceResult | null> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
   const looksLikeUrl = isLikelyUrl(sourceValue);
+  const sourcePlatform = getSourcePlatform(sourceValue);
 
   try {
     const response = await fetch("/api/parse-recipe", {
@@ -67,25 +82,29 @@ async function parseRecipeSource(sourceValue: string) {
       body: JSON.stringify({
         sourceUrl: looksLikeUrl ? sourceValue : undefined,
         rawText: looksLikeUrl ? undefined : sourceValue,
-        sourcePlatform: getSourcePlatform(sourceValue),
+        sourcePlatform,
       }),
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      return false;
+      return null;
     }
 
     const result = (await response.json()) as RecipeParseResult;
 
     if (!result.ok || !isParsedRecipeDraft(result.draft)) {
-      return false;
+      return null;
     }
 
     saveLatestParsedDraft(result.draft);
-    return true;
+    return {
+      draft: result.draft,
+      sourcePlatform,
+      sourceUrl: looksLikeUrl ? sourceValue : undefined,
+    };
   } catch {
-    return false;
+    return null;
   } finally {
     window.clearTimeout(timeoutId);
   }
@@ -109,13 +128,27 @@ export function HomeScreen() {
 
     setErrorMessage("");
     setIsGenerating(true);
-    const parseOk = await parseRecipeSource(trimmedSourceUrl);
+    const parsedSource = await parseRecipeSource(trimmedSourceUrl);
 
-    if (!parseOk) {
+    if (!parsedSource) {
       clearLatestParsedDraft();
     }
 
-    await createMockGenerationTask(trimmedSourceUrl);
+    await createMockGenerationTask(
+      trimmedSourceUrl,
+      parsedSource?.sourcePlatform ?? getSourcePlatform(trimmedSourceUrl),
+    );
+
+    if (parsedSource) {
+      const createdRecipe = await createRecipeFromParsedDraft({
+        draft: parsedSource.draft,
+        sourcePlatform: parsedSource.sourcePlatform,
+        sourceUrl: parsedSource.sourceUrl,
+      });
+
+      await completeMockGenerationTask(createdRecipe.slug);
+    }
+
     router.push("/loading");
   };
 

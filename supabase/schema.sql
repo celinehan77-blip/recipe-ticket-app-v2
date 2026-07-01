@@ -198,11 +198,39 @@ on public.ingredients
 for select
 using (true);
 
+drop policy if exists "Users can create ingredients for own recipes" on public.ingredients;
+create policy "Users can create ingredients for own recipes"
+on public.ingredients
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.recipes
+    where recipes.id = ingredients.recipe_id
+      and recipes.user_id = auth.uid()
+  )
+);
+
 drop policy if exists "Recipe steps are publicly readable" on public.recipe_steps;
 create policy "Recipe steps are publicly readable"
 on public.recipe_steps
 for select
 using (true);
+
+drop policy if exists "Users can create steps for own recipes" on public.recipe_steps;
+create policy "Users can create steps for own recipes"
+on public.recipe_steps
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.recipes
+    where recipes.id = recipe_steps.recipe_id
+      and recipes.user_id = auth.uid()
+  )
+);
 
 drop policy if exists "Users can read own favorites" on public.favorites;
 create policy "Users can read own favorites"

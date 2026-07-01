@@ -90,9 +90,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 - 当前已新增 `/api/parse-recipe`。
 - 首页生成流程已经接入 `/api/parse-recipe`。
 - 当前默认使用 mock parser，返回稳定的结构化菜谱草稿。
-- 当前解析结果只保存为本地 draft。
-- 暂未写入 Supabase `recipes`。
-- 暂未生成真实动态菜谱。
+- 当前解析结果会先保存为本地 draft。
+- 已登录用户会尝试把 draft 保存为 Supabase `recipes / ingredients / recipe_steps`。
+- 保存成功后 loading 会跳转到新生成的 `/recipe/[slug]`。
+- 保存失败时仍然 fallback 到默认菜谱，不阻塞游客体验。
 - 暂未接真实 AI。
 - 暂未接小红书 / 抖音真实解析。
 - AI key 未来只使用服务端环境变量，不使用 `NEXT_PUBLIC_`。
@@ -104,7 +105,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 - Supabase 目前只读接入 `stations / recipes` 相关公共菜谱数据。
 - 未登录用户继续使用 `localStorage` 收藏和模拟生成任务。
 - 已登录用户可以使用 Supabase 收藏同步和生成记录同步。
-- AI 解析当前只有接口骨架和 Mock Parser，尚未接入真实 AI。
+- AI 解析当前仍使用 Mock Parser，但已能尝试保存为真实 Supabase 菜谱。
 
 这样做是为了先保证前端体验稳定，再逐步切换真实后端能力。
 

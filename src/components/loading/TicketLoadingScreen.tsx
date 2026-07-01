@@ -8,6 +8,7 @@ import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
   completeMockGenerationTask,
+  getLatestGeneratedRecipeSlug,
   getLatestParsedDraft,
   getLatestGenerationTask,
 } from "@/lib/data";
@@ -27,7 +28,9 @@ export function TicketLoadingScreen() {
     const timer = window.setTimeout(() => {
       void (async () => {
         await completeMockGenerationTask();
-        router.push("/recipe/kung-pao-chicken");
+        const recipeSlug = await getLatestGeneratedRecipeSlug();
+
+        router.push(`/recipe/${recipeSlug || "kung-pao-chicken"}`);
       })();
     }, 3000);
 

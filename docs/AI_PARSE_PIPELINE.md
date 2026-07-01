@@ -6,7 +6,7 @@
 - 当前默认使用 Mock Parser。
 - 当前不接真实小红书 / 抖音解析。
 - 当前不调用 OpenAI、DeepSeek、Qwen 或其他真实 AI Provider。
-- 当前不写入数据库，也不创建真实 recipe。
+- 当前 `ParsedRecipeDraft` 已可以尝试保存为真实 Supabase recipe。
 
 ## 2. 输入
 
@@ -94,22 +94,26 @@ AI_PROVIDER=mock
 
 ## 8. 首页生成流程接入 parse API
 
-当前首页生成流程已经接入解析接口，但仍然保持原 MVP 的固定结果页：
+当前首页生成流程已经接入解析接口，并会尝试把 draft 保存为真实 Supabase recipe：
 
 ```text
 首页输入
 -> POST /api/parse-recipe
 -> 保存 latest parsed draft
 -> 创建 generation task
+-> 尝试写入 Supabase recipes / ingredients / recipe_steps
+-> 保存 latestGeneratedRecipeSlug
 -> loading
--> 暂时进入 /recipe/kung-pao-chicken
+-> 进入 /recipe/[latestGeneratedRecipeSlug]
 ```
 
 说明：
 
-- 当前不会创建真实新菜谱。
-- 当前不会写入 Supabase `recipes`。
+- 当前可以创建真实新菜谱，但只基于 Mock Parser 的 draft。
+- 当前会尝试写入 Supabase `recipes / ingredients / recipe_steps`。
 - 当前仍然使用 Mock Parser。
-- 当前 `ParsedRecipeDraft` 只保存在当前浏览器的 `localStorage`。
-- 后续阶段会把 draft 转换并保存为真实 recipe。
-- 如果解析接口失败、超时或返回不完整，首页会 fallback 到原有 mock 生成流程。
+- 当前仍然不会调用 DeepSeek / OpenAI / Qwen。
+- 当前仍然不会解析真实小红书 / 抖音页面。
+- 当前 `ParsedRecipeDraft` 仍会保存在当前浏览器的 `localStorage`，作为 fallback。
+- 如果解析接口失败、超时、返回不完整，或 Supabase 保存失败，首页会 fallback 到原有 mock 生成流程。
+- 后续阶段会把 provider 从 mock 替换为真实 AI，再复用同一套保存流程。
