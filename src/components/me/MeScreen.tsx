@@ -1,21 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Bookmark,
   ChevronRight,
   Heart,
+  LogOut,
+  Mail,
   NotebookTabs,
   Sparkles,
+  UserRound,
 } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
+import { getCurrentProfile, type UserProfile } from "@/lib/auth/profile";
+import { signOut } from "@/lib/auth/session";
 import {
   getFavoriteSlugs,
   getLatestGenerationTask,
   getRecipeBySlug,
+  syncLocalFavoritesToSupabase,
 } from "@/lib/data";
 
 type LocalProfileState = {
@@ -42,32 +49,81 @@ export function MeScreen() {
   const [localProfile, setLocalProfile] = useState<LocalProfileState>(
     defaultLocalProfileState,
   );
+  const [authProfile, setAuthProfile] = useState<UserProfile | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+  const [isSyncingFavorites, setIsSyncingFavorites] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void (async () => {
-      const task = getLatestGenerationTask();
-      const favoriteSlugs = getFavoriteSlugs();
-      const generatedRecipeSlug = task?.generatedRecipeSlug ?? null;
-      const favoriteRecipeSlug =
-        favoriteSlugs[favoriteSlugs.length - 1] ?? null;
+        const task = getLatestGenerationTask();
+        const favoriteSlugs = await getFavoriteSlugs();
+        const generatedRecipeSlug = task?.generatedRecipeSlug ?? null;
+        const favoriteRecipeSlug =
+          favoriteSlugs[favoriteSlugs.length - 1] ?? null;
 
-      setLocalProfile({
-        favoriteSlugs,
-        generatedRecipeSlug,
-        recentFavoriteTitle: await getRecipeTitle(favoriteRecipeSlug),
-        recentGeneratedTitle: await getRecipeTitle(generatedRecipeSlug),
-      });
+        setLocalProfile({
+          favoriteSlugs,
+          generatedRecipeSlug,
+          recentFavoriteTitle: await getRecipeTitle(favoriteRecipeSlug),
+          recentGeneratedTitle: await getRecipeTitle(generatedRecipeSlug),
+        });
       })();
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    void getCurrentProfile().then((profile) => {
+      if (!active) return;
+
+      setAuthProfile(profile);
+      setAuthReady(true);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const favoriteCount = localProfile.favoriteSlugs.length;
   const generatedCount = localProfile.generatedRecipeSlug ? 1 : 0;
   const recentGeneratedTitle = localProfile.recentGeneratedTitle;
   const recentFavoriteTitle = localProfile.recentFavoriteTitle;
+  const isLoggedIn = Boolean(authProfile);
+
+  const handleSignOut = async () => {
+    const result = await signOut();
+
+    if (result.ok) {
+      setAuthProfile(null);
+    }
+
+    setAuthMessage(result.message);
+  };
+
+  const handleSyncLocalFavorites = async () => {
+    setIsSyncingFavorites(true);
+    setAuthMessage("");
+
+    const result = await syncLocalFavoritesToSupabase();
+
+    if (result.skipped) {
+      setAuthMessage("当前未登录，本地收藏已保留在当前浏览器。");
+    } else if (result.ok) {
+      setAuthMessage(`已同步 ${result.synced} 个本地收藏。`);
+    } else {
+      setAuthMessage(
+        `已同步 ${result.synced} 个本地收藏，${result.failed} 个稍后可重试。`,
+      );
+    }
+
+    setIsSyncingFavorites(false);
+  };
 
   const profileSections = useMemo(
     () => [
@@ -136,6 +192,91 @@ export function MeScreen() {
               </p>
             </div>
           </section>
+
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08, duration: 0.38 }}
+            className="paper-card rounded-[24px] px-3.5 py-3"
+          >
+            <div className="relative z-10">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f4eadc] text-[#8a5a35]">
+                    {isLoggedIn ? <Mail size={18} /> : <UserRound size={18} />}
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="font-display text-[18px] tracking-[0.05em] text-[#3a2a1d]">
+                      {isLoggedIn ? "已登录" : "当前模式：本地演示"}
+                    </h2>
+                    <p className="mt-1 truncate text-[12px] leading-5 text-[#75695f]">
+                      {authReady
+                        ? authProfile?.email ?? "未登录"
+                        : "正在检查登录状态"}
+                    </p>
+                  </div>
+                </div>
+                {isLoggedIn ? (
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#fffaf2]/70 px-3 text-[12px] font-semibold text-[#8a5a35]"
+                  >
+                    <LogOut size={14} />
+                    退出登录
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="flex h-9 shrink-0 items-center rounded-full bg-[#8a5a35] px-3 text-[12px] font-semibold text-[#fffaf2]"
+                  >
+                    登录以同步
+                  </Link>
+                )}
+              </div>
+
+              <div className="mt-3 grid gap-1.5">
+                {isLoggedIn ? (
+                  <>
+                    <p className="rounded-full bg-[#fffaf2]/58 px-3 py-1.5 text-[12px] leading-5 text-[#75695f]">
+                      用户邮箱：{authProfile?.email ?? "暂无"}
+                    </p>
+                    <p className="rounded-full bg-[#fffaf2]/58 px-3 py-1.5 text-[12px] leading-5 text-[#75695f]">
+                      云端收藏同步：已开启
+                    </p>
+                    <p className="rounded-full bg-[#fffaf2]/58 px-3 py-1.5 text-[12px] leading-5 text-[#75695f]">
+                      本地收藏会保留作为兜底
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleSyncLocalFavorites}
+                      disabled={isSyncingFavorites}
+                      className="h-9 rounded-full bg-[#8b9a7a] px-3 text-[12px] font-semibold text-[#fffaf2] disabled:opacity-70"
+                    >
+                      {isSyncingFavorites ? "同步中" : "同步本地收藏"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="rounded-full bg-[#fffaf2]/58 px-3 py-1.5 text-[12px] leading-5 text-[#75695f]">
+                      未登录
+                    </p>
+                    <p className="rounded-full bg-[#fffaf2]/58 px-3 py-1.5 text-[12px] leading-5 text-[#75695f]">
+                      收藏仅保存在当前浏览器
+                    </p>
+                    <p className="rounded-full bg-[#fffaf2]/58 px-3 py-1.5 text-[12px] leading-5 text-[#75695f]">
+                      登录后可用于云端同步
+                    </p>
+                  </>
+                )}
+                {authMessage ? (
+                  <p className="rounded-full bg-[#fffaf2]/58 px-3 py-1.5 text-[12px] leading-5 text-[#8a5a35]">
+                    {authMessage}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </motion.section>
 
           {profileSections.map((section, index) => {
             const Icon = section.icon;

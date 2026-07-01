@@ -208,24 +208,39 @@ export function RecipeDetailScreen({
   recipe,
 }: RecipeDetailScreenProps) {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteMessage, setFavoriteMessage] = useState("");
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const timer = window.setTimeout(() => {
       if (recipe) {
-        setIsFavorite(isRecipeFavorite(recipe.slug));
+        void isRecipeFavorite(recipe.slug).then((favorite) => {
+          if (active) {
+            setIsFavorite(favorite);
+          }
+        });
       }
     }, 0);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, [recipe]);
 
-  const handleToggleFavorite = () => {
-    if (!recipe) {
+  const handleToggleFavorite = async () => {
+    if (!recipe || isFavoriteLoading) {
       return;
     }
 
-    const nextFavoriteState = toggleRecipeFavorite(recipe.slug);
+    setIsFavoriteLoading(true);
+    setFavoriteMessage("");
+
+    const nextFavoriteState = await toggleRecipeFavorite(recipe.slug);
     setIsFavorite(nextFavoriteState.favorite);
+    setFavoriteMessage(nextFavoriteState.message ?? "");
+    setIsFavoriteLoading(false);
   };
 
   if (!recipe) {
@@ -377,6 +392,11 @@ export function RecipeDetailScreen({
             );
           })}
         </motion.section>
+        {favoriteMessage ? (
+          <p className="mx-5 mt-2 rounded-full bg-[#fffaf2]/70 px-3 py-1.5 text-[12px] leading-5 text-[#8a5a35]">
+            {favoriteMessage}
+          </p>
+        ) : null}
 
         <section className="mt-3 px-5">
           <div className="mb-2 flex h-9 items-end justify-between px-1">
@@ -488,12 +508,13 @@ export function RecipeDetailScreen({
           })}
           <button
             onClick={handleToggleFavorite}
+            disabled={isFavoriteLoading}
             className={`flex h-11 w-32 items-center justify-center gap-1.5 rounded-full text-[14px] font-semibold tracking-[0.03em] text-[#fffaf2] shadow-[0_12px_24px_rgba(91,105,64,0.22)] ${
               isFavorite ? "bg-[#6f7d55]" : "bg-[#8b9a7a]"
-            }`}
+            } disabled:opacity-70`}
           >
             <Bookmark size={18} className={isFavorite ? "fill-[#fffaf2]/24" : ""} />
-            {isFavorite ? "已收藏" : "加入收藏"}
+            {isFavoriteLoading ? "处理中" : isFavorite ? "已收藏" : "加入收藏"}
           </button>
           {bottomActions.slice(2).map((action) => {
             const Icon = action.icon;

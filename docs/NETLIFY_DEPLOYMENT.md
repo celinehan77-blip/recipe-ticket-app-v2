@@ -166,9 +166,44 @@ Trigger deploy -> Clear cache and deploy site
 ## 当前阶段说明
 
 - Supabase 目前只读接入 `stations / recipes` 相关数据。
+- Supabase Auth 已接入邮箱 Magic Link 登录基础版。
 - 收藏功能仍然使用 `localStorage`。
 - 首页生成任务仍然使用 `localStorage`。
 - 当前生成流程仍然是模拟生成，不是真 AI。
 - 如果 Supabase 不可用，页面会继续 fallback 到 `mockData`。
 
 如果线上页面能打开但数据看起来没有变化，可能只是 Supabase 数据和 mockData 内容接近，也可能是仍在 fallback。请优先检查 `/api/deploy-health`。
+
+## Supabase Auth URL 配置
+
+Magic Link 登录需要 Supabase 后台允许回调地址。
+
+请进入 Supabase：
+
+```text
+Authentication -> URL Configuration
+```
+
+建议配置：
+
+```text
+Site URL:
+https://recipe-ticket-app-v2.netlify.app
+```
+
+Redirect URLs:
+
+```text
+https://recipe-ticket-app-v2.netlify.app/auth/callback
+http://localhost:3000/auth/callback
+http://localhost:3001/auth/callback
+```
+
+如果你修改了这些 URL 配置，需要重新测试登录。
+
+登录相关页面：
+
+- `/login`
+- `/auth/callback`
+
+当前登录只用于识别用户身份。收藏和生成任务仍然使用当前浏览器的 `localStorage`，不会跨设备同步。

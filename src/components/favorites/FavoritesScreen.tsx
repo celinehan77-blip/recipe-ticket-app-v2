@@ -7,18 +7,34 @@ import { ChevronRight, Compass, Flame, Search, Star } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
+import { getCurrentUser } from "@/lib/auth/session";
 import { getFavoriteRecipes } from "@/lib/data";
 import type { Recipe } from "@/types";
 
 export function FavoritesScreen() {
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const timer = window.setTimeout(() => {
-      void getFavoriteRecipes().then(setFavoriteRecipes);
+      void (async () => {
+        const [user, recipes] = await Promise.all([
+          getCurrentUser(),
+          getFavoriteRecipes(),
+        ]);
+
+        if (!active) return;
+
+        setIsLoggedIn(Boolean(user));
+        setFavoriteRecipes(recipes);
+      })();
     }, 0);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -41,6 +57,11 @@ export function FavoritesScreen() {
           <p className="mt-2 text-[14px] leading-6 text-[#75695f]">
             把想再次做的味道，留在这里
           </p>
+          {isLoggedIn ? (
+            <p className="mt-2 text-[12px] leading-5 text-[#8a5a35]">
+              已登录，收藏将用于云端同步
+            </p>
+          ) : null}
         </motion.header>
 
         <Link
