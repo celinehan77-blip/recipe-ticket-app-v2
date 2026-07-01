@@ -15,8 +15,12 @@
 - Station Cover Flow 菜谱选择
 - 我的页本地数据汇总
 - Supabase 只读接入
+- Supabase Auth 游客优先
+- 云端收藏同步基础版
+- 云端生成记录基础版
+- AI 解析接口骨架
 - mockData fallback
-- localStorage 收藏和模拟任务
+- localStorage fallback
 
 ## 技术栈
 
@@ -81,14 +85,22 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 如果 Supabase 未配置、查询失败或数据为空，页面会继续使用 `mockData` 正常运行。
 
+## AI Parsing
+
+- 当前已新增 `/api/parse-recipe`。
+- 当前默认使用 mock parser，返回稳定的结构化菜谱草稿。
+- 暂未接真实 AI。
+- 暂未接小红书 / 抖音真实解析。
+- AI key 未来只使用服务端环境变量，不使用 `NEXT_PUBLIC_`。
+
 ## 当前阶段说明
 
 当前是 MVP 阶段。
 
 - Supabase 目前只读接入 `stations / recipes` 相关公共菜谱数据。
-- 收藏功能仍然使用 `localStorage`。
-- 首页模拟生成任务仍然使用 `localStorage`。
-- AI 解析、登录、云端收藏还未接入。
+- 未登录用户继续使用 `localStorage` 收藏和模拟生成任务。
+- 已登录用户可以使用 Supabase 收藏同步和生成记录同步。
+- AI 解析当前只有接口骨架和 Mock Parser，尚未接入真实 AI。
 
 这样做是为了先保证前端体验稳定，再逐步切换真实后端能力。
 

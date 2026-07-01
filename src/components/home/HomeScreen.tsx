@@ -21,8 +21,9 @@ export function HomeScreen() {
   const router = useRouter();
   const [sourceUrl, setSourceUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateRecipe = (event: FormEvent<HTMLFormElement>) => {
+  const handleGenerateRecipe = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedSourceUrl = sourceUrl.trim();
@@ -33,7 +34,8 @@ export function HomeScreen() {
     }
 
     setErrorMessage("");
-    createMockGenerationTask(trimmedSourceUrl);
+    setIsGenerating(true);
+    await createMockGenerationTask(trimmedSourceUrl);
     router.push("/loading");
   };
 
@@ -92,6 +94,7 @@ export function HomeScreen() {
 
           <button
             type="submit"
+            disabled={isGenerating}
             className="block w-full border-0 bg-transparent p-0 text-left"
           >
             <motion.div

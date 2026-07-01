@@ -1,0 +1,83 @@
+"use client";
+
+import { type FormEvent, useState } from "react";
+
+const defaultRawText = "宫保鸡丁，鸡腿肉切丁，花生，大葱，酸甜微辣。";
+
+export function ParseRecipeTestScreen() {
+  const [rawText, setRawText] = useState(defaultRawText);
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [resultJson, setResultJson] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setResultJson("");
+
+    const response = await fetch("/api/parse-recipe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        rawText,
+        sourceUrl,
+        sourcePlatform: sourceUrl ? "mock" : "manual",
+      }),
+    });
+    const result = await response.json();
+
+    setResultJson(JSON.stringify(result, null, 2));
+    setIsLoading(false);
+  };
+
+  return (
+    <main className="min-h-screen bg-[#fbf8f3] px-5 py-8 text-[#3a2a1d]">
+      <div className="mx-auto max-w-3xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8a5a35]">
+          Dev Tool
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold">Parse Recipe Test</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#75695f]">
+          这个页面只用于开发测试 `/api/parse-recipe`。当前默认使用 Mock
+          Parser，不调用真实 AI，也不写入数据库。
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-7 grid gap-4">
+          <label className="grid gap-2 text-sm font-semibold text-[#5b4737]">
+            rawText
+            <textarea
+              value={rawText}
+              onChange={(event) => setRawText(event.target.value)}
+              rows={7}
+              className="rounded-xl border border-[#ded3c7] bg-white px-4 py-3 text-sm font-normal leading-6 outline-none focus:border-[#8a5a35]"
+            />
+          </label>
+
+          <label className="grid gap-2 text-sm font-semibold text-[#5b4737]">
+            sourceUrl
+            <input
+              value={sourceUrl}
+              onChange={(event) => setSourceUrl(event.target.value)}
+              className="rounded-xl border border-[#ded3c7] bg-white px-4 py-3 text-sm font-normal outline-none focus:border-[#8a5a35]"
+              placeholder="可选，例如 https://example.com/mock-note"
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="h-11 rounded-xl bg-[#8a5a35] px-5 text-sm font-semibold text-[#fffaf2] disabled:opacity-60"
+          >
+            {isLoading ? "解析中" : "测试解析"}
+          </button>
+        </form>
+
+        <pre className="mt-7 min-h-56 overflow-auto rounded-xl border border-[#ded3c7] bg-[#231b16] p-4 text-xs leading-5 text-[#f9efe2]">
+          {resultJson || "返回 JSON 会显示在这里。"}
+        </pre>
+      </div>
+    </main>
+  );
+}

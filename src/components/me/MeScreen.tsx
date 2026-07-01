@@ -28,6 +28,8 @@ import {
 type LocalProfileState = {
   favoriteSlugs: string[];
   generatedRecipeSlug: string | null;
+  generationStatus: string;
+  generationSyncLabel: string;
   recentFavoriteTitle: string;
   recentGeneratedTitle: string;
 };
@@ -35,6 +37,8 @@ type LocalProfileState = {
 const defaultLocalProfileState: LocalProfileState = {
   favoriteSlugs: [],
   generatedRecipeSlug: null,
+  generationStatus: "暂无",
+  generationSyncLabel: "本地演示",
   recentFavoriteTitle: "暂无",
   recentGeneratedTitle: "暂无",
 };
@@ -57,7 +61,7 @@ export function MeScreen() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void (async () => {
-        const task = getLatestGenerationTask();
+        const task = await getLatestGenerationTask();
         const favoriteSlugs = await getFavoriteSlugs();
         const generatedRecipeSlug = task?.generatedRecipeSlug ?? null;
         const favoriteRecipeSlug =
@@ -66,6 +70,9 @@ export function MeScreen() {
         setLocalProfile({
           favoriteSlugs,
           generatedRecipeSlug,
+          generationStatus: task?.status === "completed" ? "已完成" : "暂无",
+          generationSyncLabel:
+            task?.syncMode === "cloud" ? "云端记录已开启" : "本地演示",
           recentFavoriteTitle: await getRecipeTitle(favoriteRecipeSlug),
           recentGeneratedTitle: await getRecipeTitle(generatedRecipeSlug),
         });
@@ -92,6 +99,8 @@ export function MeScreen() {
 
   const favoriteCount = localProfile.favoriteSlugs.length;
   const generatedCount = localProfile.generatedRecipeSlug ? 1 : 0;
+  const generationStatus = localProfile.generationStatus;
+  const generationSyncLabel = localProfile.generationSyncLabel;
   const recentGeneratedTitle = localProfile.recentGeneratedTitle;
   const recentFavoriteTitle = localProfile.recentFavoriteTitle;
   const isLoggedIn = Boolean(authProfile);
@@ -135,12 +144,19 @@ export function MeScreen() {
       {
         title: "最近活动",
         icon: NotebookTabs,
-        rows: [
-          `最近生成：${recentGeneratedTitle}`,
-          `来源：${generatedCount > 0 ? "Local Demo" : "暂无"}`,
-          `状态：${generatedCount > 0 ? "已完成" : "暂无"}`,
-          `最近收藏：${recentFavoriteTitle}`,
-        ],
+        rows: isLoggedIn
+          ? [
+              `最近生成：${recentGeneratedTitle}`,
+              `状态：${generatedCount > 0 ? generationStatus : "暂无"}`,
+              `同步：${generatedCount > 0 ? generationSyncLabel : "暂无"}`,
+              `最近收藏：${recentFavoriteTitle}`,
+            ]
+          : [
+              `最近生成：${recentGeneratedTitle}`,
+              `来源：${generatedCount > 0 ? "本地演示" : "暂无"}`,
+              `状态：${generatedCount > 0 ? generationStatus : "暂无"}`,
+              `最近收藏：${recentFavoriteTitle}`,
+            ],
       },
       {
         title: "当前模式",
@@ -148,7 +164,15 @@ export function MeScreen() {
         rows: ["Recipe Ticket MVP", "Local Demo", "数据仅保存在当前浏览器"],
       },
     ],
-    [favoriteCount, generatedCount, recentFavoriteTitle, recentGeneratedTitle],
+    [
+      favoriteCount,
+      generatedCount,
+      generationStatus,
+      generationSyncLabel,
+      isLoggedIn,
+      recentFavoriteTitle,
+      recentGeneratedTitle,
+    ],
   );
 
   return (

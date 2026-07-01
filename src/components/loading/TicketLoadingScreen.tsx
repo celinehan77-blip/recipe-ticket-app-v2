@@ -20,11 +20,13 @@ export function TicketLoadingScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    getLatestGenerationTask();
+    void getLatestGenerationTask();
 
     const timer = window.setTimeout(() => {
-      completeMockGenerationTask();
-      router.push("/recipe/kung-pao-chicken");
+      void (async () => {
+        await completeMockGenerationTask();
+        router.push("/recipe/kung-pao-chicken");
+      })();
     }, 3000);
 
     return () => window.clearTimeout(timer);
