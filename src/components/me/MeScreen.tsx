@@ -21,6 +21,7 @@ import { signOut } from "@/lib/auth/session";
 import {
   getFavoriteSlugs,
   getLatestGenerationTask,
+  getLatestParsedDraft,
   getRecipeBySlug,
   syncLocalFavoritesToSupabase,
 } from "@/lib/data";
@@ -28,6 +29,8 @@ import {
 type LocalProfileState = {
   favoriteSlugs: string[];
   generatedRecipeSlug: string | null;
+  hasParsedDraft: boolean;
+  generationSourceLabel: string;
   generationStatus: string;
   generationSyncLabel: string;
   recentFavoriteTitle: string;
@@ -37,6 +40,8 @@ type LocalProfileState = {
 const defaultLocalProfileState: LocalProfileState = {
   favoriteSlugs: [],
   generatedRecipeSlug: null,
+  hasParsedDraft: false,
+  generationSourceLabel: "暂无",
   generationStatus: "暂无",
   generationSyncLabel: "本地演示",
   recentFavoriteTitle: "暂无",
@@ -61,20 +66,29 @@ export function MeScreen() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void (async () => {
+        const draft = getLatestParsedDraft();
         const task = await getLatestGenerationTask();
         const favoriteSlugs = await getFavoriteSlugs();
         const generatedRecipeSlug = task?.generatedRecipeSlug ?? null;
         const favoriteRecipeSlug =
           favoriteSlugs[favoriteSlugs.length - 1] ?? null;
+        const hasParsedDraft = Boolean(draft);
 
         setLocalProfile({
           favoriteSlugs,
           generatedRecipeSlug,
+          hasParsedDraft,
+          generationSourceLabel: hasParsedDraft
+            ? "Mock Parser"
+            : task?.syncMode === "cloud"
+              ? "Cloud Task"
+              : "本地演示",
           generationStatus: task?.status === "completed" ? "已完成" : "暂无",
           generationSyncLabel:
             task?.syncMode === "cloud" ? "云端记录已开启" : "本地演示",
           recentFavoriteTitle: await getRecipeTitle(favoriteRecipeSlug),
-          recentGeneratedTitle: await getRecipeTitle(generatedRecipeSlug),
+          recentGeneratedTitle:
+            draft?.titleZh ?? (await getRecipeTitle(generatedRecipeSlug)),
         });
       })();
     }, 0);
@@ -98,7 +112,10 @@ export function MeScreen() {
   }, []);
 
   const favoriteCount = localProfile.favoriteSlugs.length;
-  const generatedCount = localProfile.generatedRecipeSlug ? 1 : 0;
+  const generatedCount =
+    localProfile.generatedRecipeSlug || localProfile.hasParsedDraft ? 1 : 0;
+  const hasParsedDraft = localProfile.hasParsedDraft;
+  const generationSourceLabel = localProfile.generationSourceLabel;
   const generationStatus = localProfile.generationStatus;
   const generationSyncLabel = localProfile.generationSyncLabel;
   const recentGeneratedTitle = localProfile.recentGeneratedTitle;
@@ -147,13 +164,22 @@ export function MeScreen() {
         rows: isLoggedIn
           ? [
               `最近生成：${recentGeneratedTitle}`,
+              `来源：${
+                hasParsedDraft ? "Mock Parser / Cloud Task" : generationSourceLabel
+              }`,
               `状态：${generatedCount > 0 ? generationStatus : "暂无"}`,
               `同步：${generatedCount > 0 ? generationSyncLabel : "暂无"}`,
               `最近收藏：${recentFavoriteTitle}`,
             ]
           : [
               `最近生成：${recentGeneratedTitle}`,
-              `来源：${generatedCount > 0 ? "本地演示" : "暂无"}`,
+              `来源：${
+                generatedCount > 0
+                  ? hasParsedDraft
+                    ? "Mock Parser / Local Draft"
+                    : generationSourceLabel
+                  : "暂无"
+              }`,
               `状态：${generatedCount > 0 ? generationStatus : "暂无"}`,
               `最近收藏：${recentFavoriteTitle}`,
             ],
@@ -167,8 +193,10 @@ export function MeScreen() {
     [
       favoriteCount,
       generatedCount,
+      generationSourceLabel,
       generationStatus,
       generationSyncLabel,
+      hasParsedDraft,
       isLoggedIn,
       recentFavoriteTitle,
       recentGeneratedTitle,

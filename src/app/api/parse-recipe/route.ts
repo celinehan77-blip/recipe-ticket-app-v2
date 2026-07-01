@@ -70,5 +70,18 @@ export async function POST(request: Request) {
     userId: null,
   };
 
-  return Response.json(await parseRecipeInput(input));
+  try {
+    return Response.json(await parseRecipeInput(input));
+  } catch {
+    return Response.json(
+      {
+        ok: false,
+        draft: null,
+        error: "解析服务暂时不可用。",
+        provider: "mock",
+        usedFallback: true,
+      },
+      { status: 500 },
+    );
+  }
 }

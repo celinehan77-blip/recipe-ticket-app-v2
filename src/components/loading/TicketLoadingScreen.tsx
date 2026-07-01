@@ -8,6 +8,7 @@ import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
   completeMockGenerationTask,
+  getLatestParsedDraft,
   getLatestGenerationTask,
 } from "@/lib/data";
 import { loadingSteps } from "@/lib/mockData";
@@ -20,6 +21,7 @@ export function TicketLoadingScreen() {
   const router = useRouter();
 
   useEffect(() => {
+    getLatestParsedDraft();
     void getLatestGenerationTask();
 
     const timer = window.setTimeout(() => {

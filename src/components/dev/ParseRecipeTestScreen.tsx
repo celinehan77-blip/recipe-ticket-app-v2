@@ -41,7 +41,7 @@ export function ParseRecipeTestScreen() {
         <h1 className="mt-2 text-3xl font-semibold">Parse Recipe Test</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#75695f]">
           这个页面只用于开发测试 `/api/parse-recipe`。当前默认使用 Mock
-          Parser，不调用真实 AI，也不写入数据库。
+          Parser，不调用真实 AI，也不写入数据库。首页生成流程现在也会调用同一个接口。
         </p>
 
         <form onSubmit={handleSubmit} className="mt-7 grid gap-4">

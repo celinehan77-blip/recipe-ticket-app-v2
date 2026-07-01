@@ -15,7 +15,81 @@ import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
 import { LeafMark } from "@/components/ui/LeafMark";
-import { createMockGenerationTask } from "@/lib/data";
+import {
+  clearLatestParsedDraft,
+  createMockGenerationTask,
+  isParsedRecipeDraft,
+  saveLatestParsedDraft,
+} from "@/lib/data";
+import type { RecipeParseResult, RecipeParseSourcePlatform } from "@/types/ai";
+
+const PARSE_TIMEOUT_MS = 3500;
+
+function isLikelyUrl(value: string) {
+  const normalizedValue = value.toLowerCase();
+
+  return (
+    /^https?:\/\//.test(normalizedValue) ||
+    normalizedValue.startsWith("www.") ||
+    normalizedValue.includes("xiaohongshu") ||
+    normalizedValue.includes("xhs") ||
+    normalizedValue.includes("douyin") ||
+    normalizedValue.includes(".com") ||
+    normalizedValue.includes(".cn")
+  );
+}
+
+function getSourcePlatform(value: string): RecipeParseSourcePlatform {
+  const normalizedValue = value.toLowerCase();
+
+  if (normalizedValue.includes("xiaohongshu") || normalizedValue.includes("xhs")) {
+    return "xiaohongshu";
+  }
+
+  if (normalizedValue.includes("douyin")) {
+    return "douyin";
+  }
+
+  return isLikelyUrl(value) ? "mock" : "manual";
+}
+
+async function parseRecipeSource(sourceValue: string) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
+  const looksLikeUrl = isLikelyUrl(sourceValue);
+
+  try {
+    const response = await fetch("/api/parse-recipe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sourceUrl: looksLikeUrl ? sourceValue : undefined,
+        rawText: looksLikeUrl ? undefined : sourceValue,
+        sourcePlatform: getSourcePlatform(sourceValue),
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const result = (await response.json()) as RecipeParseResult;
+
+    if (!result.ok || !isParsedRecipeDraft(result.draft)) {
+      return false;
+    }
+
+    saveLatestParsedDraft(result.draft);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
 
 export function HomeScreen() {
   const router = useRouter();
@@ -35,6 +109,12 @@ export function HomeScreen() {
 
     setErrorMessage("");
     setIsGenerating(true);
+    const parseOk = await parseRecipeSource(trimmedSourceUrl);
+
+    if (!parseOk) {
+      clearLatestParsedDraft();
+    }
+
     await createMockGenerationTask(trimmedSourceUrl);
     router.push("/loading");
   };

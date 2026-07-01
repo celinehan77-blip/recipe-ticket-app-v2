@@ -91,3 +91,25 @@ AI_PROVIDER=mock
 - 生成真实 recipe draft。
 - 用户确认后保存到 Supabase。
 - 最后再处理小红书 / 抖音链接解析。
+
+## 8. 首页生成流程接入 parse API
+
+当前首页生成流程已经接入解析接口，但仍然保持原 MVP 的固定结果页：
+
+```text
+首页输入
+-> POST /api/parse-recipe
+-> 保存 latest parsed draft
+-> 创建 generation task
+-> loading
+-> 暂时进入 /recipe/kung-pao-chicken
+```
+
+说明：
+
+- 当前不会创建真实新菜谱。
+- 当前不会写入 Supabase `recipes`。
+- 当前仍然使用 Mock Parser。
+- 当前 `ParsedRecipeDraft` 只保存在当前浏览器的 `localStorage`。
+- 后续阶段会把 draft 转换并保存为真实 recipe。
+- 如果解析接口失败、超时或返回不完整，首页会 fallback 到原有 mock 生成流程。

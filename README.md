@@ -88,7 +88,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ## AI Parsing
 
 - 当前已新增 `/api/parse-recipe`。
+- 首页生成流程已经接入 `/api/parse-recipe`。
 - 当前默认使用 mock parser，返回稳定的结构化菜谱草稿。
+- 当前解析结果只保存为本地 draft。
+- 暂未写入 Supabase `recipes`。
+- 暂未生成真实动态菜谱。
 - 暂未接真实 AI。
 - 暂未接小红书 / 抖音真实解析。
 - AI key 未来只使用服务端环境变量，不使用 `NEXT_PUBLIC_`。
