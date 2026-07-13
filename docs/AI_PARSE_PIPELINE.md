@@ -4,8 +4,9 @@
 
 - 先搭建菜谱解析接口骨架。
 - 当前默认使用 Mock Parser。
+- 当前已接入 DeepSeek Provider 基础版。
 - 当前不接真实小红书 / 抖音解析。
-- 当前不调用 OpenAI、DeepSeek、Qwen 或其他真实 AI Provider。
+- 当前不调用 OpenAI、Qwen。
 - 当前 `ParsedRecipeDraft` 已可以尝试保存为真实 Supabase recipe。
 
 ## 2. 输入
@@ -51,11 +52,16 @@
 ```text
 POST /api/parse-recipe
 -> parseRecipeInput()
--> mockRecipeParser()
+-> 根据 AI_PROVIDER 选择 provider
+-> AI_PROVIDER=deepseek 且 DEEPSEEK_API_KEY 存在时调用 DeepSeek
+-> DeepSeek 成功时返回 ParsedRecipeDraft
+-> DeepSeek 失败、超时、未配置 key 或输出不合法时 fallback 到 mockRecipeParser()
 -> 返回结构化草稿
 ```
 
-当前 Mock Parser 会根据输入文本中的关键词返回稳定草稿：
+当前 DeepSeek Provider 使用官方 OpenAI-compatible Chat Completions 接口。
+
+Mock Parser 会根据输入文本中的关键词返回稳定草稿：
 
 - `宫保`、`鸡丁`、`kung pao`：宫保鸡丁。
 - `牛肉`、`beef`：土豆炖牛肉。
@@ -78,15 +84,30 @@ POST /api/parse-recipe
 当前预留环境变量：
 
 ```env
-DEEPSEEK_API_KEY=
-OPENAI_API_KEY=
-QWEN_API_KEY=
 AI_PROVIDER=mock
+
+DEEPSEEK_API_KEY=
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-flash
+
+OPENAI_API_KEY=
+OPENAI_MODEL=
+
+QWEN_API_KEY=
+QWEN_MODEL=
 ```
+
+说明：
+
+- 默认 `AI_PROVIDER=mock`，不需要真实 AI key。
+- 如果设置 `AI_PROVIDER=deepseek`，并填写 `DEEPSEEK_API_KEY`，服务端会尝试调用 DeepSeek。
+- `DEEPSEEK_BASE_URL` 和 `DEEPSEEK_MODEL` 可根据 DeepSeek 官方文档调整。
+- 所有 AI key 都是服务端密钥，不能使用 `NEXT_PUBLIC_` 前缀。
+- Netlify 部署时需要在 Netlify Environment Variables 中添加这些服务端环境变量。
 
 ## 7. 后续阶段
 
-- 接入真实 AI Provider。
+- 完善真实 AI Provider 质量和稳定性。
 - 首页生成流程调用 parse API。
 - 生成真实 recipe draft。
 - 用户确认后保存到 Supabase。
@@ -110,10 +131,11 @@ AI_PROVIDER=mock
 说明：
 
 - 当前可以创建真实新菜谱，但只基于 Mock Parser 的 draft。
+- 如果 `AI_PROVIDER=deepseek` 且 key 配置正确，可以基于 DeepSeek draft 创建真实菜谱。
 - 当前会尝试写入 Supabase `recipes / ingredients / recipe_steps`。
-- 当前仍然使用 Mock Parser。
-- 当前仍然不会调用 DeepSeek / OpenAI / Qwen。
+- 当前默认仍然使用 Mock Parser。
+- 当前不会调用 OpenAI / Qwen。
 - 当前仍然不会解析真实小红书 / 抖音页面。
 - 当前 `ParsedRecipeDraft` 仍会保存在当前浏览器的 `localStorage`，作为 fallback。
-- 如果解析接口失败、超时、返回不完整，或 Supabase 保存失败，首页会 fallback 到原有 mock 生成流程。
-- 后续阶段会把 provider 从 mock 替换为真实 AI，再复用同一套保存流程。
+- 如果 DeepSeek 调用失败、超时、返回不完整，或 Supabase 保存失败，首页会 fallback 到原有 mock 生成流程。
+- 后续阶段会继续复用同一套保存流程，并增强真实 AI 输出质量。

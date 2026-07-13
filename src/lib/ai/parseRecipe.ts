@@ -1,4 +1,5 @@
 import { mockRecipeParser } from "@/lib/ai/mockRecipeParser";
+import { parseRecipeWithDeepSeek } from "@/lib/ai/providers/deepseek";
 import type {
   RecipeParseInput,
   RecipeParseProvider,
@@ -25,12 +26,33 @@ export async function parseRecipeInput(
 ): Promise<RecipeParseResult> {
   const provider = getConfiguredProvider();
 
-  if (provider !== "mock") {
+  if (provider === "deepseek") {
+    const deepSeekResult = await parseRecipeWithDeepSeek(input);
+
+    if (deepSeekResult.ok && deepSeekResult.draft) {
+      return {
+        ...deepSeekResult,
+        provider: "deepseek",
+        usedFallback: false,
+      };
+    }
+
     const fallbackResult = await mockRecipeParser(input);
 
     return {
       ...fallbackResult,
-      provider,
+      error: deepSeekResult.error,
+      provider: "mock",
+      usedFallback: true,
+    };
+  }
+
+  if (provider === "openai" || provider === "qwen") {
+    const fallbackResult = await mockRecipeParser(input);
+
+    return {
+      ...fallbackResult,
+      provider: "mock",
       usedFallback: true,
     };
   }

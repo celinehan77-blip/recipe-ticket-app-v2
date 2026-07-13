@@ -1,18 +1,21 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import type { RecipeParseResult } from "@/types/ai";
 
 const defaultRawText = "宫保鸡丁，鸡腿肉切丁，花生，大葱，酸甜微辣。";
 
 export function ParseRecipeTestScreen() {
   const [rawText, setRawText] = useState(defaultRawText);
   const [sourceUrl, setSourceUrl] = useState("");
+  const [result, setResult] = useState<RecipeParseResult | null>(null);
   const [resultJson, setResultJson] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
+    setResult(null);
     setResultJson("");
 
     const response = await fetch("/api/parse-recipe", {
@@ -26,9 +29,10 @@ export function ParseRecipeTestScreen() {
         sourcePlatform: sourceUrl ? "mock" : "manual",
       }),
     });
-    const result = await response.json();
+    const nextResult = (await response.json()) as RecipeParseResult;
 
-    setResultJson(JSON.stringify(result, null, 2));
+    setResult(nextResult);
+    setResultJson(JSON.stringify(nextResult.draft ?? nextResult, null, 2));
     setIsLoading(false);
   };
 
@@ -40,8 +44,8 @@ export function ParseRecipeTestScreen() {
         </p>
         <h1 className="mt-2 text-3xl font-semibold">Parse Recipe Test</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[#75695f]">
-          这个页面只用于开发测试 `/api/parse-recipe`。当前默认使用 Mock
-          Parser，不调用真实 AI，也不写入数据库。首页生成流程现在也会调用同一个接口。
+          这个页面只用于开发测试 `/api/parse-recipe`。当前 provider 由服务端
+          `AI_PROVIDER` 决定，默认使用 Mock Parser。首页生成流程也会调用同一个接口。
         </p>
 
         <form onSubmit={handleSubmit} className="mt-7 grid gap-4">
@@ -74,8 +78,31 @@ export function ParseRecipeTestScreen() {
           </button>
         </form>
 
+        {result ? (
+          <section className="mt-6 grid gap-3 rounded-xl border border-[#ded3c7] bg-white p-4 text-sm text-[#5b4737]">
+            <p>
+              <span className="font-semibold">provider：</span>
+              {result.provider}
+            </p>
+            <p>
+              <span className="font-semibold">usedFallback：</span>
+              {String(result.usedFallback)}
+            </p>
+            <p>
+              <span className="font-semibold">error：</span>
+              {result.error || "无"}
+            </p>
+            <p>
+              <span className="font-semibold">warnings：</span>
+              {result.draft?.warnings?.length
+                ? result.draft.warnings.join(" / ")
+                : "无"}
+            </p>
+          </section>
+        ) : null}
+
         <pre className="mt-7 min-h-56 overflow-auto rounded-xl border border-[#ded3c7] bg-[#231b16] p-4 text-xs leading-5 text-[#f9efe2]">
-          {resultJson || "返回 JSON 会显示在这里。"}
+          {resultJson || "draft JSON 会显示在这里。"}
         </pre>
       </div>
     </main>

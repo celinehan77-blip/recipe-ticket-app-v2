@@ -81,6 +81,23 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的 Supabase anon public key
 - 不要把真实 URL 和 key 写进 GitHub。
 - 不要把真实 URL 和 key 写进 README 或文档。
 
+如果要在线上启用 DeepSeek 解析，还需要继续添加服务端 AI 环境变量：
+
+```env
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+注意：
+
+- `DEEPSEEK_API_KEY` 是服务端密钥，不要使用 `NEXT_PUBLIC_`。
+- 不要把真实 DeepSeek key 写进 GitHub、README 或文档。
+- `DEEPSEEK_BASE_URL` 和 `DEEPSEEK_MODEL` 可根据 DeepSeek 官方文档调整。
+- 如果不配置这些变量，线上仍然使用 mock parser。
+- 如果真实 AI 调用失败，接口会 fallback 到 mock parser。
+
 ### Step 6：添加环境变量后重新部署
 
 环境变量添加或修改后，必须重新部署。

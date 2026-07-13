@@ -29,7 +29,7 @@ import type {
   RecipeParseSourcePlatform,
 } from "@/types/ai";
 
-const PARSE_TIMEOUT_MS = 3500;
+const PARSE_TIMEOUT_MS = 28000;
 
 function isLikelyUrl(value: string) {
   const normalizedValue = value.toLowerCase();
