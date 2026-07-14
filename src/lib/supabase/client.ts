@@ -28,6 +28,13 @@ export function getSupabaseClient(): SupabaseClient | null {
   cachedClient = createClient(
     getSupabaseUrl(),
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+    {
+      auth: {
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        persistSession: true,
+      },
+    },
   );
 
   return cachedClient;
