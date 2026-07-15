@@ -5,8 +5,10 @@ import type {
 } from "@/types/ai";
 import type { IngredientGroup } from "@/types";
 
-function asString(value: unknown, fallback = "") {
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+function asString(value: unknown, fallback = "", maxLength = 240) {
+  return typeof value === "string" && value.trim()
+    ? value.trim().slice(0, maxLength)
+    : fallback;
 }
 
 function asStringArray(value: unknown): string[] {
@@ -25,7 +27,7 @@ function asNumber(value: unknown, fallback: number) {
   }
 
   if (typeof value === "string") {
-    const parsed = Number.parseInt(value, 10);
+    const parsed = Number(value);
 
     if (Number.isFinite(parsed)) {
       return parsed;
@@ -33,6 +35,31 @@ function asNumber(value: unknown, fallback: number) {
   }
 
   return fallback;
+}
+
+function normalizeAmount(value: unknown) {
+  const amount = asString(value, "适量", 48)
+    .replace(/\s+/g, " ")
+    .replace(
+      /^(\d+(?:\.\d+)?|\d+\/\d+)\s*(克|千克|公斤|毫升|升|个|只|颗|粒|片|块|根|把|汤匙|茶匙|勺|杯|滴)$/,
+      "$1 $2",
+    );
+
+  return amount || "适量";
+}
+
+function normalizeHeat(value: unknown, context: string) {
+  const heat = asString(value, "", 48);
+
+  if (heat) {
+    return heat;
+  }
+
+  const inferred = context.match(
+    /(水开后(?:转)?(?:小火|中火|大火)|中小火|中大火|小火|中火|大火|\d{2,3}\s*(?:°C|℃|度))/,
+  );
+
+  return inferred?.[1] ?? "未说明";
 }
 
 function asDifficulty(value: unknown) {
@@ -64,7 +91,7 @@ function normalizeIngredient(
 
   return {
     name,
-    amount: asString(item.amount, "适量"),
+    amount: normalizeAmount(item.amount),
     group: asIngredientGroup(item.group, fallbackGroup),
     note: asString(item.note),
   };
@@ -83,12 +110,34 @@ function normalizeStep(value: unknown): ParsedStep | null {
     return null;
   }
 
+  const normalizedDescription = description || title;
+  const normalizedTips = asString(item.tips, "", 240);
+
   return {
     title: title || "继续烹饪",
-    description: description || title,
-    duration: asString(item.duration, "约 5 分钟"),
-    tips: asString(item.tips),
+    description: normalizedDescription,
+    duration: asString(item.duration, "未说明", 48),
+    heat: normalizeHeat(
+      "heat" in item ? item.heat : undefined,
+      `${normalizedDescription} ${normalizedTips}`,
+    ),
+    tips: normalizedTips,
   };
+}
+
+function deduplicateByName<T extends { name: string }>(items: T[]) {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = item.name.toLocaleLowerCase();
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
 }
 
 function normalizeIngredients(value: unknown, fallbackGroup: IngredientGroup) {
@@ -121,7 +170,15 @@ export function validateParsedRecipeDraft(
   const draft = data as Partial<ParsedRecipeDraft>;
   const titleZh = asString(draft.titleZh);
   const mainIngredient = asString(draft.mainIngredient);
-  const ingredients = normalizeIngredients(draft.ingredients, "side").map(
+  const normalizedIngredients = normalizeIngredients(draft.ingredients, "side");
+  const misplacedSeasonings = normalizedIngredients.filter(
+    (ingredient) => ingredient.group === "seasoning",
+  );
+  const ingredients = deduplicateByName(
+    normalizedIngredients.filter(
+      (ingredient) => ingredient.group !== "seasoning",
+    ),
+  ).slice(0, 30).map(
     (ingredient, index) => ({
       ...ingredient,
       group:
@@ -132,13 +189,14 @@ export function validateParsedRecipeDraft(
             : ingredient.group,
     }),
   );
-  const seasonings = normalizeIngredients(draft.seasonings, "seasoning").map(
-    (ingredient) => ({
+  const seasonings = deduplicateByName([
+    ...normalizeIngredients(draft.seasonings, "seasoning"),
+    ...misplacedSeasonings,
+  ]).slice(0, 30).map((ingredient) => ({
       ...ingredient,
       group: "seasoning" as const,
-    }),
-  );
-  const steps = normalizeSteps(draft.steps);
+    }));
+  const steps = normalizeSteps(draft.steps).slice(0, 20);
 
   if (!titleZh || !mainIngredient || ingredients.length === 0 || steps.length === 0) {
     return null;
@@ -154,19 +212,29 @@ export function validateParsedRecipeDraft(
     warnings.push("AI 输出的步骤较少，已按可用信息保留。");
   }
 
+  if (seasonings.length === 0) {
+    warnings.push("AI 输出未识别到调料，请根据原始内容复核。");
+  }
+
+  const missingHeatCount = steps.filter((step) => step.heat === "未说明").length;
+
+  if (missingHeatCount > 0) {
+    warnings.push(`有 ${missingHeatCount} 个步骤未识别到火候。`);
+  }
+
   return {
     titleZh,
     titleEn: asString(draft.titleEn, titleZh),
     description: asString(draft.description, `${titleZh} 的结构化菜谱草稿。`),
-    timeMinutes: Math.max(1, asNumber(draft.timeMinutes, 30)),
+    timeMinutes: Math.min(1440, Math.max(1, asNumber(draft.timeMinutes, 30))),
     difficulty: asDifficulty(draft.difficulty),
     flavor: asString(draft.flavor, "家常"),
     mainIngredient,
-    tags: asStringArray(draft.tags).slice(0, 6),
+    tags: Array.from(new Set(asStringArray(draft.tags))).slice(0, 6),
     ingredients,
     seasonings,
     steps,
     confidence: Math.min(1, Math.max(0, asNumber(draft.confidence, 0.72))),
-    warnings: Array.from(new Set(warnings)),
+    warnings: Array.from(new Set(warnings)).slice(0, 12),
   };
 }

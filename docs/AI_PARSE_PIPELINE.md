@@ -4,7 +4,7 @@
 
 - 先搭建菜谱解析接口骨架。
 - 当前默认使用 Mock Parser。
-- 当前已接入 DeepSeek Provider 基础版。
+- 当前已接入 DeepSeek Provider 稳定性优化版。
 - 当前不接真实小红书 / 抖音解析。
 - 当前不调用 OpenAI、Qwen。
 - 当前 `ParsedRecipeDraft` 已可以尝试保存为真实 Supabase recipe。
@@ -28,6 +28,12 @@
 - `sourcePlatform`：可选，支持 `xiaohongshu`、`douyin`、`manual`、`mock`。
 
 `sourceUrl` 和 `rawText` 不能同时为空。
+
+输入边界：
+
+- `sourceUrl` 最多 2048 个字符。
+- `rawText` 最多 30000 个字符。
+- 超限请求会直接拒绝，不会进入付费 Provider。
 
 ## 3. 输出
 
@@ -54,6 +60,8 @@ POST /api/parse-recipe
 -> parseRecipeInput()
 -> 根据 AI_PROVIDER 选择 provider
 -> AI_PROVIDER=deepseek 且 DEEPSEEK_API_KEY 存在时调用 DeepSeek
+-> 使用 JSON Output + 非思考模式，记录 finish reason 和 Token usage
+-> 对 408 / 429 / 5xx、网络失败、超时、空内容、截断和非法 JSON 做受控重试
 -> DeepSeek 成功时返回 ParsedRecipeDraft
 -> DeepSeek 失败、超时、未配置 key 或输出不合法时 fallback 到 mockRecipeParser()
 -> 返回结构化草稿
@@ -89,6 +97,9 @@ AI_PROVIDER=mock
 DEEPSEEK_API_KEY=
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
+DEEPSEEK_TIMEOUT_MS=30000
+DEEPSEEK_MAX_RETRIES=1
+DEEPSEEK_MAX_TOKENS=3000
 
 OPENAI_API_KEY=
 OPENAI_MODEL=
@@ -102,12 +113,15 @@ QWEN_MODEL=
 - 默认 `AI_PROVIDER=mock`，不需要真实 AI key。
 - 如果设置 `AI_PROVIDER=deepseek`，并填写 `DEEPSEEK_API_KEY`，服务端会尝试调用 DeepSeek。
 - `DEEPSEEK_BASE_URL` 和 `DEEPSEEK_MODEL` 可根据 DeepSeek 官方文档调整。
+- `DEEPSEEK_TIMEOUT_MS` 限制单次请求等待时间，代码会约束在 5–60 秒。
+- `DEEPSEEK_MAX_RETRIES` 默认 1，代码会约束在 0–2；重试可能增加费用。
+- `DEEPSEEK_MAX_TOKENS` 默认 3000，代码会约束在 1000–8000。
 - 所有 AI key 都是服务端密钥，不能使用 `NEXT_PUBLIC_` 前缀。
 - Netlify 部署时需要在 Netlify Environment Variables 中添加这些服务端环境变量。
 
 ## 7. 后续阶段
 
-- 完善真实 AI Provider 质量和稳定性。
+- 使用真实样本验证 DeepSeek 质量、Token 成本和响应时间。
 - 首页生成流程调用 parse API。
 - 生成真实 recipe draft。
 - 用户确认后保存到 Supabase。
@@ -130,7 +144,7 @@ QWEN_MODEL=
 
 说明：
 
-- 当前可以创建真实新菜谱，但只基于 Mock Parser 的 draft。
+- 默认 Mock Parser 可以创建演示菜谱；配置 DeepSeek 后可以基于真实 AI draft 创建菜谱。
 - 如果 `AI_PROVIDER=deepseek` 且 key 配置正确，可以基于 DeepSeek draft 创建真实菜谱。
 - 当前会尝试写入 Supabase `recipes / ingredients / recipe_steps`。
 - 当前默认仍然使用 Mock Parser。
@@ -139,3 +153,18 @@ QWEN_MODEL=
 - 当前 `ParsedRecipeDraft` 仍会保存在当前浏览器的 `localStorage`，作为 fallback。
 - 如果 DeepSeek 调用失败、超时、返回不完整，或 Supabase 保存失败，首页会 fallback 到原有 mock 生成流程。
 - 后续阶段会继续复用同一套保存流程，并增强真实 AI 输出质量。
+
+## 9. 稳定性与诊断
+
+`RecipeParseResult.diagnostics` 在尝试真实 Provider 时包含：
+
+- `attemptedProvider`：实际尝试的 Provider，即使最终 fallback 到 Mock 也会保留。
+- `model`：请求或响应使用的模型名。
+- `durationMs`：从开始尝试到返回结果的总耗时。
+- `attemptCount`：实际调用次数。
+- `finishReason`：模型停止输出的原因；`length` 会被视为截断失败。
+- `usage`：prompt、completion 和 total Token 数，用于成本观察。
+
+DeepSeek 官方说明 JSON Output 仍可能偶发返回空内容，因此当前实现会在配置范围内重试，然后安全 fallback。Prompt 会把用户内容标记为数据，忽略其中改变角色、泄露提示词或输出非菜谱内容的指令。
+
+开发页 `/dev/parse-test` 会展示上述诊断信息。生产首页只消费稳定的 `draft / provider / usedFallback / error` 合约，不暴露 Secret。

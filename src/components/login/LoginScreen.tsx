@@ -1,11 +1,17 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Send, ShieldCheck } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
+import {
+  canSendLoginEmail,
+  getLoginCooldownMessage,
+  getLoginSendButtonLabel,
+  LOGIN_EMAIL_COOLDOWN_SECONDS,
+} from "@/lib/auth/loginRateLimit";
 import { signInWithEmail } from "@/lib/auth/session";
 
 function isValidEmail(email: string) {
@@ -17,9 +23,28 @@ export function LoginScreen() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [isSending, setIsSending] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const sendLockRef = useRef(false);
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setCooldownSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [cooldownSeconds]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (
+      sendLockRef.current ||
+      !canSendLoginEmail({ isSending, cooldownSeconds })
+    ) {
+      return;
+    }
 
     const trimmedEmail = email.trim();
 
@@ -35,15 +60,30 @@ export function LoginScreen() {
       return;
     }
 
+    sendLockRef.current = true;
     setIsSending(true);
     setMessage("");
 
-    const result = await signInWithEmail(trimmedEmail);
+    const result = await signInWithEmail(trimmedEmail).catch(() => ({
+      ok: false,
+      message: "登录链接发送失败，请稍后再试。",
+    }));
 
+    sendLockRef.current = false;
     setIsSending(false);
     setMessageType(result.ok ? "success" : "error");
-    setMessage(result.message);
+
+    if (result.ok) {
+      setCooldownSeconds(LOGIN_EMAIL_COOLDOWN_SECONDS);
+      setMessage(getLoginCooldownMessage(LOGIN_EMAIL_COOLDOWN_SECONDS));
+    } else {
+      setMessage(result.message);
+    }
   };
+
+  const sendState = { isSending, cooldownSeconds };
+  const isSendDisabled = !canSendLoginEmail(sendState);
+  const buttonLabel = getLoginSendButtonLabel(sendState);
 
   return (
     <IphoneFrame>
@@ -104,11 +144,11 @@ export function LoginScreen() {
 
             <button
               type="submit"
-              disabled={isSending}
+              disabled={isSendDisabled}
               className="mt-4 flex h-[54px] w-full items-center justify-center gap-2 rounded-[20px] bg-[#8a5a35] text-[16px] font-semibold tracking-[0.05em] text-[#fffaf2] shadow-[0_14px_28px_rgba(104,61,24,0.22)] disabled:opacity-60"
             >
               <Send size={17} />
-              {isSending ? "发送中" : "发送登录链接"}
+              {buttonLabel}
             </button>
 
             {message ? (

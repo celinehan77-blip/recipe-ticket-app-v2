@@ -1,0 +1,61 @@
+# Changelog
+
+本文件记录 Recipe Ticket / 日食笔记的重要产品、代码和项目治理变化。
+
+## 2026-07-14
+
+### AI Software Company 工作流
+
+- 新增 `MASTER_PLAN.md`，作为产品使命、核心体验、设计语言和 MVP 边界的战略最高层。
+- 新增 Architect、QA、Reviewer、Release Manager、Knowledge Manager 和 Product Analyst 职责文档。
+- 将团队层级更新为：产品负责人 → MASTER_PLAN → ChatGPT（CTO + Product Director）→ Codex（Engineering Manager）。
+- 固化十步开发闭环、Working Release、Stable Release、回滚记录和权限门槛。
+
+### DeepSeek 真实解析优化
+
+- 新增可配置的 DeepSeek 超时、受控重试和最大输出 Token。
+- 使用 DeepSeek V4 非思考 JSON 模式，并识别 `finish_reason=length` 输出截断。
+- 新增 Provider、模型、耗时、尝试次数、finish reason 和 Token usage 诊断。
+- fallback 到 Mock 后继续保留真实 Provider 的失败诊断。
+- 新增 `sourceUrl` 和 `rawText` 输入长度保护及 Prompt 注入隔离。
+- `/dev/parse-test` 增加诊断展示和网络错误状态。
+
+### 验证
+
+- `npm run lint`：通过。
+- `npm run build`：通过，包含 TypeScript 检查与应用路由构建。
+- `/api/parse-recipe`：Mock 正常输入 200、空输入 400、非法 JSON 400、超长输入 413。
+- DeepSeek 不可达模拟：成功 fallback 到 Mock，并保留 diagnostics。
+- `/dev/parse-test`：浏览器 Preview 通过。
+- Netlify Production `/api/parse-recipe`：HTTP 200，`provider=deepseek`，`usedFallback=false`。
+- Netlify Production `/dev/parse-test`：HTTP 200，页面可用于同一接口的开发验证。
+- Secret Scan：Netlify 部署记录无 Secret 命中；本地扫描仅发现空值示例、变量名和测试用 `test-key`。
+
+### 解析样本测试体系
+
+- 新增解析质量评分工具，覆盖食材、调料、步骤、火候、时间、标签、描述和置信度。
+- 新增 16 条本地解析样本，覆盖详细文本、短文本、噪声文本、口语输入、缺失信息、重复步骤和 Prompt 注入。
+- 新增 `npm run test:ai`，用于运行 DeepSeek Provider fallback、Prompt、结构校验和样本质量测试。
+- 当前 `npm run test:ai`：23 项通过，不调用真实 DeepSeek API。
+
+## 2026-07-13
+
+### 新增
+
+- 新增 `docs/AI_PROJECT_DIRECTOR.md`，建立项目级永久 AI Project Director 工作流。
+- 新增 `docs/ROADMAP.md`，汇总已完成阶段、当前阶段、验收标准和人工依赖。
+- 新增 `docs/CHANGELOG.md`，用于持续记录每轮交付。
+
+### 更新
+
+- 在 `README.md` 增加开发前强制阅读入口。
+- 在根目录 `AGENTS.md` 增加 Project Director 强制启动规则，使支持仓库指令的 AI 工具进入项目后先读取工作流。
+- 修正 `README.md` 中与当前 Supabase 和真实 AI 基础版状态不一致的旧描述。
+- 根据产品负责人决策，将当前项目阶段更新为 `Phase 12`。
+- 在 `docs/ROADMAP.md` 建立 10 项有序 `Next Queue`，首项为 DeepSeek 真实解析优化，末项为正式上线。
+- 在 Project Director 工作流中加入 ROADMAP 队列自动维护规则；完成项保留记录并自动推进下一项，AI 不得擅自重排。
+
+### 验证
+
+- 本轮仅修改 Markdown 文档；Build、Lint、TypeScript、API、Database 和 Preview 不适用。
+- 已检查文档路径、相互链接、工作流边界和 Git diff。

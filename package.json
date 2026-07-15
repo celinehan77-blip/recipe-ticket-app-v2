@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npm run test:ai && npm run test:auth",
+    "test:ai": "tsx --test --test-concurrency=1 tests/ai/*.test.ts",
+    "test:auth": "tsx --test --test-concurrency=1 tests/auth/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
@@ -24,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5"
   }
 }

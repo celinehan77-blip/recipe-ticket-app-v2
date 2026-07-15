@@ -1,0 +1,68 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # GitHub Actions cron uses UTC. Runs at 03:17 on every third day-of-month.
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-supabase-alive
+  cancel-in-progress: false
+
+jobs:
+  heartbeat:
+    name: Query Supabase database
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Validate required secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SUPABASE_URL}" || -z "${SUPABASE_ANON_KEY}" ]]; then
+            echo "::error::Missing SUPABASE_URL or SUPABASE_ANON_KEY in GitHub Actions secrets."
+            exit 1
+          fi
+
+      - name: Send database heartbeat
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          http_code="$(
+            curl --silent --show-error --fail-with-body \
+              --retry 3 \
+              --retry-delay 10 \
+              --retry-max-time 180 \
+              --retry-all-errors \
+              --connect-timeout 15 \
+              --max-time 60 \
+              --output /dev/null \
+              --write-out "%{http_code}" \
+              --get \
+              --header "apikey: ${SUPABASE_ANON_KEY}" \
+              --header "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+              --header "Accept: application/json" \
+              --data-urlencode "select=id" \
+              --data-urlencode "limit=1" \
+              "${SUPABASE_URL%/}/rest/v1/stations"
+          )"
+
+          if [[ ! "${http_code}" =~ ^2[0-9]{2}$ ]]; then
+            echo "::error::Supabase database heartbeat returned HTTP ${http_code}."
+            exit 1
+          fi
+
+          echo "Supabase database heartbeat succeeded with HTTP ${http_code}."

@@ -18,22 +18,37 @@ export function ParseRecipeTestScreen() {
     setResult(null);
     setResultJson("");
 
-    const response = await fetch("/api/parse-recipe", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        rawText,
-        sourceUrl,
-        sourcePlatform: sourceUrl ? "mock" : "manual",
-      }),
-    });
-    const nextResult = (await response.json()) as RecipeParseResult;
+    try {
+      const response = await fetch("/api/parse-recipe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          rawText,
+          sourceUrl,
+          sourcePlatform: sourceUrl ? "mock" : "manual",
+        }),
+      });
+      const nextResult = (await response.json()) as RecipeParseResult;
 
-    setResult(nextResult);
-    setResultJson(JSON.stringify(nextResult.draft ?? nextResult, null, 2));
-    setIsLoading(false);
+      setResult(nextResult);
+      setResultJson(JSON.stringify(nextResult.draft ?? nextResult, null, 2));
+    } catch {
+      const failedResult: RecipeParseResult = {
+        ok: false,
+        draft: null,
+        error: "无法连接解析接口。",
+        errorCode: "PROVIDER_UNAVAILABLE",
+        provider: "mock",
+        usedFallback: true,
+      };
+
+      setResult(failedResult);
+      setResultJson(JSON.stringify(failedResult, null, 2));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -93,9 +108,39 @@ export function ParseRecipeTestScreen() {
               {result.error || "无"}
             </p>
             <p>
+              <span className="font-semibold">errorCode：</span>
+              {result.errorCode || "无"}
+            </p>
+            <p>
               <span className="font-semibold">warnings：</span>
               {result.draft?.warnings?.length
                 ? result.draft.warnings.join(" / ")
+                : "无"}
+            </p>
+            <p>
+              <span className="font-semibold">attemptedProvider：</span>
+              {result.diagnostics?.attemptedProvider ?? result.provider}
+            </p>
+            <p>
+              <span className="font-semibold">model：</span>
+              {result.diagnostics?.model ?? "无"}
+            </p>
+            <p>
+              <span className="font-semibold">duration：</span>
+              {result.diagnostics
+                ? `${result.diagnostics.durationMs} ms`
+                : "无"}
+            </p>
+            <p>
+              <span className="font-semibold">attempts / finishReason：</span>
+              {result.diagnostics
+                ? `${result.diagnostics.attemptCount} / ${result.diagnostics.finishReason ?? "无"}`
+                : "无"}
+            </p>
+            <p>
+              <span className="font-semibold">token usage：</span>
+              {result.diagnostics?.usage
+                ? `${result.diagnostics.usage.promptTokens} + ${result.diagnostics.usage.completionTokens} = ${result.diagnostics.usage.totalTokens}`
                 : "无"}
             </p>
           </section>

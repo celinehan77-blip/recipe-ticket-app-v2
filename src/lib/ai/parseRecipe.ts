@@ -32,6 +32,7 @@ export async function parseRecipeInput(
     if (deepSeekResult.ok && deepSeekResult.draft) {
       return {
         ...deepSeekResult,
+        model: deepSeekResult.diagnostics?.model ?? null,
         provider: "deepseek",
         usedFallback: false,
       };
@@ -42,8 +43,11 @@ export async function parseRecipeInput(
     return {
       ...fallbackResult,
       error: deepSeekResult.error,
+      errorCode: deepSeekResult.errorCode,
+      model: deepSeekResult.diagnostics?.model ?? null,
       provider: "mock",
       usedFallback: true,
+      diagnostics: deepSeekResult.diagnostics,
     };
   }
 
@@ -52,6 +56,8 @@ export async function parseRecipeInput(
 
     return {
       ...fallbackResult,
+      error: `${provider} provider is not implemented.`,
+      errorCode: "PROVIDER_UNAVAILABLE",
       provider: "mock",
       usedFallback: true,
     };

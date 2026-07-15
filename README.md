@@ -2,7 +2,13 @@
 
 一个将小红书 / 抖音美食视频链接整理成干净菜谱，并支持收藏、分类浏览和风味地图的高质感菜谱收藏 App MVP。
 
-当前项目仍处于 MVP 阶段，重点是验证核心体验：输入链接、模拟生成菜谱、浏览风味地图、收藏菜谱，并为后续接入真实 AI 解析和云端数据做准备。
+> **开发前必读：所有开发开始前必须先阅读 [`docs/AI_PROJECT_DIRECTOR.md`](docs/AI_PROJECT_DIRECTOR.md)，再继续规划、编码、调试或部署。**
+>
+> 项目阶段与变更记录：[`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/CHANGELOG.md`](docs/CHANGELOG.md)
+>
+> 产品战略最高层：[`MASTER_PLAN.md`](MASTER_PLAN.md)
+
+当前项目处于 **Phase 12**，已经具备游客本地 fallback、Supabase 基础能力和服务端 DeepSeek 解析基础版。当前待开发队列已进入解析样本测试体系，完整顺序以 ROADMAP 为准。
 
 ## 当前功能
 
@@ -74,6 +80,9 @@ AI_PROVIDER=deepseek
 DEEPSEEK_API_KEY=
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
+DEEPSEEK_TIMEOUT_MS=30000
+DEEPSEEK_MAX_RETRIES=1
+DEEPSEEK_MAX_TOKENS=3000
 ```
 
 说明：
@@ -105,9 +114,12 @@ DEEPSEEK_MODEL=deepseek-v4-flash
 - 当前已新增 `/api/parse-recipe`。
 - 首页生成流程已经接入 `/api/parse-recipe`。
 - 当前默认使用 mock parser，返回稳定的结构化菜谱草稿。
-- 当前已接入 DeepSeek Provider 基础版。
+- 当前已接入 DeepSeek Provider，并已完成 Netlify Production 基础验收。
+- DeepSeek 请求支持可配置超时、受控重试和 JSON 输出截断检测。
+- 开发诊断会显示 attempted provider、模型、耗时、尝试次数、finish reason 和 Token 用量。
 - 设置 `AI_PROVIDER=deepseek` 且填写 `DEEPSEEK_API_KEY` 后，服务端会尝试调用 DeepSeek。
 - DeepSeek 失败、超时、未配置 key 或输出不合法时，会 fallback 到 mock parser。
+- `npm run test:ai` 会运行本地 Provider fallback、Prompt、校验和解析样本质量测试，不调用真实 DeepSeek。
 - 当前解析结果会先保存为本地 draft。
 - 已登录用户会尝试把 draft 保存为 Supabase `recipes / ingredients / recipe_steps`。
 - 保存成功后 loading 会跳转到新生成的 `/recipe/[slug]`。
@@ -122,7 +134,7 @@ DEEPSEEK_MODEL=deepseek-v4-flash
 - Supabase 目前只读接入 `stations / recipes` 相关公共菜谱数据。
 - 未登录用户继续使用 `localStorage` 收藏和模拟生成任务。
 - 已登录用户可以使用 Supabase 收藏同步和生成记录同步。
-- AI 解析默认仍使用 Mock Parser；配置 DeepSeek 服务端环境变量后可尝试真实 AI 解析。
+- AI 解析默认仍保留 Mock Parser fallback；配置 DeepSeek 服务端环境变量后可使用真实 AI 解析。
 
 这样做是为了先保证前端体验稳定，再逐步切换真实后端能力。
 
@@ -155,19 +167,23 @@ AI_PROVIDER=mock
 DEEPSEEK_API_KEY=
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
+DEEPSEEK_TIMEOUT_MS=30000
+DEEPSEEK_MAX_RETRIES=1
+DEEPSEEK_MAX_TOKENS=3000
 ```
 
 说明：
 
 - Supabase 目前只读接入 `stations / recipes` 相关公共菜谱数据。
 - 没有配置 Supabase 环境变量时，项目会 fallback 到 `mockData`。
-- 收藏与生成任务仍然使用 `localStorage`。
+- 未登录用户的收藏与生成任务继续使用 `localStorage`；已登录用户会尝试同步到 Supabase。
 - 不要把真实 Supabase URL 或 anon key 写进 GitHub。
 - 不要把真实 DeepSeek key 写进 GitHub，也不要使用 `NEXT_PUBLIC_`。
 - Netlify 不会自动读取本地 `.env.local`，线上环境变量需要在 Netlify 后台单独配置。
 - 环境变量更新后需要重新部署。
 - 如果 Supabase 不可用，线上页面会继续 fallback 到 `mockData`。
 - 如果 DeepSeek 不配置或调用失败，线上解析会 fallback 到 mock parser。
+- `DEEPSEEK_MAX_RETRIES=1` 表示失败后最多额外尝试一次；增加重试会增加耗时和可能的 API 费用。
 
 线上 Supabase 诊断接口：
 
@@ -181,12 +197,22 @@ DEEPSEEK_MODEL=deepseek-v4-flash
 
 ## 后续计划
 
-- 登录 / Auth
-- 收藏云端同步
-- AI 菜谱解析
-- 小红书 / 抖音链接解析
-- 视觉 QA
-- 部署上线
+- 当前完整路线、Phase 状态和验收标准见 [`docs/ROADMAP.md`](docs/ROADMAP.md)。
+- Current Phase：`Phase 12`。
+- Next Queue 当前项：解析样本测试体系；后续依次推进小红书、抖音、OCR、质量评分、Embedding 搜索、收藏夹、iOS PWA、数据分析与正式上线。
+- Git commit、Git push、真实账号、API Key、付费和生产环境变更仍需人工授权。
+
+## AI Software Company
+
+项目由产品负责人、ChatGPT（CTO + Product Director）和 Codex（Engineering Manager）共同推进。固定职责文档：
+
+- [`AI_PROJECT_DIRECTOR.md`](docs/AI_PROJECT_DIRECTOR.md)
+- [`AI_ARCHITECT.md`](docs/AI_ARCHITECT.md)
+- [`AI_QA.md`](docs/AI_QA.md)
+- [`AI_REVIEWER.md`](docs/AI_REVIEWER.md)
+- [`AI_RELEASE_MANAGER.md`](docs/AI_RELEASE_MANAGER.md)
+- [`AI_KNOWLEDGE_MANAGER.md`](docs/AI_KNOWLEDGE_MANAGER.md)
+- [`AI_PRODUCT_ANALYST.md`](docs/AI_PRODUCT_ANALYST.md)
 
 ## 常用命令
 

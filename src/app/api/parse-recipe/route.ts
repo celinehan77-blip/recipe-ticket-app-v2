@@ -7,6 +7,8 @@ const allowedSourcePlatforms = new Set<RecipeParseSourcePlatform>([
   "manual",
   "mock",
 ]);
+const MAX_SOURCE_URL_LENGTH = 2048;
+const MAX_RAW_TEXT_LENGTH = 30000;
 
 function asOptionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
@@ -33,6 +35,7 @@ export async function POST(request: Request) {
         ok: false,
         draft: null,
         error: "请求 body 必须是 JSON。",
+        errorCode: "INVALID_INPUT",
         provider: "mock",
         usedFallback: true,
       },
@@ -54,10 +57,39 @@ export async function POST(request: Request) {
         ok: false,
         draft: null,
         error: "sourceUrl 和 rawText 不能同时为空。",
+        errorCode: "INVALID_INPUT",
         provider: "mock",
         usedFallback: true,
       },
       { status: 400 },
+    );
+  }
+
+  if (sourceUrl && sourceUrl.length > MAX_SOURCE_URL_LENGTH) {
+    return Response.json(
+      {
+        ok: false,
+        draft: null,
+        error: `sourceUrl 不能超过 ${MAX_SOURCE_URL_LENGTH} 个字符。`,
+        errorCode: "INVALID_INPUT",
+        provider: "mock",
+        usedFallback: true,
+      },
+      { status: 400 },
+    );
+  }
+
+  if (rawText && rawText.length > MAX_RAW_TEXT_LENGTH) {
+    return Response.json(
+      {
+        ok: false,
+        draft: null,
+        error: `rawText 不能超过 ${MAX_RAW_TEXT_LENGTH} 个字符。`,
+        errorCode: "INVALID_INPUT",
+        provider: "mock",
+        usedFallback: true,
+      },
+      { status: 413 },
     );
   }
 
@@ -78,6 +110,7 @@ export async function POST(request: Request) {
         ok: false,
         draft: null,
         error: "解析服务暂时不可用。",
+        errorCode: "UNKNOWN",
         provider: "mock",
         usedFallback: true,
       },

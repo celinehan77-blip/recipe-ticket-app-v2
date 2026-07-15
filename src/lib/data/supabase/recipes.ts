@@ -162,6 +162,18 @@ async function createUniqueRecipeSlug(draft: ParsedRecipeDraft) {
   return `${baseSlug}-${Date.now().toString(36)}`;
 }
 
+async function cleanupCreatedRecipe(recipeId: string) {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return false;
+  }
+
+  const { error } = await supabase.from("recipes").delete().eq("id", recipeId);
+
+  return !error;
+}
+
 export async function getAllRecipesFromSupabase(): Promise<
   SupabaseRecipeRow[]
 > {
@@ -329,20 +341,49 @@ export async function createRecipeFromParsedDraftInSupabase({
     title: step.title,
     description: step.description,
     duration: step.duration,
-    tips: step.tips,
+    tips:
+      step.heat && step.heat !== "未说明"
+        ? `火候：${step.heat}${step.tips ? `；${step.tips}` : ""}`
+        : step.tips,
     sort_order: index,
   }));
+
+  if (ingredientRows.length === 0) {
+    await cleanupCreatedRecipe(recipeId);
+
+    return {
+      error: "Recipe write rolled back because ingredients were empty.",
+      id: null,
+      ok: false,
+      recipe: null,
+      slug: null,
+    };
+  }
+
+  if (stepRows.length === 0) {
+    await cleanupCreatedRecipe(recipeId);
+
+    return {
+      error: "Recipe write rolled back because steps were empty.",
+      id: null,
+      ok: false,
+      recipe: null,
+      slug: null,
+    };
+  }
 
   if (ingredientRows.length > 0) {
     const { error } = await supabase.from("ingredients").insert(ingredientRows);
 
     if (error) {
+      await cleanupCreatedRecipe(recipeId);
+
       return {
         error: `Ingredients insert failed: ${error.message}`,
-        id: recipeId,
+        id: null,
         ok: false,
-        recipe,
-        slug,
+        recipe: null,
+        slug: null,
       };
     }
   }
@@ -351,12 +392,14 @@ export async function createRecipeFromParsedDraftInSupabase({
     const { error } = await supabase.from("recipe_steps").insert(stepRows);
 
     if (error) {
+      await cleanupCreatedRecipe(recipeId);
+
       return {
         error: `Recipe steps insert failed: ${error.message}`,
-        id: recipeId,
+        id: null,
         ok: false,
-        recipe,
-        slug,
+        recipe: null,
+        slug: null,
       };
     }
   }
