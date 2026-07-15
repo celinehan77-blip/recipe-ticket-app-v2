@@ -1,6 +1,9 @@
 import { parseRecipeInput } from "@/lib/ai";
 import type { RecipeParseInput, RecipeParseSourcePlatform } from "@/types/ai";
 import { checkRateLimit } from "@/lib/security/rateLimit";
+import { extractPublicSource } from "@/lib/source";
+
+export const runtime = "nodejs";
 
 const allowedSourcePlatforms = new Set<RecipeParseSourcePlatform>([
   "xiaohongshu",
@@ -79,10 +82,10 @@ export async function POST(request: Request) {
   }
 
   const requestBody = body && typeof body === "object" ? body : {};
-  const sourceUrl = asOptionalString(
+  let sourceUrl = asOptionalString(
     "sourceUrl" in requestBody ? requestBody.sourceUrl : undefined,
   );
-  const rawText = asOptionalString(
+  let rawText = asOptionalString(
     "rawText" in requestBody ? requestBody.rawText : undefined,
   );
 
@@ -128,17 +131,50 @@ export async function POST(request: Request) {
     );
   }
 
+  let sourceMetadata;
+
+  if (sourceUrl && !rawText) {
+    const extractedSource = await extractPublicSource(sourceUrl);
+
+    if (!extractedSource.ok) {
+      return Response.json(
+        {
+          ok: false,
+          draft: null,
+          error: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
+          errorCode: "SOURCE_EXTRACTION_FAILED",
+          provider: "mock",
+          sourceErrorCode: extractedSource.errorCode,
+          usedFallback: false,
+        },
+        { status: 422 },
+      );
+    }
+
+    rawText = extractedSource.text;
+    sourceUrl = extractedSource.canonicalUrl;
+    sourceMetadata = {
+      canonicalUrl: extractedSource.canonicalUrl,
+      extractor: extractedSource.extractor,
+      platform: extractedSource.platform,
+      warnings: extractedSource.warnings,
+    };
+  }
+
   const input: RecipeParseInput = {
     sourceUrl,
     rawText,
-    sourcePlatform: asSourcePlatform(
-      "sourcePlatform" in requestBody ? requestBody.sourcePlatform : undefined,
-    ),
+    sourcePlatform:
+      sourceMetadata?.platform ??
+      asSourcePlatform(
+        "sourcePlatform" in requestBody ? requestBody.sourcePlatform : undefined,
+      ),
     userId: null,
   };
 
   try {
-    return Response.json(await parseRecipeInput(input));
+    const result = await parseRecipeInput(input);
+    return Response.json(sourceMetadata ? { ...result, source: sourceMetadata } : result);
   } catch {
     return Response.json(
       {

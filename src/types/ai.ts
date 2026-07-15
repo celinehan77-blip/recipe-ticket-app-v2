@@ -1,4 +1,8 @@
 import type { IngredientGroup } from "@/types";
+import type {
+  SourceExtractionErrorCode,
+  SourceExtractionMetadata,
+} from "@/lib/source/types";
 
 export type RecipeParseSourcePlatform =
   | "xiaohongshu"
@@ -40,6 +44,7 @@ export type RecipeParseErrorCode =
   | "EMPTY_RESPONSE"
   | "TRUNCATED_RESPONSE"
   | "INVALID_RESPONSE"
+  | "SOURCE_EXTRACTION_FAILED"
   | "UNKNOWN";
 
 export type ParsedRecipeDraft = {
@@ -66,6 +71,8 @@ export type RecipeParseResult = {
   provider: RecipeParseProvider;
   usedFallback: boolean;
   model?: string | null;
+  source?: SourceExtractionMetadata;
+  sourceErrorCode?: SourceExtractionErrorCode | null;
   diagnostics?: {
     attemptedProvider: RecipeParseProvider;
     model: string | null;

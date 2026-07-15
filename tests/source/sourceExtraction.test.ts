@@ -1,0 +1,188 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { extractPublicTextFromHtml } from "../../src/lib/source/extractHtml";
+import { extractPublicSource } from "../../src/lib/source/extractSource";
+import { extractHttpUrlFromSharedText } from "../../src/lib/source/sharedInput";
+import {
+  identifySourcePlatform,
+  isPublicIpAddress,
+  validateSourceUrl,
+} from "../../src/lib/source/urlSafety";
+
+const publicLookup = async () => [{ address: "8.8.8.8", family: 4 }];
+
+const recipeHtml = `<!doctype html>
+<html>
+  <head>
+    <title>番茄炒蛋</title>
+    <meta property="og:title" content="番茄炒蛋" />
+    <meta property="og:description" content="番茄切块，鸡蛋打散，热锅炒熟。" />
+    <script type="application/ld+json">
+      {"@type":"Recipe","description":"加入盐和少量糖调味。"}
+    </script>
+    <script id="__NEXT_DATA__" type="application/json">
+      {"props":{"pageProps":{"note":{"desc":"最后倒回鸡蛋翻炒均匀。"}}}}
+    </script>
+  </head>
+  <body><main>番茄切块，鸡蛋打散，热锅炒熟。</main></body>
+</html>`;
+
+test("identifies supported platform hosts without accepting lookalikes", () => {
+  assert.equal(identifySourcePlatform("www.xiaohongshu.com"), "xiaohongshu");
+  assert.equal(identifySourcePlatform("xhslink.com"), "xiaohongshu");
+  assert.equal(identifySourcePlatform("v.douyin.com"), "douyin");
+  assert.equal(identifySourcePlatform("douyin.com.evil.test"), null);
+  assert.equal(identifySourcePlatform("evildouyin.com"), null);
+});
+
+test("accepts only safe HTTPS platform URLs", () => {
+  assert.equal(
+    validateSourceUrl("https://www.xiaohongshu.com/explore/abc")?.platform,
+    "xiaohongshu",
+  );
+  assert.equal(validateSourceUrl("http://www.xiaohongshu.com/explore/abc"), null);
+  assert.equal(validateSourceUrl("https://user@v.douyin.com/abc"), null);
+  assert.equal(validateSourceUrl("https://v.douyin.com:444/abc"), null);
+  assert.equal(validateSourceUrl("https://example.com/abc"), null);
+});
+
+test("rejects private and reserved network addresses", () => {
+  assert.equal(isPublicIpAddress("8.8.8.8"), true);
+  assert.equal(isPublicIpAddress("10.0.0.1"), false);
+  assert.equal(isPublicIpAddress("127.0.0.1"), false);
+  assert.equal(isPublicIpAddress("169.254.169.254"), false);
+  assert.equal(isPublicIpAddress("192.168.1.10"), false);
+  assert.equal(isPublicIpAddress("198.51.100.10"), false);
+  assert.equal(isPublicIpAddress("203.0.113.10"), false);
+  assert.equal(isPublicIpAddress("::1"), false);
+  assert.equal(isPublicIpAddress("fd00::1"), false);
+});
+
+test("extracts a clean URL from copied share text", () => {
+  assert.equal(
+    extractHttpUrlFromSharedText(
+      "分享一道菜谱 https://v.douyin.com/abc123/，复制链接打开抖音。",
+    ),
+    "https://v.douyin.com/abc123/",
+  );
+  assert.equal(extractHttpUrlFromSharedText("只有普通菜谱正文"), null);
+});
+
+test("extracts and deduplicates metadata, JSON-LD and embedded JSON", () => {
+  const result = extractPublicTextFromHtml(recipeHtml);
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.title, "番茄炒蛋");
+  assert.match(result.text, /番茄切块/);
+  assert.match(result.text, /少量糖/);
+  assert.match(result.text, /倒回鸡蛋/);
+  assert.equal(result.extractor, "combined");
+  assert.equal(result.text.match(/番茄切块/g)?.length, 1);
+});
+
+test("classifies empty and blocked pages safely", () => {
+  const empty = extractPublicTextFromHtml("<html><body>首页</body></html>");
+  const blocked = extractPublicTextFromHtml(
+    "<html><body>访问过于频繁，请完成验证码</body></html>",
+  );
+
+  assert.equal(empty.ok, false);
+  assert.equal(!empty.ok && empty.errorCode, "no_text");
+  assert.equal(blocked.ok, false);
+  assert.equal(!blocked.ok && blocked.errorCode, "fetch_blocked");
+});
+
+test("resolves an allowed short link and strips query data from storage URL", async () => {
+  const requestedUrls: string[] = [];
+  const fetchImpl: typeof fetch = async (input) => {
+    const url = String(input);
+    requestedUrls.push(url);
+
+    if (url.includes("xhslink.com")) {
+      return new Response(null, {
+        headers: {
+          location:
+            "https://www.xiaohongshu.com/explore/abc?share_token=secret",
+        },
+        status: 302,
+      });
+    }
+
+    return new Response(recipeHtml, {
+      headers: { "content-type": "text/html; charset=utf-8" },
+      status: 200,
+    });
+  };
+
+  const result = await extractPublicSource("https://xhslink.com/a1b2", {
+    fetchImpl,
+    lookupHost: publicLookup,
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(requestedUrls.length, 2);
+  assert.equal(result.platform, "xiaohongshu");
+  assert.equal(result.canonicalUrl, "https://www.xiaohongshu.com/explore/abc");
+  assert.match(result.text, /番茄炒蛋/);
+});
+
+test("blocks cross-platform and non-platform redirects", async () => {
+  const fetchImpl: typeof fetch = async () =>
+    new Response(null, {
+      headers: { location: "https://example.com/private" },
+      status: 302,
+    });
+
+  const result = await extractPublicSource("https://v.douyin.com/abc", {
+    fetchImpl,
+    lookupHost: publicLookup,
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(!result.ok && result.errorCode, "unsafe_redirect");
+});
+
+test("blocks platform hosts that resolve to private addresses", async () => {
+  const result = await extractPublicSource("https://v.douyin.com/abc", {
+    fetchImpl: async () => new Response(recipeHtml),
+    lookupHost: async () => [{ address: "127.0.0.1", family: 4 }],
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(!result.ok && result.errorCode, "unsafe_redirect");
+});
+
+test("rejects oversized responses before reading the body", async () => {
+  const result = await extractPublicSource("https://www.douyin.com/video/abc", {
+    fetchImpl: async () =>
+      new Response(recipeHtml, {
+        headers: { "content-length": String(3 * 1024 * 1024) },
+      }),
+    lookupHost: publicLookup,
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(!result.ok && result.errorCode, "response_too_large");
+});
+
+test("times out without retrying indefinitely", async () => {
+  const fetchImpl: typeof fetch = async (_input, init) =>
+    new Promise((_, reject) => {
+      init?.signal?.addEventListener("abort", () => {
+        const error = new Error("aborted");
+        error.name = "AbortError";
+        reject(error);
+      });
+    });
+
+  const result = await extractPublicSource("https://v.douyin.com/abc", {
+    fetchImpl,
+    lookupHost: publicLookup,
+    timeoutMs: 5,
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(!result.ok && result.errorCode, "timeout");
+});

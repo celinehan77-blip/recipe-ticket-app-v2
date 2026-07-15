@@ -23,6 +23,19 @@
 - 浏览器验证：游客正文生成进入唯一动态 slug，详情内容正确，收藏按钮可切换为“已收藏”。
 - 下一 Checkpoint：公开小红书 / 抖音分享链接文字提取。
 
+### 公开分享链接文字提取 Working Release
+
+- 新增小红书、`xhslink`、抖音和 `v.douyin` 公开 HTTPS 链接识别。
+- 支持最多 3 次同平台短链跳转，并在每一步重新执行域名和公网地址检查。
+- 新增 SSRF 防护、8 秒超时、2 MB HTML 上限和 30000 字提取上限。
+- 使用 `cheerio` 安全提取 Open Graph、description、JSON-LD、JSON script 和公开页面正文，不执行脚本或 `eval`。
+- 支持从“说明文字 + 分享 URL”中提取干净链接，并在保存前移除查询参数和 fragment。
+- `/api/parse-recipe` 只有在取得真实公开文字后才调用 DeepSeek；失败返回安全错误分类。
+- 首页移除链接硬拦截；抓取失败时停留首页并显示内联中文提示，不生成无关 Mock 菜谱。
+- 新增 URL、DNS、重定向、HTML、超时、超大响应和失败分类测试。
+- Working Release 回滚基线：`07c54db`。
+- 尚未完成：真实小红书 / 抖音分享短链验收。
+
 ## 2026-07-14
 
 ### AI Software Company 工作流

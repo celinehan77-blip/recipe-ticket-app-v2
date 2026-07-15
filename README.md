@@ -113,6 +113,8 @@ DEEPSEEK_MAX_TOKENS=3000
 
 - 当前已新增 `/api/parse-recipe`。
 - 首页生成流程已经接入 `/api/parse-recipe`。
+- 已新增小红书 / 抖音公开分享链接文字提取基础版，支持受控短链跳转、公开 HTML 元数据和内嵌 JSON 提取。
+- 链接抓取只读取无需登录即可访问的公开内容，不执行页面脚本，不绕过登录、验证码或平台访问控制。
 - 当前默认使用 mock parser，返回稳定的结构化菜谱草稿。
 - 当前已接入 DeepSeek Provider，并已完成 Netlify Production 基础验收。
 - DeepSeek 请求支持可配置超时、受控重试和 JSON 输出截断检测。
@@ -124,7 +126,7 @@ DEEPSEEK_MAX_TOKENS=3000
 - 已登录用户会尝试把 draft 保存为 Supabase `recipes / ingredients / recipe_steps`。
 - 保存成功后 loading 会跳转到新生成的 `/recipe/[slug]`。
 - 游客生成的每道本地菜谱使用唯一 slug，保存失败时仍保留可用的本地动态菜谱。
-- 暂未接小红书 / 抖音真实解析。
+- 公开链接提取基础代码已完成，真实平台短链仍需使用产品负责人提供的样本完成验收。
 - AI key 只使用服务端环境变量，不使用 `NEXT_PUBLIC_`。
 
 ## 当前阶段说明

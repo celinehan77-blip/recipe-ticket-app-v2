@@ -73,18 +73,20 @@ Milestone 2：Production Ready MVP
     │   ├── Task：失败状态与动态详情 fallback
     │   ├── Task：本地菜谱唯一 slug 与最多 50 道历史
     │   └── Task：收藏、我的菜谱和登录迁移按具体 slug 读取
-    └── Checkpoint A1：公开分享链接文字提取（进行中）
-        ├── Task：小红书 / 抖音 URL 识别与短链解析
-        ├── Task：SSRF 防护与受控公开网页抓取
-        ├── Task：公开标题、正文和页面元数据提取
-        └── Task：接入现有 DeepSeek 管线与真实链接验收
+    └── Checkpoint A1：公开分享链接文字提取（等待真实链接验收）
+        ├── Task：小红书 / 抖音 URL 识别与短链解析（已完成）
+        ├── Task：SSRF 防护与受控公开网页抓取（已完成）
+        ├── Task：公开标题、正文和页面元数据提取（已完成）
+        ├── Task：接入现有 DeepSeek 管线（已完成）
+        └── Task：真实小红书 / 抖音短链验收（等待产品负责人提供样本）
 ```
 
 - Current Milestone：`Milestone 2`
 - Current Phase：`Phase A - Source Acquisition`
 - Current Checkpoint：`A1 - 公开分享链接文字提取`
-- Current Version：`0.2.0-working.1`
+- Current Version：`0.2.0-working.2`
 - Checkpoint A0 Rollback Commit：`a1303b6`
+- Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
 
 后续 Phase：

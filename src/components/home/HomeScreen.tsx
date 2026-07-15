@@ -29,6 +29,7 @@ import type {
   RecipeParseResult,
   RecipeParseSourcePlatform,
 } from "@/types/ai";
+import { extractHttpUrlFromSharedText } from "@/lib/source/sharedInput";
 
 const PARSE_TIMEOUT_MS = 70000;
 
@@ -72,21 +73,15 @@ type ParsedSourceResult =
       ok: false;
       failureCode: "ai_provider_failed" | "ai_fallback_used";
       message: string;
+      shouldContinueWithFallback: boolean;
     };
 
 async function parseRecipeSource(
   sourceValue: string,
 ): Promise<ParsedSourceResult> {
-  const looksLikeUrl = isLikelyUrl(sourceValue);
+  const extractedUrl = extractHttpUrlFromSharedText(sourceValue);
+  const looksLikeUrl = Boolean(extractedUrl) || isLikelyUrl(sourceValue);
   const sourcePlatform = getSourcePlatform(sourceValue);
-
-  if (looksLikeUrl) {
-    return {
-      ok: false,
-      failureCode: "ai_provider_failed",
-      message: "暂不直接读取平台链接，请粘贴菜谱正文或视频字幕。",
-    };
-  }
 
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
@@ -98,7 +93,7 @@ async function parseRecipeSource(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        sourceUrl: looksLikeUrl ? sourceValue : undefined,
+        sourceUrl: looksLikeUrl ? extractedUrl ?? sourceValue : undefined,
         rawText: looksLikeUrl ? undefined : sourceValue,
         sourcePlatform,
       }),
@@ -106,10 +101,22 @@ async function parseRecipeSource(
     });
 
     if (!response.ok) {
+      let result: RecipeParseResult | null = null;
+
+      try {
+        result = (await response.json()) as RecipeParseResult;
+      } catch {
+        result = null;
+      }
+
       return {
         ok: false,
         failureCode: "ai_provider_failed",
-        message: "菜谱解析请求失败，请稍后重试。",
+        message:
+          looksLikeUrl && result?.errorCode === "SOURCE_EXTRACTION_FAILED"
+            ? "暂时无法读取这条分享链接，请粘贴正文或字幕。"
+            : "菜谱解析请求失败，请稍后重试。",
+        shouldContinueWithFallback: !looksLikeUrl,
       };
     }
 
@@ -120,6 +127,7 @@ async function parseRecipeSource(
         ok: false,
         failureCode: "ai_provider_failed",
         message: "没有识别出完整菜谱，请补充食材和步骤后重试。",
+        shouldContinueWithFallback: !looksLikeUrl,
       };
     }
 
@@ -132,14 +140,19 @@ async function parseRecipeSource(
       ok: true,
       draft: result.draft,
       sourcePlatform,
-      sourceUrl: looksLikeUrl ? sourceValue : undefined,
+      sourceUrl: looksLikeUrl
+        ? result.source?.canonicalUrl ?? sourceValue
+        : undefined,
       usedFallback: result.usedFallback,
     };
   } catch {
     return {
       ok: false,
       failureCode: "ai_provider_failed",
-      message: "菜谱解析超时或网络异常，请稍后重试。",
+      message: looksLikeUrl
+        ? "暂时无法读取这条分享链接，请粘贴正文或字幕。"
+        : "菜谱解析超时或网络异常，请稍后重试。",
+      shouldContinueWithFallback: !looksLikeUrl,
     };
   } finally {
     window.clearTimeout(timeoutId);
@@ -174,6 +187,14 @@ export function HomeScreen() {
 
     if (!parsedSource.ok) {
       clearLatestParsedDraft();
+
+      if (!parsedSource.shouldContinueWithFallback) {
+        setErrorMessage(parsedSource.message);
+        generationLockRef.current = false;
+        setIsGenerating(false);
+        return;
+      }
+
       const task = await createMockGenerationTask(
         trimmedSourceUrl,
         getSourcePlatform(trimmedSourceUrl),
@@ -188,7 +209,7 @@ export function HomeScreen() {
     }
 
     const task = await createMockGenerationTask(
-      trimmedSourceUrl,
+      parsedSource.sourceUrl ?? trimmedSourceUrl,
       parsedSource.sourcePlatform,
     );
 
