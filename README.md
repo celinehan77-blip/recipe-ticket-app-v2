@@ -8,11 +8,11 @@
 >
 > 产品战略最高层：[`MASTER_PLAN.md`](MASTER_PLAN.md)
 
-当前项目处于 **Phase 12**，已经具备游客本地 fallback、Supabase 基础能力和服务端 DeepSeek 解析基础版。当前待开发队列已进入解析样本测试体系，完整顺序以 ROADMAP 为准。
+当前项目处于 **Milestone 2：Production Ready MVP**。数据一致性基础 Checkpoint 已完成，当前最高优先级是公开小红书 / 抖音分享链接的文字提取，完整四级进度以 ROADMAP 为准。
 
 ## 当前功能
 
-- 首页粘贴链接，模拟生成菜谱
+- 首页粘贴菜谱正文或字幕，使用 DeepSeek 生成菜谱
 - Loading 票根生成页
 - 动态菜谱详情页
 - 本地收藏
@@ -123,7 +123,7 @@ DEEPSEEK_MAX_TOKENS=3000
 - 当前解析结果会先保存为本地 draft。
 - 已登录用户会尝试把 draft 保存为 Supabase `recipes / ingredients / recipe_steps`。
 - 保存成功后 loading 会跳转到新生成的 `/recipe/[slug]`。
-- 保存失败时仍然 fallback 到默认菜谱，不阻塞游客体验。
+- 游客生成的每道本地菜谱使用唯一 slug，保存失败时仍保留可用的本地动态菜谱。
 - 暂未接小红书 / 抖音真实解析。
 - AI key 只使用服务端环境变量，不使用 `NEXT_PUBLIC_`。
 

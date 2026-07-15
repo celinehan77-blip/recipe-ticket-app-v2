@@ -1,6 +1,8 @@
-export type MockGenerationTaskStatus = "processing" | "completed";
+export type MockGenerationTaskStatus = "processing" | "completed" | "failed";
 
 export type MockGenerationTask = {
+  completedAt?: string | null;
+  errorCode?: string | null;
   sourceUrl: string;
   generatedRecipeSlug: string;
   status: MockGenerationTaskStatus;
@@ -98,7 +100,12 @@ export function completeMockGenerationTask() {
   try {
     window.localStorage.setItem(
       MOCK_GENERATION_TASK_KEY,
-      JSON.stringify({ ...task, status: "completed" }),
+      JSON.stringify({
+        ...task,
+        completedAt: new Date().toISOString(),
+        errorCode: null,
+        status: "completed",
+      }),
     );
   } catch {
     return;
@@ -120,8 +127,39 @@ export function completeMockGenerationTaskWithSlug(generatedRecipeSlug: string) 
       MOCK_GENERATION_TASK_KEY,
       JSON.stringify({
         ...task,
+        completedAt: new Date().toISOString(),
+        errorCode: null,
         generatedRecipeSlug: safeSlug,
         status: "completed",
+      }),
+    );
+  } catch {
+    return;
+  }
+}
+
+export function failMockGenerationTaskWithSlug(
+  generatedRecipeSlug: string,
+  errorCode: string,
+) {
+  const task = readMockGenerationTask();
+  const safeSlug = generatedRecipeSlug || DEFAULT_GENERATED_RECIPE_SLUG;
+
+  saveLatestGeneratedRecipeSlug(safeSlug);
+
+  if (!task || !canUseLocalStorage()) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      MOCK_GENERATION_TASK_KEY,
+      JSON.stringify({
+        ...task,
+        completedAt: new Date().toISOString(),
+        errorCode,
+        generatedRecipeSlug: safeSlug,
+        status: "failed",
       }),
     );
   } catch {

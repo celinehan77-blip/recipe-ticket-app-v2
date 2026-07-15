@@ -32,6 +32,7 @@ export type ParsedStep = {
 
 export type RecipeParseErrorCode =
   | "INVALID_INPUT"
+  | "RATE_LIMITED"
   | "PROVIDER_NOT_CONFIGURED"
   | "PROVIDER_TIMEOUT"
   | "PROVIDER_RATE_LIMIT"

@@ -2,6 +2,27 @@
 
 本文件记录 Recipe Ticket / 日食笔记的重要产品、代码和项目治理变化。
 
+## 2026-07-15
+
+### Milestone 2 数据一致性基础 Checkpoint
+
+- 建立 `Milestone → Phase → Checkpoint → Task` 四级推进与断点续作记录。
+- Generation Task 使用当前创建的 Task ID 完成或失败，避免误更新历史任务。
+- 解析失败、AI fallback 和云端保存失败会记录安全错误状态，同时保留可用详情页。
+- 游客菜谱改为唯一 `local-recipe-*` slug，并在当前浏览器保留最多 50 道本地菜谱。
+- 收藏、详情、“我的菜谱”和登录迁移按具体本地 slug 读取，避免新生成覆盖旧收藏。
+- 菜谱详情读取到缺失食材或步骤的云端数据时不再视为完整菜谱。
+- `/api/parse-recipe` 增加基础请求限流，生产环境默认隐藏开发测试入口。
+- 本 Checkpoint 的回滚基线：`a1303b6`。
+
+### 验证
+
+- `npm test`：41 项通过。
+- `npm run lint`：通过。
+- `npm run build`：通过。
+- 浏览器验证：游客正文生成进入唯一动态 slug，详情内容正确，收藏按钮可切换为“已收藏”。
+- 下一 Checkpoint：公开小红书 / 抖音分享链接文字提取。
+
 ## 2026-07-14
 
 ### AI Software Company 工作流

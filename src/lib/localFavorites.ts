@@ -55,6 +55,34 @@ export function removeFavoriteRecipe(slug: string) {
   return nextFavoriteSlugs;
 }
 
+export function replaceFavoriteRecipeSlug(
+  previousSlug: string,
+  nextSlug: string,
+) {
+  const favoriteSlugs = getFavoriteRecipeSlugs();
+
+  if (!favoriteSlugs.includes(previousSlug)) {
+    return favoriteSlugs;
+  }
+
+  const nextFavoriteSlugs = favoriteSlugs.map((slug) =>
+    slug === previousSlug ? nextSlug : slug,
+  );
+
+  saveFavoriteRecipeSlugs(nextFavoriteSlugs);
+  return Array.from(new Set(nextFavoriteSlugs));
+}
+
+export function clearFavoriteRecipes() {
+  if (!canUseLocalStorage()) return;
+
+  try {
+    window.localStorage.removeItem(FAVORITE_RECIPE_SLUGS_KEY);
+  } catch {
+    return;
+  }
+}
+
 export function isFavoriteRecipe(slug: string) {
   return getFavoriteRecipeSlugs().includes(slug);
 }

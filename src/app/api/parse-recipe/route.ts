@@ -1,5 +1,6 @@
 import { parseRecipeInput } from "@/lib/ai";
 import type { RecipeParseInput, RecipeParseSourcePlatform } from "@/types/ai";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 const allowedSourcePlatforms = new Set<RecipeParseSourcePlatform>([
   "xiaohongshu",
@@ -9,6 +10,16 @@ const allowedSourcePlatforms = new Set<RecipeParseSourcePlatform>([
 ]);
 const MAX_SOURCE_URL_LENGTH = 2048;
 const MAX_RAW_TEXT_LENGTH = 30000;
+const PARSE_RATE_LIMIT = 5;
+const PARSE_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+
+function getClientKey(request: Request) {
+  return (
+    request.headers.get("x-nf-client-connection-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "unknown"
+  );
+}
 
 function asOptionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
@@ -25,6 +36,30 @@ function asSourcePlatform(value: unknown): RecipeParseSourcePlatform | undefined
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(`parse:${getClientKey(request)}`, {
+    limit: PARSE_RATE_LIMIT,
+    windowMs: PARSE_RATE_LIMIT_WINDOW_MS,
+  });
+
+  if (!rateLimit.allowed) {
+    return Response.json(
+      {
+        ok: false,
+        draft: null,
+        error: "解析请求过于频繁，请稍后再试。",
+        errorCode: "RATE_LIMITED",
+        provider: "mock",
+        usedFallback: false,
+      },
+      {
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+        status: 429,
+      },
+    );
+  }
+
   let body: unknown;
 
   try {

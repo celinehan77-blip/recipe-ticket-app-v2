@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -20,6 +20,7 @@ import {
   completeMockGenerationTask,
   createMockGenerationTask,
   createRecipeFromParsedDraft,
+  failGenerationTask,
   isParsedRecipeDraft,
   saveLatestParsedDraft,
 } from "@/lib/data";
@@ -29,7 +30,7 @@ import type {
   RecipeParseSourcePlatform,
 } from "@/types/ai";
 
-const PARSE_TIMEOUT_MS = 28000;
+const PARSE_TIMEOUT_MS = 70000;
 
 function isLikelyUrl(value: string) {
   const normalizedValue = value.toLowerCase();
@@ -59,19 +60,36 @@ function getSourcePlatform(value: string): RecipeParseSourcePlatform {
   return isLikelyUrl(value) ? "mock" : "manual";
 }
 
-type ParsedSourceResult = {
-  draft: ParsedRecipeDraft;
-  sourcePlatform: RecipeParseSourcePlatform;
-  sourceUrl?: string;
-};
+type ParsedSourceResult =
+  | {
+      ok: true;
+      draft: ParsedRecipeDraft;
+      sourcePlatform: RecipeParseSourcePlatform;
+      sourceUrl?: string;
+      usedFallback: boolean;
+    }
+  | {
+      ok: false;
+      failureCode: "ai_provider_failed" | "ai_fallback_used";
+      message: string;
+    };
 
 async function parseRecipeSource(
   sourceValue: string,
-): Promise<ParsedSourceResult | null> {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
+): Promise<ParsedSourceResult> {
   const looksLikeUrl = isLikelyUrl(sourceValue);
   const sourcePlatform = getSourcePlatform(sourceValue);
+
+  if (looksLikeUrl) {
+    return {
+      ok: false,
+      failureCode: "ai_provider_failed",
+      message: "暂不直接读取平台链接，请粘贴菜谱正文或视频字幕。",
+    };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
 
   try {
     const response = await fetch("/api/parse-recipe", {
@@ -88,23 +106,41 @@ async function parseRecipeSource(
     });
 
     if (!response.ok) {
-      return null;
+      return {
+        ok: false,
+        failureCode: "ai_provider_failed",
+        message: "菜谱解析请求失败，请稍后重试。",
+      };
     }
 
     const result = (await response.json()) as RecipeParseResult;
 
     if (!result.ok || !isParsedRecipeDraft(result.draft)) {
-      return null;
+      return {
+        ok: false,
+        failureCode: "ai_provider_failed",
+        message: "没有识别出完整菜谱，请补充食材和步骤后重试。",
+      };
     }
 
-    saveLatestParsedDraft(result.draft);
+    saveLatestParsedDraft(result.draft, {
+      model: result.model ?? result.diagnostics?.model ?? null,
+      provider: result.provider,
+      usedFallback: result.usedFallback,
+    });
     return {
+      ok: true,
       draft: result.draft,
       sourcePlatform,
       sourceUrl: looksLikeUrl ? sourceValue : undefined,
+      usedFallback: result.usedFallback,
     };
   } catch {
-    return null;
+    return {
+      ok: false,
+      failureCode: "ai_provider_failed",
+      message: "菜谱解析超时或网络异常，请稍后重试。",
+    };
   } finally {
     window.clearTimeout(timeoutId);
   }
@@ -115,39 +151,71 @@ export function HomeScreen() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const generationLockRef = useRef(false);
 
   const handleGenerateRecipe = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (generationLockRef.current) {
+      return;
+    }
+
     const trimmedSourceUrl = sourceUrl.trim();
 
     if (!trimmedSourceUrl) {
-      setErrorMessage("请先粘贴小红书 / 抖音链接");
+      setErrorMessage("请先粘贴菜谱正文或视频字幕");
       return;
     }
 
     setErrorMessage("");
+    generationLockRef.current = true;
     setIsGenerating(true);
     const parsedSource = await parseRecipeSource(trimmedSourceUrl);
 
-    if (!parsedSource) {
+    if (!parsedSource.ok) {
       clearLatestParsedDraft();
+      const task = await createMockGenerationTask(
+        trimmedSourceUrl,
+        getSourcePlatform(trimmedSourceUrl),
+      );
+      await failGenerationTask(
+        parsedSource.failureCode,
+        "kung-pao-chicken",
+        task.id,
+      );
+      router.push("/loading");
+      return;
     }
 
-    await createMockGenerationTask(
+    const task = await createMockGenerationTask(
       trimmedSourceUrl,
-      parsedSource?.sourcePlatform ?? getSourcePlatform(trimmedSourceUrl),
+      parsedSource.sourcePlatform,
     );
 
-    if (parsedSource) {
-      const createdRecipe = await createRecipeFromParsedDraft({
-        draft: parsedSource.draft,
-        sourcePlatform: parsedSource.sourcePlatform,
-        sourceUrl: parsedSource.sourceUrl,
-      });
+    const createdRecipe = await createRecipeFromParsedDraft({
+      draft: parsedSource.draft,
+      preferLocal: parsedSource.usedFallback,
+      sourcePlatform: parsedSource.sourcePlatform,
+      sourceUrl: parsedSource.sourceUrl,
+    });
 
-      await completeMockGenerationTask(createdRecipe.slug);
+    if (parsedSource.usedFallback) {
+      await failGenerationTask("ai_fallback_used", createdRecipe.slug, task.id);
+      router.push("/loading");
+      return;
     }
+
+    if (createdRecipe.usedFallback) {
+      await failGenerationTask(
+        "recipe_save_failed",
+        createdRecipe.slug,
+        task.id,
+      );
+      router.push("/loading");
+      return;
+    }
+
+    await completeMockGenerationTask(createdRecipe.slug, task.id);
 
     router.push("/loading");
   };
@@ -170,7 +238,7 @@ export function HomeScreen() {
             属于你的好味道
           </h1>
           <p className="mt-5 text-[17px] font-medium leading-8 tracking-[0.08em] text-[#a2968a]">
-            粘贴视频链接，生成干净菜谱
+            粘贴菜谱正文或字幕，生成干净菜谱
           </p>
         </motion.section>
 
@@ -192,8 +260,8 @@ export function HomeScreen() {
                   setErrorMessage("");
                 }
               }}
-              aria-label="粘贴小红书 / 抖音链接"
-              placeholder="粘贴小红书 / 抖音链接"
+              aria-label="粘贴菜谱正文或视频字幕"
+              placeholder="粘贴菜谱正文或视频字幕"
               className="min-w-0 flex-1 bg-transparent text-left text-[18px] font-semibold tracking-[0.03em] text-[#7c6f64] outline-none placeholder:text-[#b4aaa1]"
             />
             <ScanLine size={24} className="text-[#7c5638]" />

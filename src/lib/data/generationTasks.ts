@@ -1,16 +1,16 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import {
-  completeMockGenerationTask as completeStoredMockGenerationTask,
   completeMockGenerationTaskWithSlug,
+  failMockGenerationTaskWithSlug,
   readLatestGeneratedRecipeSlug,
   readMockGenerationTask,
-  saveLatestGeneratedRecipeSlug,
   saveMockGenerationTask,
   type MockGenerationTask,
 } from "@/lib/mockGenerationTask";
 import {
   tryCompleteGenerationTaskInSupabase,
   tryCreateGenerationTaskInSupabase,
+  tryFailGenerationTaskInSupabase,
   tryGetLatestGeneratedRecipeSlugFromSupabase,
   tryGetLatestGenerationTaskFromSupabase,
   type SupabaseGenerationTaskRow,
@@ -20,6 +20,13 @@ import {
 const DEFAULT_GENERATED_RECIPE_SLUG = "kung-pao-chicken";
 
 export type GenerationTaskSyncMode = "local" | "cloud" | "fallback";
+
+export type GenerationTaskFailureCode =
+  | "ai_provider_failed"
+  | "ai_fallback_used"
+  | "recipe_save_failed"
+  | "generation_task_update_failed"
+  | "unknown";
 
 export type GenerationTask = {
   completedAt?: string | null;
@@ -44,7 +51,7 @@ function mapLocalTask(task: MockGenerationTask | null): GenerationTask | null {
     status: task.status,
     syncMode: "local",
     createdAt: task.createdAt,
-    completedAt: task.status === "completed" ? task.createdAt : null,
+    completedAt: task.completedAt ?? null,
   };
 }
 
@@ -122,6 +129,7 @@ export async function createMockGenerationTask(
 
 export async function completeMockGenerationTask(
   generatedRecipeSlug?: string,
+  taskId?: string,
 ): Promise<GenerationTask | null> {
   const user = await getCurrentUser();
   const safeSlug =
@@ -129,39 +137,65 @@ export async function completeMockGenerationTask(
     readLatestGeneratedRecipeSlug() ||
     DEFAULT_GENERATED_RECIPE_SLUG;
 
-  if (user) {
-    const latestCloudTask = await tryGetLatestGenerationTaskFromSupabase(user.id);
+  completeMockGenerationTaskWithSlug(safeSlug);
 
-    if (latestCloudTask.ok && latestCloudTask.data?.id) {
+  if (user && taskId) {
+    const cloudTaskId = taskId;
+
+    if (cloudTaskId) {
       const completed = await tryCompleteGenerationTaskInSupabase(
-        latestCloudTask.data.id,
+        cloudTaskId,
         safeSlug,
       );
 
       if (completed.ok) {
-        saveLatestGeneratedRecipeSlug(safeSlug);
-
         return {
-          ...(mapSupabaseTask(latestCloudTask.data, safeSlug) as GenerationTask),
+          ...(getLocalGenerationTask() as GenerationTask),
           completedAt: new Date().toISOString(),
           generatedRecipeSlug: safeSlug,
+          id: cloudTaskId,
           status: "completed",
+          syncMode: "cloud",
         };
       }
     }
   }
 
-  if (safeSlug === DEFAULT_GENERATED_RECIPE_SLUG) {
-    completeStoredMockGenerationTask();
-    saveLatestGeneratedRecipeSlug(safeSlug);
-  } else {
-    completeMockGenerationTaskWithSlug(safeSlug);
+  const localTask = getLocalGenerationTask();
+  return localTask && user ? { ...localTask, syncMode: "fallback" } : localTask;
+}
+
+export async function failGenerationTask(
+  errorCode: GenerationTaskFailureCode,
+  generatedRecipeSlug = DEFAULT_GENERATED_RECIPE_SLUG,
+  taskId?: string,
+): Promise<GenerationTask | null> {
+  failMockGenerationTaskWithSlug(generatedRecipeSlug, errorCode);
+  const user = await getCurrentUser();
+
+  if (user && taskId) {
+    const failed = await tryFailGenerationTaskInSupabase(taskId, errorCode);
+    const localTask = getLocalGenerationTask();
+
+    if (localTask) {
+      return {
+        ...localTask,
+        id: taskId,
+        syncMode: failed.ok ? "cloud" : "fallback",
+      };
+    }
   }
 
   return getLocalGenerationTask();
 }
 
 export async function getLatestGeneratedRecipeSlug(): Promise<string> {
+  const localRecipeSlug = readLatestGeneratedRecipeSlug();
+
+  if (localRecipeSlug) {
+    return localRecipeSlug;
+  }
+
   const user = await getCurrentUser();
 
   if (user) {
@@ -175,7 +209,6 @@ export async function getLatestGeneratedRecipeSlug(): Promise<string> {
   }
 
   return (
-    readLatestGeneratedRecipeSlug() ??
     getLocalGenerationTask()?.generatedRecipeSlug ??
     DEFAULT_GENERATED_RECIPE_SLUG
   );

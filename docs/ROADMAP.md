@@ -63,28 +63,36 @@
 - 建立统一的阶段闭环、Review、验证、文档和人工门槛规则。
 - 建立本 ROADMAP 与 `docs/CHANGELOG.md`。
 
-## 项目状态总览
+## 当前四级推进状态
 
 ```text
-Current Phase: Phase 12
-Current Version: 0.1.0-working
-
-Next Queue:
-
-1. DeepSeek 真实解析优化
-2. 解析样本测试体系
-3. 小红书链接解析
-4. 抖音链接解析
-5. OCR 图片识别
-6. AI 菜谱质量评分
-6. Recipe Embedding 搜索
-7. 收藏夹优化
-8. iOS PWA
-9. 数据分析
-10. 正式上线
+Milestone 2：Production Ready MVP
+└── Phase A：Source Acquisition
+    ├── Checkpoint A0：数据一致性基础（已完成，2026-07-15）
+    │   ├── Task：生成任务精确绑定当前 Task ID
+    │   ├── Task：失败状态与动态详情 fallback
+    │   ├── Task：本地菜谱唯一 slug 与最多 50 道历史
+    │   └── Task：收藏、我的菜谱和登录迁移按具体 slug 读取
+    └── Checkpoint A1：公开分享链接文字提取（进行中）
+        ├── Task：小红书 / 抖音 URL 识别与短链解析
+        ├── Task：SSRF 防护与受控公开网页抓取
+        ├── Task：公开标题、正文和页面元数据提取
+        └── Task：接入现有 DeepSeek 管线与真实链接验收
 ```
 
-Current Phase 由产品负责人指定为 **Phase 12**。Phase 编号与功能队列分开维护：Phase 表示项目整体推进阶段，Next Queue 表示接下来必须按顺序处理的功能任务。
+- Current Milestone：`Milestone 2`
+- Current Phase：`Phase A - Source Acquisition`
+- Current Checkpoint：`A1 - 公开分享链接文字提取`
+- Current Version：`0.2.0-working.1`
+- Checkpoint A0 Rollback Commit：`a1303b6`
+- 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
+
+后续 Phase：
+
+1. Phase B：User Journey，完成陌生用户端到端旅程和会话持久化。
+2. Phase C：Production Verification，完成跨设备、生产数据和发布验收。
+
+每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 
 ## Next Queue
 

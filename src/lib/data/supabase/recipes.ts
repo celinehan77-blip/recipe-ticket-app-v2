@@ -174,6 +174,14 @@ async function cleanupCreatedRecipe(recipeId: string) {
   return !error;
 }
 
+async function rollbackCreatedRecipe(recipeId: string, reason: string) {
+  const cleanedUp = await cleanupCreatedRecipe(recipeId);
+
+  return cleanedUp
+    ? `${reason} The incomplete recipe was removed.`
+    : `${reason} Cleanup failed; an incomplete recipe may remain.`;
+}
+
 export async function getAllRecipesFromSupabase(): Promise<
   SupabaseRecipeRow[]
 > {
@@ -186,6 +194,29 @@ export async function getAllRecipesFromSupabase(): Promise<
   const { data, error } = await supabase
     .from("recipes")
     .select("*, stations(slug)")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function getMyRecipesFromSupabase(
+  userId: string,
+): Promise<SupabaseRecipeRow[]> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("*, stations(slug)")
+    .eq("user_id", userId)
+    .eq("is_generated", true)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -267,10 +298,19 @@ export async function getRecipeDetailBySlugFromSupabase(
       .order("sort_order", { ascending: true }),
   ]);
 
+  if (
+    ingredientsResult.error ||
+    stepsResult.error ||
+    !ingredientsResult.data?.length ||
+    !stepsResult.data?.length
+  ) {
+    return null;
+  }
+
   return {
     recipe,
-    ingredients: ingredientsResult.error ? [] : ingredientsResult.data ?? [],
-    steps: stepsResult.error ? [] : stepsResult.data ?? [],
+    ingredients: ingredientsResult.data,
+    steps: stepsResult.data,
   };
 }
 
@@ -349,10 +389,11 @@ export async function createRecipeFromParsedDraftInSupabase({
   }));
 
   if (ingredientRows.length === 0) {
-    await cleanupCreatedRecipe(recipeId);
-
     return {
-      error: "Recipe write rolled back because ingredients were empty.",
+      error: await rollbackCreatedRecipe(
+        recipeId,
+        "Recipe write failed because ingredients were empty.",
+      ),
       id: null,
       ok: false,
       recipe: null,
@@ -361,10 +402,11 @@ export async function createRecipeFromParsedDraftInSupabase({
   }
 
   if (stepRows.length === 0) {
-    await cleanupCreatedRecipe(recipeId);
-
     return {
-      error: "Recipe write rolled back because steps were empty.",
+      error: await rollbackCreatedRecipe(
+        recipeId,
+        "Recipe write failed because steps were empty.",
+      ),
       id: null,
       ok: false,
       recipe: null,
@@ -376,10 +418,11 @@ export async function createRecipeFromParsedDraftInSupabase({
     const { error } = await supabase.from("ingredients").insert(ingredientRows);
 
     if (error) {
-      await cleanupCreatedRecipe(recipeId);
-
       return {
-        error: `Ingredients insert failed: ${error.message}`,
+        error: await rollbackCreatedRecipe(
+          recipeId,
+          `Ingredients insert failed: ${error.message}`,
+        ),
         id: null,
         ok: false,
         recipe: null,
@@ -392,10 +435,11 @@ export async function createRecipeFromParsedDraftInSupabase({
     const { error } = await supabase.from("recipe_steps").insert(stepRows);
 
     if (error) {
-      await cleanupCreatedRecipe(recipeId);
-
       return {
-        error: `Recipe steps insert failed: ${error.message}`,
+        error: await rollbackCreatedRecipe(
+          recipeId,
+          `Recipe steps insert failed: ${error.message}`,
+        ),
         id: null,
         ok: false,
         recipe: null,

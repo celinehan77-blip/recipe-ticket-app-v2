@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, CookingPot, Leaf, Plus, Star } from "lucide-react";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
-  completeMockGenerationTask,
   getLatestGeneratedRecipeSlug,
   getLatestParsedDraft,
   getLatestGenerationTask,
@@ -20,21 +19,31 @@ const ticketMotion = {
 
 export function TicketLoadingScreen() {
   const router = useRouter();
+  const [recipeTitle, setRecipeTitle] = useState("你的菜谱");
+  const [recipeTitleEn, setRecipeTitleEn] = useState("Your Recipe");
 
   useEffect(() => {
-    getLatestParsedDraft();
+    const titleTimer = window.setTimeout(() => {
+      const draft = getLatestParsedDraft();
+      if (draft) {
+        setRecipeTitle(draft.titleZh);
+        setRecipeTitleEn(draft.titleEn || "Your Recipe");
+      }
+    }, 0);
     void getLatestGenerationTask();
 
     const timer = window.setTimeout(() => {
       void (async () => {
-        await completeMockGenerationTask();
         const recipeSlug = await getLatestGeneratedRecipeSlug();
 
         router.push(`/recipe/${recipeSlug || "kung-pao-chicken"}`);
       })();
     }, 3000);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(titleTimer);
+      window.clearTimeout(timer);
+    };
   }, [router]);
 
   return (
@@ -78,10 +87,10 @@ export function TicketLoadingScreen() {
               <span>No.20240520</span>
             </div>
             <h2 className="font-display relative z-10 mt-6 text-center text-[30px] leading-none tracking-[0.12em] text-[#352417]">
-              宫保鸡丁
+              {recipeTitle}
             </h2>
             <p className="relative z-10 mt-2 text-center font-serif text-[16px] text-[#49392b]">
-              Kung Pao Chicken
+              {recipeTitleEn}
             </p>
             <div className="relative z-10 mt-5 flex items-end justify-between border-t border-dashed border-[#7e6044]/18 pt-4">
               <div>
@@ -89,7 +98,7 @@ export function TicketLoadingScreen() {
                   FROM
                 </p>
                 <p className="font-display mt-1 text-[16px] text-[#3d2d20]">
-                  小红书
+                  菜谱正文
                 </p>
               </div>
               <div className="mb-2 flex items-center gap-2 text-[#b09a80]">

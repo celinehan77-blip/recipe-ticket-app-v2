@@ -9,7 +9,10 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { getAuthClient } from "@/lib/auth/client";
-import { syncLocalFavoritesToSupabase } from "@/lib/data";
+import {
+  migrateLatestLocalRecipeAfterLogin,
+  syncLocalFavoritesToSupabase,
+} from "@/lib/data";
 
 const FAVORITE_SYNC_KEY_PREFIX = "recipe-ticket:favorites-synced-at";
 
@@ -74,7 +77,7 @@ async function syncFavoritesOnceAfterLogin(userId: string) {
 
   const result = await syncLocalFavoritesToSupabase();
 
-  if (!result.skipped) {
+  if (result.ok) {
     window.localStorage.setItem(syncKey, new Date().toISOString());
   }
 }
@@ -180,6 +183,7 @@ export function AuthCallbackScreen() {
       } = await supabase.auth.getUser();
 
       if (user?.id) {
+        await migrateLatestLocalRecipeAfterLogin(user.id);
         await syncFavoritesOnceAfterLogin(user.id);
       }
 

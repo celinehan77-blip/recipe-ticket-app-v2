@@ -22,9 +22,12 @@ import {
   getFavoriteSlugs,
   getLatestGenerationTask,
   getLatestParsedDraft,
+  getLatestParsedDraftMetadata,
+  getMyRecipes,
   getRecipeBySlug,
   syncLocalFavoritesToSupabase,
 } from "@/lib/data";
+import type { Recipe } from "@/types";
 
 type LocalProfileState = {
   favoriteSlugs: string[];
@@ -35,6 +38,7 @@ type LocalProfileState = {
   generationSyncLabel: string;
   recentFavoriteTitle: string;
   recentGeneratedTitle: string;
+  myRecipes: Recipe[];
 };
 
 const defaultLocalProfileState: LocalProfileState = {
@@ -46,12 +50,66 @@ const defaultLocalProfileState: LocalProfileState = {
   generationSyncLabel: "本地演示",
   recentFavoriteTitle: "暂无",
   recentGeneratedTitle: "暂无",
+  myRecipes: [],
 };
 
 async function getRecipeTitle(slug: string | null) {
   if (!slug) return "暂无";
 
   return (await getRecipeBySlug(slug))?.titleZh ?? "暂无";
+}
+
+function getParserLabel(
+  provider: "mock" | "deepseek" | "openai" | "qwen" | undefined,
+  usedFallback: boolean | undefined,
+) {
+  if (provider === "deepseek" && !usedFallback) {
+    return "DeepSeek";
+  }
+
+  if (usedFallback) {
+    return "Mock Fallback";
+  }
+
+  return provider === "mock" ? "Mock Parser" : "本地演示";
+}
+
+async function loadProfileState(): Promise<LocalProfileState> {
+  const draft = getLatestParsedDraft();
+  const draftMetadata = getLatestParsedDraftMetadata();
+  const task = await getLatestGenerationTask();
+  const [favoriteSlugs, myRecipes] = await Promise.all([
+    getFavoriteSlugs(),
+    getMyRecipes(),
+  ]);
+  const generatedRecipeSlug = task?.generatedRecipeSlug ?? null;
+  const favoriteRecipeSlug = favoriteSlugs[favoriteSlugs.length - 1] ?? null;
+  const hasParsedDraft = Boolean(draft);
+
+  return {
+    favoriteSlugs,
+    generatedRecipeSlug,
+    hasParsedDraft,
+    generationSourceLabel: hasParsedDraft
+      ? getParserLabel(draftMetadata?.provider, draftMetadata?.usedFallback)
+      : task?.syncMode === "cloud"
+        ? "Cloud Task"
+        : "本地演示",
+    generationStatus:
+      task?.status === "completed"
+        ? "已完成"
+        : task?.status === "failed"
+          ? "已使用本地兜底"
+          : "暂无",
+    generationSyncLabel:
+      task?.syncMode === "cloud" ? "云端记录已开启" : "本地演示",
+    recentFavoriteTitle: await getRecipeTitle(favoriteRecipeSlug),
+    recentGeneratedTitle:
+      myRecipes[0]?.titleZh ??
+      draft?.titleZh ??
+      (await getRecipeTitle(generatedRecipeSlug)),
+    myRecipes,
+  };
 }
 
 export function MeScreen() {
@@ -65,32 +123,7 @@ export function MeScreen() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void (async () => {
-        const draft = getLatestParsedDraft();
-        const task = await getLatestGenerationTask();
-        const favoriteSlugs = await getFavoriteSlugs();
-        const generatedRecipeSlug = task?.generatedRecipeSlug ?? null;
-        const favoriteRecipeSlug =
-          favoriteSlugs[favoriteSlugs.length - 1] ?? null;
-        const hasParsedDraft = Boolean(draft);
-
-        setLocalProfile({
-          favoriteSlugs,
-          generatedRecipeSlug,
-          hasParsedDraft,
-          generationSourceLabel: hasParsedDraft
-            ? "Mock Parser"
-            : task?.syncMode === "cloud"
-              ? "Cloud Task"
-              : "本地演示",
-          generationStatus: task?.status === "completed" ? "已完成" : "暂无",
-          generationSyncLabel:
-            task?.syncMode === "cloud" ? "云端记录已开启" : "本地演示",
-          recentFavoriteTitle: await getRecipeTitle(favoriteRecipeSlug),
-          recentGeneratedTitle:
-            draft?.titleZh ?? (await getRecipeTitle(generatedRecipeSlug)),
-        });
-      })();
+      void loadProfileState().then(setLocalProfile);
     }, 0);
 
     return () => window.clearTimeout(timer);
@@ -112,8 +145,7 @@ export function MeScreen() {
   }, []);
 
   const favoriteCount = localProfile.favoriteSlugs.length;
-  const generatedCount =
-    localProfile.generatedRecipeSlug || localProfile.hasParsedDraft ? 1 : 0;
+  const generatedCount = localProfile.myRecipes.length;
   const hasParsedDraft = localProfile.hasParsedDraft;
   const generationSourceLabel = localProfile.generationSourceLabel;
   const generationStatus = localProfile.generationStatus;
@@ -127,6 +159,7 @@ export function MeScreen() {
 
     if (result.ok) {
       setAuthProfile(null);
+      setLocalProfile(await loadProfileState());
     }
 
     setAuthMessage(result.message);
@@ -154,19 +187,12 @@ export function MeScreen() {
   const profileSections = useMemo(
     () => [
       {
-        title: "我的菜谱",
-        icon: Bookmark,
-        rows: [`已收藏 ${favoriteCount} 道`, `已生成 ${generatedCount} 道`],
-      },
-      {
         title: "最近活动",
         icon: NotebookTabs,
         rows: isLoggedIn
           ? [
               `最近生成：${recentGeneratedTitle}`,
-              `来源：${
-                hasParsedDraft ? "Mock Parser / Cloud Task" : generationSourceLabel
-              }`,
+              `来源：${generationSourceLabel} / Cloud Task`,
               `状态：${generatedCount > 0 ? generationStatus : "暂无"}`,
               `同步：${generatedCount > 0 ? generationSyncLabel : "暂无"}`,
               `最近收藏：${recentFavoriteTitle}`,
@@ -176,7 +202,7 @@ export function MeScreen() {
               `来源：${
                 generatedCount > 0
                   ? hasParsedDraft
-                    ? "Mock Parser / Local Draft"
+                    ? `${generationSourceLabel} / Local Draft`
                     : generationSourceLabel
                   : "暂无"
               }`,
@@ -187,11 +213,12 @@ export function MeScreen() {
       {
         title: "当前模式",
         icon: Sparkles,
-        rows: ["Recipe Ticket MVP", "Local Demo", "数据仅保存在当前浏览器"],
+        rows: isLoggedIn
+          ? ["Recipe Ticket MVP", "云端同步已开启", "菜谱与收藏保存在当前账号"]
+          : ["Recipe Ticket MVP", "Local Demo", "登录后可迁移到云端账号"],
       },
     ],
     [
-      favoriteCount,
       generatedCount,
       generationSourceLabel,
       generationStatus,
@@ -368,6 +395,51 @@ export function MeScreen() {
               </motion.article>
             );
           })}
+
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12, duration: 0.38 }}
+            className="paper-card rounded-[24px] px-3.5 py-3"
+          >
+            <div className="relative z-10">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#f4eadc] text-[#8a5a35]">
+                    <Bookmark size={18} />
+                  </span>
+                  <div>
+                    <h2 className="font-display text-[18px] tracking-[0.05em] text-[#3a2a1d]">
+                      我的菜谱
+                    </h2>
+                    <p className="mt-0.5 text-[11px] text-[#8a8178]">
+                      已生成 {generatedCount} 道 · 已收藏 {favoriteCount} 道
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={17} className="text-[#8a8178]" />
+              </div>
+
+              <div className="mt-3 grid gap-1.5">
+                {localProfile.myRecipes.length > 0 ? (
+                  localProfile.myRecipes.slice(0, 5).map((recipe) => (
+                    <Link
+                      key={recipe.slug}
+                      href={`/recipe/${recipe.slug}`}
+                      className="flex items-center justify-between rounded-full bg-[#fffaf2]/58 px-3 py-2 text-[12px] text-[#75695f]"
+                    >
+                      <span className="truncate">{recipe.titleZh}</span>
+                      <ChevronRight size={14} className="shrink-0" />
+                    </Link>
+                  ))
+                ) : (
+                  <p className="rounded-full bg-[#fffaf2]/58 px-3 py-2 text-[12px] text-[#75695f]">
+                    还没有生成菜谱
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.section>
         </motion.div>
       </div>
 

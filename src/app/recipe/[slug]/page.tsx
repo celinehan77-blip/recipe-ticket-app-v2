@@ -35,6 +35,7 @@ export default async function RecipePage({
       allRecipes={serializeRecipes(recipes)}
       backHref={backHref}
       recipe={recipe ? serializeRecipe(recipe) : null}
+      recipeSlug={slug}
     />
   );
 }

@@ -114,7 +114,7 @@ export async function tryCompleteGenerationTaskInSupabase(
     return { data: false, ok: false };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("generation_tasks")
     .update({
       status: "completed",
@@ -122,9 +122,40 @@ export async function tryCompleteGenerationTaskInSupabase(
       error_message: null,
       completed_at: new Date().toISOString(),
     })
-    .eq("id", taskId);
+    .eq("id", taskId)
+    .select("id")
+    .maybeSingle<{ id: string }>();
 
-  if (error) {
+  if (error || !data?.id) {
+    return { data: false, ok: false };
+  }
+
+  return { data: true, ok: true };
+}
+
+export async function tryFailGenerationTaskInSupabase(
+  taskId: string,
+  errorCode: string,
+): Promise<SupabaseResult<boolean>> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return { data: false, ok: false };
+  }
+
+  const { data, error } = await supabase
+    .from("generation_tasks")
+    .update({
+      status: "failed",
+      generated_recipe_id: null,
+      error_message: errorCode,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", taskId)
+    .select("id")
+    .maybeSingle<{ id: string }>();
+
+  if (error || !data?.id) {
     return { data: false, ok: false };
   }
 

@@ -3,3 +3,5 @@ export * from "@/lib/data/recipes";
 export * from "@/lib/data/favorites";
 export * from "@/lib/data/generationTasks";
 export * from "@/lib/data/parsedDrafts";
+export * from "@/lib/data/localGeneratedRecipe";
+export * from "@/lib/data/localRecipeMigration";

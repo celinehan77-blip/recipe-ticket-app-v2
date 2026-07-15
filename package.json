@@ -1,15 +1,17 @@
 {
   "name": "recipe-ticket-app-v2",
-  "version": "0.1.0",
+  "version": "0.2.0-working.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npm run test:ai && npm run test:auth",
+    "test": "npm run test:ai && npm run test:auth && npm run test:data && npm run test:security",
     "test:ai": "tsx --test --test-concurrency=1 tests/ai/*.test.ts",
-    "test:auth": "tsx --test --test-concurrency=1 tests/auth/*.test.ts"
+    "test:auth": "tsx --test --test-concurrency=1 tests/auth/*.test.ts",
+    "test:data": "tsx --test --test-concurrency=1 tests/data/*.test.ts",
+    "test:security": "tsx --test --test-concurrency=1 tests/security/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

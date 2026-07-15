@@ -165,10 +165,11 @@ for select
 using (true);
 
 drop policy if exists "Recipes are publicly readable" on public.recipes;
-create policy "Recipes are publicly readable"
+drop policy if exists "Public and owner recipes are readable" on public.recipes;
+create policy "Public and owner recipes are readable"
 on public.recipes
 for select
-using (true);
+using (user_id is null or (select auth.uid()) = user_id);
 
 drop policy if exists "Authenticated users can create own recipes" on public.recipes;
 create policy "Authenticated users can create own recipes"
@@ -193,10 +194,18 @@ to authenticated
 using (auth.uid() = user_id);
 
 drop policy if exists "Ingredients are publicly readable" on public.ingredients;
-create policy "Ingredients are publicly readable"
+drop policy if exists "Public and owner ingredients are readable" on public.ingredients;
+create policy "Public and owner ingredients are readable"
 on public.ingredients
 for select
-using (true);
+using (
+  exists (
+    select 1
+    from public.recipes
+    where recipes.id = ingredients.recipe_id
+      and (recipes.user_id is null or recipes.user_id = (select auth.uid()))
+  )
+);
 
 drop policy if exists "Users can create ingredients for own recipes" on public.ingredients;
 create policy "Users can create ingredients for own recipes"
@@ -213,10 +222,18 @@ with check (
 );
 
 drop policy if exists "Recipe steps are publicly readable" on public.recipe_steps;
-create policy "Recipe steps are publicly readable"
+drop policy if exists "Public and owner recipe steps are readable" on public.recipe_steps;
+create policy "Public and owner recipe steps are readable"
 on public.recipe_steps
 for select
-using (true);
+using (
+  exists (
+    select 1
+    from public.recipes
+    where recipes.id = recipe_steps.recipe_id
+      and (recipes.user_id is null or recipes.user_id = (select auth.uid()))
+  )
+);
 
 drop policy if exists "Users can create steps for own recipes" on public.recipe_steps;
 create policy "Users can create steps for own recipes"

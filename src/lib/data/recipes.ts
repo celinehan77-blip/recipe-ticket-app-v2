@@ -7,6 +7,7 @@ import {
 import {
   createRecipeFromParsedDraftInSupabase,
   getAllRecipesFromSupabase,
+  getMyRecipesFromSupabase,
   getRecipeBySlugFromSupabase,
   getRecipeDetailBySlugFromSupabase,
   getRecipesByStationSlugFromSupabase,
@@ -18,6 +19,11 @@ import {
 } from "@/lib/data/supabase/mappers";
 import type { Recipe } from "@/types";
 import type { ParsedRecipeDraft, RecipeParseSourcePlatform } from "@/types/ai";
+import {
+  getLocalGeneratedRecipeBySlug,
+  getLocalGeneratedRecipes,
+  saveLocalGeneratedRecipe,
+} from "@/lib/data/localGeneratedRecipe";
 
 export type RecipeCardData = Pick<
   Recipe,
@@ -33,6 +39,7 @@ export type RecipeCardData = Pick<
 >;
 
 export type CreateRecipeFromParsedDraftInput = {
+  preferLocal?: boolean;
   draft: ParsedRecipeDraft;
   sourcePlatform?: RecipeParseSourcePlatform;
   sourceUrl?: string;
@@ -75,7 +82,29 @@ export async function getAllRecipes(): Promise<Recipe[]> {
   return recipes;
 }
 
+export async function getMyRecipes(): Promise<Recipe[]> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return getLocalGeneratedRecipes();
+  }
+
+  try {
+    return (await getMyRecipesFromSupabase(user.id))
+      .map(mapSupabaseRecipeToRecipe)
+      .filter((recipe): recipe is Recipe => Boolean(recipe));
+  } catch {
+    return [];
+  }
+}
+
 export async function getRecipeBySlug(slug: string): Promise<Recipe | null> {
+  const localRecipe = getLocalGeneratedRecipeBySlug(slug);
+
+  if (localRecipe) {
+    return localRecipe;
+  }
+
   try {
     const supabaseRecipe = await getRecipeBySlugFromSupabase(slug);
     const recipe = supabaseRecipe
@@ -158,6 +187,7 @@ export async function getRecipeCardData(
 }
 
 export async function createRecipeFromParsedDraft({
+  preferLocal = false,
   draft,
   sourcePlatform = "mock",
   sourceUrl,
@@ -166,14 +196,16 @@ export async function createRecipeFromParsedDraft({
   try {
     const user = await getCurrentUser();
 
-    if (!user) {
+    if (!user || preferLocal) {
+      const localRecipe = saveLocalGeneratedRecipe(draft);
+
       return {
-        error: "User is not signed in.",
+        error: null,
         fallbackSlug: DEFAULT_GENERATED_RECIPE_SLUG,
         id: null,
-        ok: false,
-        slug: DEFAULT_GENERATED_RECIPE_SLUG,
-        usedFallback: true,
+        ok: true,
+        slug: localRecipe.slug,
+        usedFallback: preferLocal,
       };
     }
 
@@ -186,12 +218,14 @@ export async function createRecipeFromParsedDraft({
     });
 
     if (!result.ok || !result.slug) {
+      const localRecipe = saveLocalGeneratedRecipe(draft);
+
       return {
         error: result.error,
         fallbackSlug: DEFAULT_GENERATED_RECIPE_SLUG,
         id: result.id,
-        ok: false,
-        slug: DEFAULT_GENERATED_RECIPE_SLUG,
+        ok: true,
+        slug: localRecipe.slug,
         usedFallback: true,
       };
     }
@@ -205,12 +239,14 @@ export async function createRecipeFromParsedDraft({
       usedFallback: false,
     };
   } catch (error) {
+    const localRecipe = saveLocalGeneratedRecipe(draft);
+
     return {
       error: error instanceof Error ? error.message : "Recipe creation failed.",
       fallbackSlug: DEFAULT_GENERATED_RECIPE_SLUG,
       id: null,
-      ok: false,
-      slug: DEFAULT_GENERATED_RECIPE_SLUG,
+      ok: true,
+      slug: localRecipe.slug,
       usedFallback: true,
     };
   }

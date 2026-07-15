@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -19,15 +19,20 @@ import {
 import { IosStatusBar } from "@/components/layout/IosStatusBar";
 import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
+  getRecipeDetailBySlug,
+  getLocalGeneratedRecipeBySlug,
+  isLocalGeneratedRecipeSlug,
   isRecipeFavorite,
   toggleRecipeFavorite,
 } from "@/lib/data";
+import { serializeRecipe } from "@/lib/data/serializers";
 import type { Ingredient, IngredientGroup, SerializableRecipe } from "@/types";
 
 type RecipeDetailScreenProps = {
   allRecipes: SerializableRecipe[];
   backHref: string;
   recipe: SerializableRecipe | null;
+  recipeSlug: string;
 };
 
 const statIcons = [Clock3, BarChart3, Flame, ChefHat, Heart];
@@ -205,17 +210,51 @@ function StepThumb({ index }: { index: number }) {
 export function RecipeDetailScreen({
   allRecipes,
   backHref,
-  recipe,
+  recipe: initialRecipe,
+  recipeSlug,
 }: RecipeDetailScreenProps) {
+  const [resolvedRecipe, setResolvedRecipe] = useState(initialRecipe);
+  const [isResolvingRecipe, setIsResolvingRecipe] = useState(!initialRecipe);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteMessage, setFavoriteMessage] = useState("");
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+  const favoriteLockRef = useRef(false);
 
   useEffect(() => {
     let active = true;
     const timer = window.setTimeout(() => {
-      if (recipe) {
-        void isRecipeFavorite(recipe.slug).then((favorite) => {
+      if (!initialRecipe && isLocalGeneratedRecipeSlug(recipeSlug)) {
+        const localRecipe = getLocalGeneratedRecipeBySlug(recipeSlug);
+        if (active) {
+          setResolvedRecipe(localRecipe ? serializeRecipe(localRecipe) : null);
+          setIsResolvingRecipe(false);
+        }
+      } else if (!initialRecipe) {
+        void getRecipeDetailBySlug(recipeSlug).then((clientRecipe) => {
+          if (active) {
+            setResolvedRecipe(
+              clientRecipe ? serializeRecipe(clientRecipe) : null,
+            );
+            setIsResolvingRecipe(false);
+          }
+        });
+      } else {
+        setResolvedRecipe(initialRecipe);
+        setIsResolvingRecipe(false);
+      }
+    }, 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [initialRecipe, recipeSlug]);
+
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(() => {
+      if (resolvedRecipe) {
+        void isRecipeFavorite(resolvedRecipe.slug).then((favorite) => {
           if (active) {
             setIsFavorite(favorite);
           }
@@ -227,23 +266,39 @@ export function RecipeDetailScreen({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [recipe]);
+  }, [resolvedRecipe]);
 
   const handleToggleFavorite = async () => {
-    if (!recipe || isFavoriteLoading) {
+    if (!resolvedRecipe || favoriteLockRef.current) {
       return;
     }
 
+    favoriteLockRef.current = true;
     setIsFavoriteLoading(true);
     setFavoriteMessage("");
 
-    const nextFavoriteState = await toggleRecipeFavorite(recipe.slug);
-    setIsFavorite(nextFavoriteState.favorite);
-    setFavoriteMessage(nextFavoriteState.message ?? "");
-    setIsFavoriteLoading(false);
+    try {
+      const nextFavoriteState = await toggleRecipeFavorite(resolvedRecipe.slug);
+      setIsFavorite(nextFavoriteState.favorite);
+      setFavoriteMessage(nextFavoriteState.message ?? "");
+    } finally {
+      favoriteLockRef.current = false;
+      setIsFavoriteLoading(false);
+    }
   };
 
-  if (!recipe) {
+  if (isResolvingRecipe) {
+    return (
+      <IphoneFrame>
+        <IosStatusBar />
+        <div className="app-content grid place-items-center px-6 text-center text-[14px] text-[#75695f]">
+          正在读取你的菜谱…
+        </div>
+      </IphoneFrame>
+    );
+  }
+
+  if (!resolvedRecipe) {
     return (
       <IphoneFrame>
         <IosStatusBar />
@@ -276,7 +331,8 @@ export function RecipeDetailScreen({
     );
   }
 
-  const recipeNo = getRecipeNo(recipe, allRecipes);
+  const recipeNo = getRecipeNo(resolvedRecipe, allRecipes);
+  const recipe = resolvedRecipe;
   const recipeStats = [
     { label: "烹饪时间", value: String(recipe.timeMinutes), suffix: "分钟" },
     { label: "难度等级", value: recipe.difficulty },
@@ -325,7 +381,8 @@ export function RecipeDetailScreen({
               <button
                 aria-label="收藏"
                 onClick={handleToggleFavorite}
-                className="recipe-nav-button"
+                disabled={isFavoriteLoading}
+                className="recipe-nav-button disabled:opacity-70"
               >
                 <Bookmark
                   size={20}
