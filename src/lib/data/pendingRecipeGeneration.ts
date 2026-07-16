@@ -58,6 +58,13 @@ type ParsedSourceResult =
       shouldContinueWithFallback: boolean;
     };
 
+type ShareTranscriptionResponse = {
+  ok: boolean;
+  transcript?: string;
+  source?: { canonicalUrl?: string };
+  generation?: RecipeParseResult["generation"];
+};
+
 const activeJobs = new Map<string, Promise<PendingRecipeGenerationResult>>();
 
 function canUseLocalStorage() {
@@ -148,12 +155,40 @@ async function parseRecipeSource(sourceValue: string): Promise<ParsedSourceResul
   const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
 
   try {
+    let transcription: ShareTranscriptionResponse | null = null;
+    let canonicalSourceUrl = extractedUrl ?? sourceValue;
+
+    if (looksLikeUrl) {
+      const transcriptionResponse = await fetch("/api/parse-recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operation: "transcribe",
+          sourceUrl: canonicalSourceUrl,
+          sourcePlatform,
+        }),
+        signal: controller.signal,
+      });
+      transcription = (await transcriptionResponse.json()) as ShareTranscriptionResponse;
+
+      if (!transcriptionResponse.ok || !transcription.ok || !transcription.transcript) {
+        return {
+          ok: false,
+          message: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
+          shouldContinueWithFallback: false,
+        };
+      }
+
+      canonicalSourceUrl =
+        transcription.source?.canonicalUrl ?? canonicalSourceUrl;
+    }
+
     const response = await fetch("/api/parse-recipe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        sourceUrl: looksLikeUrl ? extractedUrl ?? sourceValue : undefined,
-        rawText: looksLikeUrl ? undefined : sourceValue,
+        sourceUrl: looksLikeUrl ? canonicalSourceUrl : undefined,
+        rawText: looksLikeUrl ? transcription?.transcript : sourceValue,
         sourcePlatform,
       }),
       signal: controller.signal,
@@ -170,14 +205,16 @@ async function parseRecipeSource(sourceValue: string): Promise<ParsedSourceResul
       };
     }
 
+    const generation = transcription?.generation ?? result.generation;
+
     saveLatestParsedDraft(result.draft, {
-      generation: result.generation
+      generation: generation
         ? {
-            asrModel: result.generation.asrModel,
-            asrProvider: result.generation.asrProvider,
-            processingTimeMs: result.generation.processingTimeMs,
-            stages: result.generation.stages,
-            usedAsrFallback: result.generation.usedAsrFallback,
+            asrModel: generation.asrModel,
+            asrProvider: generation.asrProvider,
+            processingTimeMs: generation.processingTimeMs,
+            stages: generation.stages,
+            usedAsrFallback: generation.usedAsrFallback,
           }
         : undefined,
       model: result.model ?? result.diagnostics?.model ?? null,
@@ -190,7 +227,10 @@ async function parseRecipeSource(sourceValue: string): Promise<ParsedSourceResul
       draft: result.draft,
       sourcePlatform,
       sourceUrl: looksLikeUrl
-        ? result.source?.canonicalUrl ?? extractedUrl ?? sourceValue
+        ? transcription?.source?.canonicalUrl ??
+          result.source?.canonicalUrl ??
+          extractedUrl ??
+          sourceValue
         : undefined,
       usedFallback: result.usedFallback,
     };

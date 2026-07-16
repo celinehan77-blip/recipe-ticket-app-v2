@@ -24,6 +24,11 @@ export type ShareLinkGenerationResult = {
   transcript: string;
 };
 
+export type ShareLinkTranscriptionResult = Omit<
+  ShareLinkGenerationResult,
+  "draft"
+>;
+
 function validateGroundedRecipe(draft: ParsedRecipeDraft, transcript: string) {
   const quality = scoreParsedRecipeDraft(draft);
   const namedItems = [...draft.ingredients, ...draft.seasonings].filter((item) =>
@@ -47,14 +52,21 @@ function validateGroundedRecipe(draft: ParsedRecipeDraft, transcript: string) {
 
 const globalCache = globalThis as typeof globalThis & {
   __recipeTicketShareJobs?: Map<string, Promise<ShareLinkGenerationResult>>;
+  __recipeTicketTranscriptionJobs?: Map<
+    string,
+    Promise<ShareLinkTranscriptionResult>
+  >;
 };
 const shareJobs =
   globalCache.__recipeTicketShareJobs ??
   (globalCache.__recipeTicketShareJobs = new Map());
+const transcriptionJobs =
+  globalCache.__recipeTicketTranscriptionJobs ??
+  (globalCache.__recipeTicketTranscriptionJobs = new Map());
 
-async function generateUncachedRecipeFromShareLink(
+async function transcribeUncachedShareLink(
   sourceUrl: string,
-): Promise<ShareLinkGenerationResult> {
+): Promise<ShareLinkTranscriptionResult> {
   const startedAt = Date.now();
   const stages: ShareLinkGenerationResult["stages"] = [
     { stage: "resolving_link", completedAtMs: 0 },
@@ -65,10 +77,53 @@ async function generateUncachedRecipeFromShareLink(
   const asr = await transcribeAudio(audio.audio);
   stages.push({ stage: "transcribing", completedAtMs: Date.now() - startedAt });
 
+  return {
+    asr,
+    canonicalUrl: audio.canonicalUrl,
+    durationSeconds: audio.durationSeconds,
+    sourceHash: audio.sourceHash,
+    stages,
+    title: audio.title,
+    transcript: asr.transcript,
+  };
+}
+
+export async function transcribeShareLink(sourceUrl: string) {
+  const { sourceHash } = normalizeShareUrl(sourceUrl);
+  const existing = transcriptionJobs.get(sourceHash);
+
+  if (existing) {
+    return existing;
+  }
+
+  const transcription = transcribeUncachedShareLink(sourceUrl);
+  if (transcriptionJobs.size >= 20) {
+    const oldestKey = transcriptionJobs.keys().next().value;
+    if (oldestKey) {
+      transcriptionJobs.delete(oldestKey);
+    }
+  }
+  transcriptionJobs.set(sourceHash, transcription);
+
+  try {
+    return await transcription;
+  } catch (error) {
+    transcriptionJobs.delete(sourceHash);
+    throw error;
+  }
+}
+
+async function generateUncachedRecipeFromShareLink(
+  sourceUrl: string,
+): Promise<ShareLinkGenerationResult> {
+  const transcribed = await transcribeShareLink(sourceUrl);
+  const startedAt = Date.now() - (transcribed.stages.at(-1)?.completedAtMs ?? 0);
+  const stages = [...transcribed.stages];
+
   const parsed = await parseRecipeWithDeepSeek({
-    rawText: asr.transcript,
+    rawText: transcribed.transcript,
     sourcePlatform: "xiaohongshu",
-    sourceUrl: audio.canonicalUrl,
+    sourceUrl: transcribed.canonicalUrl,
     userId: null,
   });
   stages.push({ stage: "parsing", completedAtMs: Date.now() - startedAt });
@@ -77,19 +132,19 @@ async function generateUncachedRecipeFromShareLink(
     throw new Error(parsed.errorCode || "DEEPSEEK_PARSE_FAILED");
   }
 
-  validateGroundedRecipe(parsed.draft, asr.transcript);
+  validateGroundedRecipe(parsed.draft, transcribed.transcript);
   stages.push({ stage: "validating", completedAtMs: Date.now() - startedAt });
   stages.push({ stage: "completed", completedAtMs: Date.now() - startedAt });
 
   return {
-    asr,
-    canonicalUrl: audio.canonicalUrl,
+    asr: transcribed.asr,
+    canonicalUrl: transcribed.canonicalUrl,
     draft: parsed.draft,
-    durationSeconds: audio.durationSeconds,
-    sourceHash: audio.sourceHash,
+    durationSeconds: transcribed.durationSeconds,
+    sourceHash: transcribed.sourceHash,
     stages,
-    title: audio.title,
-    transcript: asr.transcript,
+    title: transcribed.title,
+    transcript: transcribed.transcript,
   };
 }
 

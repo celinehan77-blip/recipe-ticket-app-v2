@@ -2,7 +2,10 @@ import { parseRecipeInput } from "@/lib/ai";
 import type { RecipeParseInput, RecipeParseSourcePlatform } from "@/types/ai";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { extractPublicSource } from "@/lib/source";
-import { generateRecipeFromShareLink } from "@/lib/generation/generateRecipeFromShareLink";
+import {
+  generateRecipeFromShareLink,
+  transcribeShareLink,
+} from "@/lib/generation/generateRecipeFromShareLink";
 import { AudioExtractionError } from "@/lib/media/extractAudio";
 
 export const runtime = "nodejs";
@@ -38,6 +41,40 @@ function asSourcePlatform(value: unknown): RecipeParseSourcePlatform | undefined
   return allowedSourcePlatforms.has(value as RecipeParseSourcePlatform)
     ? (value as RecipeParseSourcePlatform)
     : undefined;
+}
+
+async function shareLinkFailureResponse(error: unknown, sourceUrl: string) {
+  const mediaErrorCode =
+    error instanceof AudioExtractionError ? error.code : null;
+  const extractedSource = await extractPublicSource(sourceUrl);
+
+  if (!extractedSource.ok) {
+    return Response.json(
+      {
+        ok: false,
+        draft: null,
+        error: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
+        errorCode: "SOURCE_EXTRACTION_FAILED",
+        provider: "mock",
+        sourceErrorCode: mediaErrorCode ?? extractedSource.errorCode,
+        usedFallback: false,
+      },
+      { status: 422 },
+    );
+  }
+
+  return Response.json(
+    {
+      ok: false,
+      draft: null,
+      error: "视频语音暂时无法识别，请粘贴正文或字幕。",
+      errorCode: "SOURCE_EXTRACTION_FAILED",
+      provider: "mock",
+      sourceErrorCode: mediaErrorCode ?? "no_text",
+      usedFallback: false,
+    },
+    { status: 422 },
+  );
 }
 
 export async function POST(request: Request) {
@@ -90,6 +127,10 @@ export async function POST(request: Request) {
   const rawText = asOptionalString(
     "rawText" in requestBody ? requestBody.rawText : undefined,
   );
+  const operation =
+    "operation" in requestBody && requestBody.operation === "transcribe"
+      ? "transcribe"
+      : "parse";
 
   if (!sourceUrl && !rawText) {
     return Response.json(
@@ -133,6 +174,38 @@ export async function POST(request: Request) {
     );
   }
 
+  if (sourceUrl && !rawText && operation === "transcribe") {
+    try {
+      const transcribed = await transcribeShareLink(sourceUrl);
+
+      return Response.json({
+        ok: true,
+        transcript: transcribed.transcript,
+        error: null,
+        errorCode: null,
+        source: {
+          canonicalUrl: transcribed.canonicalUrl,
+          extractor: "combined",
+          platform: "xiaohongshu",
+          warnings: transcribed.asr.warnings,
+        },
+        generation: {
+          asrModel: transcribed.asr.model,
+          asrProvider: transcribed.asr.provider,
+          durationSeconds: transcribed.durationSeconds,
+          processingTimeMs:
+            transcribed.stages.at(-1)?.completedAtMs ??
+            transcribed.asr.processingTimeMs,
+          sourceHash: transcribed.sourceHash,
+          stages: transcribed.stages,
+          usedAsrFallback: transcribed.asr.usedFallback,
+        },
+      });
+    } catch (error) {
+      return shareLinkFailureResponse(error, sourceUrl);
+    }
+  }
+
   if (sourceUrl && !rawText) {
     try {
       const generated = await generateRecipeFromShareLink(sourceUrl);
@@ -163,37 +236,7 @@ export async function POST(request: Request) {
         },
       });
     } catch (error) {
-      const mediaErrorCode =
-        error instanceof AudioExtractionError ? error.code : null;
-      const extractedSource = await extractPublicSource(sourceUrl);
-
-      if (!extractedSource.ok) {
-        return Response.json(
-          {
-            ok: false,
-            draft: null,
-            error: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
-            errorCode: "SOURCE_EXTRACTION_FAILED",
-            provider: "mock",
-            sourceErrorCode: mediaErrorCode ?? extractedSource.errorCode,
-            usedFallback: false,
-          },
-          { status: 422 },
-        );
-      }
-
-      return Response.json(
-        {
-          ok: false,
-          draft: null,
-          error: "视频语音暂时无法识别，请粘贴正文或字幕。",
-          errorCode: "SOURCE_EXTRACTION_FAILED",
-          provider: "mock",
-          sourceErrorCode: mediaErrorCode ?? "no_text",
-          usedFallback: false,
-        },
-        { status: 422 },
-      );
+      return shareLinkFailureResponse(error, sourceUrl);
     }
   }
 
