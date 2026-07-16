@@ -41,8 +41,10 @@ test("identifies supported platform hosts without accepting lookalikes", () => {
   assert.equal(identifySourcePlatform("www.xiaohongshu.com"), "xiaohongshu");
   assert.equal(identifySourcePlatform("xhslink.com"), "xiaohongshu");
   assert.equal(identifySourcePlatform("v.douyin.com"), "douyin");
+  assert.equal(identifySourcePlatform("www.iesdouyin.com"), "douyin");
   assert.equal(identifySourcePlatform("douyin.com.evil.test"), null);
   assert.equal(identifySourcePlatform("evildouyin.com"), null);
+  assert.equal(identifySourcePlatform("iesdouyin.com.evil.test"), null);
 });
 
 test("accepts only safe HTTPS platform URLs", () => {
@@ -115,17 +117,32 @@ test("normalizes copied Xiaohongshu share text to a stable source hash", () => {
   assert.equal(fromHttp.sourceHash, fromHttps.sourceHash);
 });
 
-test("media extraction rejects unsupported platforms before starting a process", () => {
-  assert.throws(
-    () => normalizeShareUrl("https://v.douyin.com/abc"),
-    (error: unknown) =>
-      error instanceof AudioExtractionError && error.code === "unsupported_url",
-  );
+test("media extraction accepts Douyin and rejects lookalike hosts", () => {
+  const douyin = normalizeShareUrl("抖音分享 https://v.douyin.com/abc/?token=private");
+  assert.equal(douyin.platform, "douyin");
+  assert.equal(douyin.canonicalUrl, "https://v.douyin.com/abc/");
   assert.throws(
     () => normalizeShareUrl("https://xhslink.com.evil.test/o/abc"),
     (error: unknown) =>
       error instanceof AudioExtractionError && error.code === "unsupported_url",
   );
+});
+
+test("normalizes the six Douyin MVP samples without retaining share noise", () => {
+  const samples = [
+    "https://v.douyin.com/3MPyusYaM8s/",
+    "https://v.douyin.com/61MfaxPVOqo/",
+    "https://v.douyin.com/29Zba-mo3Ng/",
+    "https://v.douyin.com/DXgCz5OFyMc/",
+    "https://v.douyin.com/WmuRtJV1Ubs/",
+    "https://v.douyin.com/XKc1oxiuiAU/",
+  ];
+
+  for (const sample of samples) {
+    const normalized = normalizeShareUrl(`复制打开抖音 ${sample} share-token`);
+    assert.equal(normalized.platform, "douyin");
+    assert.equal(normalized.canonicalUrl, sample);
+  }
 });
 
 test("extracts and deduplicates metadata, JSON-LD and embedded JSON", () => {

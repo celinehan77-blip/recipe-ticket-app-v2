@@ -34,6 +34,7 @@ export type ShareLinkGenerationResult = {
   stages: Array<{ stage: GenerationStage; completedAtMs: number }>;
   title: string | null;
   transcript: string;
+  platform: "xiaohongshu" | "douyin";
   diagnostics: RecipeParseResult["diagnostics"];
 };
 
@@ -108,6 +109,7 @@ async function transcribeUncachedShareLink(
     stages,
     title: audio.title,
     transcript: asr.transcript,
+    platform: audio.platform,
   };
 }
 
@@ -145,7 +147,7 @@ async function generateUncachedRecipeFromShareLink(
 
   const parsed = await parseRecipeWithDeepSeek({
     rawText: transcribed.transcript,
-    sourcePlatform: "xiaohongshu",
+    sourcePlatform: transcribed.platform,
     sourceUrl: transcribed.canonicalUrl,
     userId: null,
   });
@@ -168,6 +170,7 @@ async function generateUncachedRecipeFromShareLink(
     stages,
     title: transcribed.title,
     transcript: transcribed.transcript,
+    platform: transcribed.platform,
     diagnostics: parsed.diagnostics,
   };
 }

@@ -4,7 +4,7 @@ import type { PublicSourcePlatform } from "@/lib/source/types";
 
 const PLATFORM_HOSTS: Record<PublicSourcePlatform, string[]> = {
   xiaohongshu: ["xiaohongshu.com", "xhslink.com"],
-  douyin: ["douyin.com"],
+  douyin: ["douyin.com", "iesdouyin.com"],
 };
 
 export type HostLookup = (

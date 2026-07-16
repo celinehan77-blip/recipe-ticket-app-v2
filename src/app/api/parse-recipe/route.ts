@@ -211,7 +211,7 @@ export async function POST(request: Request) {
         source: {
           canonicalUrl: transcribed.canonicalUrl,
           extractor: "combined",
-          platform: "xiaohongshu",
+          platform: transcribed.platform,
           warnings: transcribed.asr.warnings,
         },
         generation: {
@@ -247,7 +247,7 @@ export async function POST(request: Request) {
         source: {
           canonicalUrl: generated.canonicalUrl,
           extractor: "combined",
-          platform: "xiaohongshu",
+          platform: generated.platform,
           warnings: generated.asr.warnings,
         },
         generation: {

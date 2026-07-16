@@ -4,6 +4,17 @@ import { constants } from "node:fs";
 import { access, mkdir, readFile, rm, stat } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
+import { Readable, Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import type { PublicSourcePlatform } from "@/lib/source/types";
+import {
+  resolveDouyinMedia,
+  validatePublicMediaUrl,
+} from "@/lib/media/tikhubDouyin";
+import {
+  AudioExtractionError,
+  type AudioExtractionErrorCode,
+} from "@/lib/media/errors";
 import { extractHttpUrlFromSharedText } from "@/lib/source/sharedInput";
 import {
   sanitizeSourceUrl,
@@ -16,25 +27,8 @@ const MAX_MEDIA_BYTES = 100 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
 const PROCESS_TIMEOUT_MS = 60_000;
 
-export type AudioExtractionErrorCode =
-  | "unsupported_url"
-  | "yt_dlp_unavailable"
-  | "media_unavailable"
-  | "media_too_long"
-  | "media_too_large"
-  | "ffmpeg_failed"
-  | "process_timeout"
-  | "audio_empty";
-
-export class AudioExtractionError extends Error {
-  constructor(
-    public readonly code: AudioExtractionErrorCode,
-    message: string,
-  ) {
-    super(message);
-    this.name = "AudioExtractionError";
-  }
-}
+export { AudioExtractionError } from "@/lib/media/errors";
+export type { AudioExtractionErrorCode } from "@/lib/media/errors";
 
 export type ExtractedAudio = {
   audio: Buffer;
@@ -42,6 +36,7 @@ export type ExtractedAudio = {
   durationSeconds: number;
   sourceHash: string;
   title: string | null;
+  platform: PublicSourcePlatform;
 };
 
 type MediaMetadata = {
@@ -137,10 +132,10 @@ export function normalizeShareUrl(sharedValue: string) {
   const extracted = extractHttpUrlFromSharedText(sharedValue) ?? sharedValue.trim();
   const validated = validateSourceUrl(upgradeInitialPlatformUrl(extracted));
 
-  if (!validated || validated.platform !== "xiaohongshu") {
+  if (!validated) {
     throw new AudioExtractionError(
       "unsupported_url",
-      "Only public Xiaohongshu links are supported in this checkpoint.",
+      "Only public Xiaohongshu and Douyin links are supported.",
     );
   }
 
@@ -148,8 +143,98 @@ export function normalizeShareUrl(sharedValue: string) {
 
   return {
     canonicalUrl,
+    platform: validated.platform,
     sourceHash: createHash("sha256").update(canonicalUrl).digest("hex"),
   };
+}
+
+async function streamRemoteMediaAudio(mediaUrl: string, outputPath: string) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROCESS_TIMEOUT_MS);
+  const ffmpeg = spawn(
+    resolveFfmpegPath(),
+    [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-i",
+      "pipe:0",
+      "-vn",
+      "-ac",
+      "1",
+      "-ar",
+      "16000",
+      "-codec:a",
+      "libmp3lame",
+      "-b:a",
+      "32k",
+      outputPath,
+    ],
+    { stdio: ["pipe", "pipe", "pipe"] },
+  );
+
+  try {
+    let currentUrl = mediaUrl;
+    let response: Response | null = null;
+    for (let redirects = 0; redirects <= 3; redirects += 1) {
+      const safeUrl = await validatePublicMediaUrl(currentUrl);
+      if (!safeUrl) {
+        throw new AudioExtractionError("media_unavailable", "Douyin media URL was unsafe.");
+      }
+      response = await fetch(safeUrl, { redirect: "manual", signal: controller.signal });
+      if (![301, 302, 303, 307, 308].includes(response.status)) break;
+      const location = response.headers.get("location");
+      if (!location || redirects === 3) {
+        throw new AudioExtractionError("media_unavailable", "Douyin media redirect failed.");
+      }
+      currentUrl = new URL(location, safeUrl).toString();
+    }
+    if (!response) {
+      throw new AudioExtractionError("media_unavailable", "Douyin media download failed.");
+    }
+    const declaredBytes = Number(response.headers.get("content-length") ?? 0);
+    if (!response.ok || !response.body) {
+      throw new AudioExtractionError("media_unavailable", "Douyin media download failed.");
+    }
+    if (declaredBytes > MAX_MEDIA_BYTES) {
+      throw new AudioExtractionError("media_too_large", "Media exceeds 100 MB.");
+    }
+
+    let streamedBytes = 0;
+    const input = Readable.fromWeb(response.body as never);
+    const limiter = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        streamedBytes += chunk.length;
+        callback(
+          streamedBytes > MAX_MEDIA_BYTES
+            ? new AudioExtractionError("media_too_large", "Media exceeds 100 MB.")
+            : null,
+          chunk,
+        );
+      },
+    });
+
+    const [, ffmpegResult] = await Promise.all([
+      pipeline(input, limiter, ffmpeg.stdin),
+      waitForProcess(ffmpeg, PROCESS_TIMEOUT_MS, false, "ffmpeg_failed"),
+    ]);
+    if (streamedBytes > MAX_MEDIA_BYTES) {
+      throw new AudioExtractionError("media_too_large", "Media exceeds 100 MB.");
+    }
+    if (ffmpegResult.code !== 0) {
+      throw new AudioExtractionError(
+        "ffmpeg_failed",
+        safeProcessError(ffmpegResult.stderr) || "FFmpeg audio extraction failed.",
+      );
+    }
+  } catch (error) {
+    if (error instanceof AudioExtractionError) throw error;
+    throw new AudioExtractionError("media_unavailable", "Douyin media stream failed.");
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+    if (!ffmpeg.killed) ffmpeg.kill("SIGKILL");
+  }
 }
 
 async function readMetadata(sourceUrl: string) {
@@ -284,9 +369,12 @@ export async function getMediaRuntimeDiagnostics() {
 
 export async function extractAudioWithYtDlp(sharedValue: string): Promise<ExtractedAudio> {
   const normalized = normalizeShareUrl(sharedValue);
-  const metadata = await readMetadata(normalized.canonicalUrl);
-  const durationSeconds = Number(metadata.duration ?? 0);
-  const mediaBytes = Number(metadata.filesize ?? metadata.filesize_approx ?? 0);
+  const douyin = normalized.platform === "douyin"
+    ? await resolveDouyinMedia(normalized.canonicalUrl)
+    : null;
+  const metadata = douyin ? null : await readMetadata(normalized.canonicalUrl);
+  const durationSeconds = douyin?.durationSeconds ?? Number(metadata?.duration ?? 0);
+  const mediaBytes = Number(metadata?.filesize ?? metadata?.filesize_approx ?? 0);
 
   if (!durationSeconds || durationSeconds > MAX_MEDIA_DURATION_SECONDS) {
     throw new AudioExtractionError("media_too_long", "Media duration exceeds 5 minutes.");
@@ -300,7 +388,11 @@ export async function extractAudioWithYtDlp(sharedValue: string): Promise<Extrac
 
   await mkdir(tempDirectory, { recursive: true });
   try {
-    await streamAudio(normalized.canonicalUrl, audioPath);
+    if (douyin?.mediaUrl) {
+      await streamRemoteMediaAudio(douyin.mediaUrl, audioPath);
+    } else {
+      await streamAudio(normalized.canonicalUrl, audioPath);
+    }
     const audioStats = await stat(/* turbopackIgnore: true */ audioPath);
 
     if (!audioStats.size) {
@@ -310,7 +402,7 @@ export async function extractAudioWithYtDlp(sharedValue: string): Promise<Extrac
       throw new AudioExtractionError("media_too_large", "Extracted audio exceeds 8 MB.");
     }
 
-    const metadataUrl = metadata.webpage_url
+    const metadataUrl = metadata?.webpage_url
       ? validateSourceUrl(upgradeInitialPlatformUrl(metadata.webpage_url))
       : null;
 
@@ -318,10 +410,12 @@ export async function extractAudioWithYtDlp(sharedValue: string): Promise<Extrac
       audio: await readFile(/* turbopackIgnore: true */ audioPath),
       canonicalUrl: metadataUrl
         ? sanitizeSourceUrl(metadataUrl.url)
-        : normalized.canonicalUrl,
+        : douyin?.canonicalUrl ?? normalized.canonicalUrl,
       durationSeconds,
       sourceHash: normalized.sourceHash,
-      title: typeof metadata.title === "string" ? metadata.title.slice(0, 160) : null,
+      title: douyin?.description ??
+        (typeof metadata?.title === "string" ? metadata.title.slice(0, 160) : null),
+      platform: normalized.platform,
     };
   } finally {
     await rm(tempDirectory, { recursive: true, force: true });

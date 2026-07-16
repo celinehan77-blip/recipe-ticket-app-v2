@@ -129,7 +129,8 @@ ALIBABA_ASR_MODEL=qwen3-asr-flash
 - 当前已新增 `/api/parse-recipe`。
 - 首页生成流程已经接入 `/api/parse-recipe`。
 - 已新增小红书公开视频语音提取链路：短链规范化、yt-dlp 公开媒体解析、FFmpeg 临时音轨、火山 ASR 主调用与 Qwen ASR 失败备用。
-- 当前 Checkpoint 只支持小红书，不处理抖音、B 站、YouTube、私密内容或需要登录的内容。
+- 小红书继续使用 `yt-dlp`；抖音公开分享链接通过服务端 TikHub App V3 获取公开媒体后复用同一套 FFmpeg、ASR 和 DeepSeek 管线。私密内容、需要登录的内容、B 站和 YouTube 不在当前范围内。
+- 抖音图文作品当前不做 OCR；没有可用音轨或足够正文时会安全提示，不生成与来源无关的菜谱。
 - 链接抓取只读取无需登录即可访问的公开内容，不执行页面脚本，不绕过登录、验证码或平台访问控制。
 - 当前已接入 DeepSeek Provider，并已完成 Vercel Production 真实链路验收；Netlify 保留为备用部署平台。
 - DeepSeek 请求支持可配置超时、受控重试和 JSON 输出截断检测。

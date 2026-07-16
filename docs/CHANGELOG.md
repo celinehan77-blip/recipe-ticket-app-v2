@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-17
+
+### Milestone 3 / Checkpoint B1 抖音 MVP 实现
+
+- 确认真实抖音短链可展开，但直接 `yt-dlp` 需要新鲜匿名 Cookie；不引入用户 Cookie、浏览器抓取或登录绕过。
+- 新增 TikHub App V3 服务端解析适配器，只取得公开作品媒体数据；媒体仍以流方式进入 FFmpeg，不永久保存视频。
+- 抖音复用现有火山 ASR、阿里 fallback、DeepSeek、质量校验、Supabase 保存和动态详情链路。
+- 增加 `iesdouyin.com` 官方跳转域名、安全媒体 URL 校验、HTTPS 跳转、超时、大小限制和图文无音轨分类。
+- 六条真实抖音样本均通过短链规范化测试；真实付费验收等待服务端 `TIKHUB_API_KEY`，Checkpoint B1 尚未完成。
+- 版本更新为 `0.2.0-working.13`；本轮代码回滚基线为 `0c7fa85`。
+
 本文件记录 Recipe Ticket / 日食笔记的重要产品、代码和项目治理变化。
 
 ## 2026-07-16
