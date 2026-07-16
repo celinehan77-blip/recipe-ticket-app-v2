@@ -184,7 +184,16 @@ async function readMetadata(sourceUrl: string) {
 async function streamAudio(sourceUrl: string, outputPath: string) {
   const ytDlp = spawn(
     resolveYtDlpPath(),
-    ["--quiet", "--no-warnings", "--no-playlist", "-f", "best[ext=mp4]/best", "-o", "-", sourceUrl],
+    [
+      "--quiet",
+      "--no-warnings",
+      "--no-playlist",
+      "-f",
+      "worstaudio/worst[ext=mp4]/worst",
+      "-o",
+      "-",
+      sourceUrl,
+    ],
     { stdio: ["ignore", "pipe", "pipe"] },
   );
   const ffmpeg = spawn(
@@ -203,7 +212,7 @@ async function streamAudio(sourceUrl: string, outputPath: string) {
       "-codec:a",
       "libmp3lame",
       "-b:a",
-      "48k",
+      "32k",
       outputPath,
     ],
     { stdio: ["pipe", "pipe", "pipe"] },

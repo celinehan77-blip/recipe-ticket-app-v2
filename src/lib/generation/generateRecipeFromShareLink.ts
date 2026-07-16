@@ -73,9 +73,19 @@ async function transcribeUncachedShareLink(
   ];
   const audio = await extractAudioWithYtDlp(sourceUrl);
   stages.push({ stage: "extracting_audio", completedAtMs: Date.now() - startedAt });
+  console.info("[recipe-pipeline]", {
+    elapsedMs: stages.at(-1)?.completedAtMs,
+    stage: "extracting_audio",
+  });
 
   const asr = await transcribeAudio(audio.audio);
   stages.push({ stage: "transcribing", completedAtMs: Date.now() - startedAt });
+  console.info("[recipe-pipeline]", {
+    elapsedMs: stages.at(-1)?.completedAtMs,
+    provider: asr.provider,
+    stage: "transcribing",
+    usedFallback: asr.usedFallback,
+  });
 
   return {
     asr,
