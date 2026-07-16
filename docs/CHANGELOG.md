@@ -12,6 +12,7 @@
 - 合并前一条“农家一碗香”后，小红书首轮 5 条样本成功率 60%，平均质量分 94.7，P95 约 30.9 秒，fallback 为 0。
 - 新增媒体提取、DeepSeek 解析和质量校验的安全失败分类，避免全部写成通用 AI 错误。
 - 固定 yt-dlp 从 `2025.10.14` 升级到官方 `2026.06.09`，Vercel 构建继续强制 SHA-256 校验。
+- Vercel Production 提交 `301ee90` 部署 READY；健康接口确认 yt-dlp、FFmpeg 和 Supabase 均可用，首页返回 200。
 - Checkpoint A2 保持进行中：正文样本 2 / 10，小红书成功率未达到 80% 门槛。
 
 ### Milestone 3 / Checkpoint A1 完成
