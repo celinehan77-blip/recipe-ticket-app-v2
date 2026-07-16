@@ -11,6 +11,7 @@ import {
   tryCompleteGenerationTaskInSupabase,
   tryCreateGenerationTaskInSupabase,
   tryFailGenerationTaskInSupabase,
+  tryGetCompletedGeneratedRecipeSlugBySourceFromSupabase,
   tryGetLatestGeneratedRecipeSlugFromSupabase,
   tryGetLatestGenerationTaskFromSupabase,
   type SupabaseGenerationTaskRow,
@@ -212,4 +213,22 @@ export async function getLatestGeneratedRecipeSlug(): Promise<string> {
     getLocalGenerationTask()?.generatedRecipeSlug ??
     DEFAULT_GENERATED_RECIPE_SLUG
   );
+}
+
+export async function getCompletedGeneratedRecipeSlugBySource(
+  sourceUrl: string,
+): Promise<string | null> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const result =
+    await tryGetCompletedGeneratedRecipeSlugBySourceFromSupabase(
+      user.id,
+      sourceUrl,
+    );
+
+  return result.ok ? result.data : null;
 }

@@ -230,6 +230,37 @@ export async function tryGetLatestGeneratedRecipeSlugFromSupabase(
   return { data: await getRecipeSlugById(data.generated_recipe_id), ok: true };
 }
 
+export async function tryGetCompletedGeneratedRecipeSlugBySourceFromSupabase(
+  userId: string,
+  sourceUrl: string,
+): Promise<SupabaseResult<string | null>> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return { data: null, ok: false };
+  }
+
+  const { data, error } = await supabase
+    .from("generation_tasks")
+    .select("generated_recipe_id")
+    .eq("user_id", userId)
+    .eq("source_url", sourceUrl)
+    .eq("status", "completed")
+    .order("completed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ generated_recipe_id: string | null }>();
+
+  if (error) {
+    return { data: null, ok: false };
+  }
+
+  if (!data?.generated_recipe_id) {
+    return { data: null, ok: true };
+  }
+
+  return { data: await getRecipeSlugById(data.generated_recipe_id), ok: true };
+}
+
 export async function getLatestGeneratedRecipeSlugFromSupabase(
   userId: string,
 ): Promise<string | null> {

@@ -13,7 +13,10 @@ import {
   saveLocalGeneratedRecipe,
 } from "../../src/lib/data/localGeneratedRecipe";
 import type { ParsedRecipeDraft } from "../../src/types/ai";
-import { isBackgroundGenerationRouteUnavailable } from "../../src/lib/data/pendingRecipeGeneration";
+import {
+  isBackgroundGenerationRouteUnavailable,
+  pickReusableRecipeSlug,
+} from "../../src/lib/data/pendingRecipeGeneration";
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>();
@@ -152,4 +155,10 @@ test("Vercel can fall back when Netlify background routes are unavailable", () =
   assert.equal(isBackgroundGenerationRouteUnavailable(404), true);
   assert.equal(isBackgroundGenerationRouteUnavailable(405), true);
   assert.equal(isBackgroundGenerationRouteUnavailable(500), false);
+});
+
+test("completed source generation prefers local cache then cloud cache", () => {
+  assert.equal(pickReusableRecipeSlug("local-recipe", "cloud-recipe"), "local-recipe");
+  assert.equal(pickReusableRecipeSlug(null, "cloud-recipe"), "cloud-recipe");
+  assert.equal(pickReusableRecipeSlug(null, null), null);
 });

@@ -9,6 +9,7 @@ import {
   completeMockGenerationTask,
   createMockGenerationTask,
   failGenerationTask,
+  getCompletedGeneratedRecipeSlugBySource,
 } from "@/lib/data/generationTasks";
 import { createRecipeFromParsedDraft } from "@/lib/data/recipes";
 import {
@@ -216,6 +217,13 @@ export function isBackgroundGenerationRouteUnavailable(status: number) {
   return status === 404 || status === 405;
 }
 
+export function pickReusableRecipeSlug(
+  localSlug: string | null,
+  cloudSlug: string | null,
+) {
+  return localSlug ?? cloudSlug;
+}
+
 async function requestDirectRecipeParse(
   body: Record<string, string>,
   signal: AbortSignal,
@@ -362,13 +370,14 @@ async function runPendingGeneration(
 export async function beginPendingRecipeGeneration(sourceValue: string) {
   const sourcePlatform = getRecipeSourcePlatform(sourceValue);
   const persistedSourceValue = sanitizeSharedSourceForStorage(sourceValue);
-  const cachedSlug = isLikelyRecipeUrl(sourceValue)
+  const localCachedSlug = isLikelyRecipeUrl(sourceValue)
     ? await getCachedGeneratedRecipeSlug(sourceValue)
     : null;
-  const task = await createMockGenerationTask(
-    persistedSourceValue,
-    sourcePlatform,
-  );
+  const cloudCachedSlug = localCachedSlug
+    ? null
+    : await getCompletedGeneratedRecipeSlugBySource(persistedSourceValue);
+  const cachedSlug = pickReusableRecipeSlug(localCachedSlug, cloudCachedSlug);
+
   const pending: PendingRecipeGeneration = {
     jobId: window.crypto.randomUUID(),
     recipeSlug: cachedSlug ?? undefined,
@@ -376,19 +385,24 @@ export async function beginPendingRecipeGeneration(sourceValue: string) {
     sourceValue: persistedSourceValue,
     startedAt: new Date().toISOString(),
     status: cachedSlug ? "completed" : "processing",
-    taskId: task.id,
   };
 
   savePendingGeneration(pending);
 
   if (cachedSlug) {
-    await completeMockGenerationTask(cachedSlug, task.id);
     activeJobs.set(pending.jobId, Promise.resolve({ ok: true, slug: cachedSlug }));
   } else {
+    const task = await createMockGenerationTask(
+      persistedSourceValue,
+      sourcePlatform,
+    );
+    const pendingWithTask = { ...pending, taskId: task.id };
+    savePendingGeneration(pendingWithTask);
     activeJobs.set(
       pending.jobId,
-      runPendingGeneration(pending, sourceValue),
+      runPendingGeneration(pendingWithTask, sourceValue),
     );
+    return pendingWithTask;
   }
 
   return pending;
