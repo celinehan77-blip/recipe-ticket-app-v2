@@ -86,9 +86,9 @@ Milestone 2：Production Ready MVP
 ```
 
 - Current Milestone：`Milestone 2`
-- Current Phase：`Phase B - User Journey`
-- Current Checkpoint：`B1 - 生产环境陌生用户端到端验收`
-- Current Version：`0.2.0-working.5`
+- Current Phase：`Phase C - Production Verification`
+- Current Checkpoint：`C1 - 重复生成与付费防护`
+- Current Version：`0.2.0-working.6`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
@@ -98,7 +98,7 @@ Milestone 2：Production Ready MVP
 1. Phase B：User Journey，完成 Netlify 生产运行时和陌生用户端到端旅程验收。
 2. Phase C：Production Verification，完成跨设备、生产数据和发布验收。
 
-Checkpoint B1 当前状态：Vercel Production 已用真实小红书样本跑通媒体、火山 ASR 与 DeepSeek；正在完成双平台首页旅程和登录用户 Supabase 持久化验收。Netlify 因 Credits 暂停，配置保留为备用部署路径。
+Checkpoint B1 已完成：Vercel Production 已跑通游客真实小红书链路、登录用户云端菜谱写入、动态详情刷新、云端收藏和 `/me` 数据恢复。Checkpoint C1 将为登录用户复用已完成的同来源云端任务，避免跨设备或浏览器缓存失效后重复调用付费链路。
 
 每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 
@@ -107,7 +107,7 @@ Checkpoint B1 当前状态：Vercel Production 已用真实小红书样本跑通
 | 顺序 | 待开发项 | 状态 | 启动时必须确认 |
 | --- | --- | --- | --- |
 | 1 | DeepSeek 真实解析优化 | 已完成（2026-07-16） | 真实 Provider 与登录用户写入均已验证 |
-| 2 | 解析样本测试体系 | 进行中（基础样本与质量评分测试已完成） | 扩充真实样本文本、成本和耗时统计 |
+| 2 | 解析样本测试体系 | 进行中（进入生产重复计费防护） | 扩充真实样本文本、成本和耗时统计 |
 | 3 | 小红书链接解析 | 已完成（2026-07-16） | yt-dlp、火山 ASR、Qwen 备用与 DeepSeek 已验收 |
 | 4 | 抖音链接解析 | 待开发 | 合法内容获取方式、平台限制和失败兜底 |
 | 5 | OCR 图片识别 | 待开发 | 图片输入范围、OCR Provider 和隐私策略 |

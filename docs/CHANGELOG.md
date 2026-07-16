@@ -4,6 +4,15 @@
 
 ## 2026-07-16
 
+### Milestone 2 / Checkpoint B1 完成
+
+- Vercel Magic Link Session 已建立，刷新 `/me` 后仍保持登录。
+- 登录用户从首页生成“蒜蓉虾仁蒸蛋”，自动跳转 `/recipe/steamed-egg-with-garlic-shrimp`。
+- Supabase 验证为 1 条 owner recipe、8 条 ingredients、5 条 steps 和 1 条已完成且正确关联的 generation task。
+- 动态详情刷新后仍可读取；`/me` 云端菜谱从 3 道增加到 4 道。
+- 云端收藏写入成功，favorite 与 recipe owner 一致。
+- Checkpoint B1 回滚基线：`75dd3d3`。
+
 ### Vercel / Netlify 双平台兼容
 
 - Vercel Production 已部署 GitHub `main` 提交 `b058dab`，页面、Supabase、DeepSeek、yt-dlp、FFmpeg 和火山 ASR 运行信号通过。

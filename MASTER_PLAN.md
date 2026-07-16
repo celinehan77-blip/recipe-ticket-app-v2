@@ -56,7 +56,8 @@ AI 整理并校验结构化菜谱
 - Tailwind CSS + Framer Motion：界面与克制动效。
 - Supabase：Auth、Postgres 数据库与云端同步。
 - DeepSeek Flash：服务端菜谱结构化解析。
-- Netlify：当前部署平台。
+- Vercel：当前主要测试和生产验收平台。
+- Netlify：保留为同仓库备用部署平台，额度恢复后可继续启用。
 - `mockData` + `localStorage`：游客与外部服务故障时的安全 fallback。
 
 ## 7. MVP 边界
