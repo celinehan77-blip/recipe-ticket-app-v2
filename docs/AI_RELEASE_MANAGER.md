@@ -29,7 +29,7 @@ RELEASE_MANAGER 以 Working Release 为单位管理版本，而不是把每个 C
 
 | Version | Commit | Phase | 状态 | Rollback |
 | --- | --- | --- | --- | --- |
-| `0.2.0-working.11` | 当前工作区 | Milestone 3 / A2 | 10 条正文基线、来源事实校验与透明用量估算规则 | `87362ef` |
+| `0.2.0-working.11` | `c5d0c2d` | Milestone 3 / A2 | 10 条正文基线、来源事实校验与透明用量估算规则；Vercel READY | `87362ef` |
 | `0.2.0-working.10` | `301ee90` | Milestone 3 / A2 | 真实样本首轮、重点提醒、失败分类与 yt-dlp 升级；Vercel READY | `001463e` |
 | `0.2.0-working.9` | 当前工作区 | Milestone 3 / A1 | 正文与小红书生产 diagnostics 写入、RLS 与动态菜谱完整性验收通过 | `4911230` |
 | `0.2.0-working.8` | 当前工作区 | Milestone 2 / C2 | 过期任务恢复、孤儿数据审计与 Milestone 2 收口；66 tests、lint、build 通过 | `51303c6` |
