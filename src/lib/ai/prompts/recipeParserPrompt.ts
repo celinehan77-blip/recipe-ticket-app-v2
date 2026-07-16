@@ -65,7 +65,8 @@ export const recipeParserSystemPrompt = `你是一个专业中餐菜谱整理助
 13. ingredients 的 group 只能是 main 或 side；seasonings 的 group 必须是 seasoning。
 14. confidence 根据来源完整度给出 0–1：短文本或推断较多时必须降低。
 15. warnings 只记录会影响复刻准确性的缺失或推断，不写泛泛提醒。
-16. 如果来源只是链接，无法读取真实内容时，warnings 说明“当前仅根据链接文本进行推断”。`;
+16. 如果来源只是链接，无法读取真实内容时，warnings 说明“当前仅根据链接文本进行推断”。
+17. 原文明确使用“一定、必须、千万、切记、不要省略、不能、否则”等词强调的操作要求，要保留在对应 step.tips；会直接影响成败的原因或后果也要保留在 step.description。原文没有明确强调时 tips 保持空字符串，不得自行编造重点。`;
 
 const MAX_PROMPT_SOURCE_TEXT_LENGTH = 16000;
 
