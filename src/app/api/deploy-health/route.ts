@@ -1,4 +1,5 @@
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { getMediaRuntimeDiagnostics } from "@/lib/media/extractAudio";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +22,10 @@ async function getTableCount(tableName: "stations" | "recipes") {
 
 export async function GET() {
   const configured = isSupabaseConfigured();
-  const [stations, recipes] = await Promise.all([
+  const [stations, recipes, mediaRuntime] = await Promise.all([
     getTableCount("stations"),
     getTableCount("recipes"),
+    getMediaRuntimeDiagnostics(),
   ]);
 
   return Response.json({
@@ -32,6 +34,7 @@ export async function GET() {
     recipesCount: recipes.count,
     stationsReadable: stations.ok,
     recipesReadable: recipes.ok,
+    mediaRuntime,
     fallbackRetained: true,
   });
 }

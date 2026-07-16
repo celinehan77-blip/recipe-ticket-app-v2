@@ -19,6 +19,7 @@
 
 # production
 /build
+/runtime-tools
 
 # misc
 .DS_Store

@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, rm, stat } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, mkdir, readFile, rm, stat } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import ffmpegStaticPath from "ffmpeg-static";
@@ -70,7 +71,7 @@ function resolveYtDlpPath() {
     return macUserInstall;
   }
 
-  return path.join("node_modules", ".cache", "recipe-ticket", "yt-dlp");
+  return path.join(process.cwd(), "runtime-tools", "yt-dlp");
 }
 
 function resolveFfmpegPath() {
@@ -97,6 +98,7 @@ function waitForProcess(
   child: ChildProcess,
   timeoutMs: number,
   captureStdout = true,
+  spawnErrorCode: AudioExtractionErrorCode = "media_unavailable",
 ): Promise<{ code: number | null; stderr: string; stdout: Buffer }> {
   return new Promise((resolve, reject) => {
     const stdout: Buffer[] = [];
@@ -110,9 +112,16 @@ function waitForProcess(
       child.stdout?.on("data", (chunk: Buffer) => stdout.push(chunk));
     }
     child.stderr?.on("data", (chunk: Buffer) => stderr.push(chunk));
-    child.once("error", (error) => {
+    child.once("error", () => {
       clearTimeout(timer);
-      reject(error);
+      reject(
+        new AudioExtractionError(
+          spawnErrorCode,
+          spawnErrorCode === "yt_dlp_unavailable"
+            ? "yt-dlp is unavailable in the server runtime."
+            : "Media process could not start.",
+        ),
+      );
     });
     child.once("close", (code) => {
       clearTimeout(timer);
@@ -150,7 +159,12 @@ async function readMetadata(sourceUrl: string) {
     ["--no-warnings", "--no-playlist", "--skip-download", "--dump-single-json", sourceUrl],
     { stdio: ["ignore", "pipe", "pipe"] },
   );
-  const result = await waitForProcess(child, PROCESS_TIMEOUT_MS);
+  const result = await waitForProcess(
+    child,
+    PROCESS_TIMEOUT_MS,
+    true,
+    "yt_dlp_unavailable",
+  );
 
   if (result.code !== 0) {
     const summary = safeProcessError(result.stderr);
@@ -213,8 +227,8 @@ async function streamAudio(sourceUrl: string, outputPath: string) {
 
   try {
     const [ytDlpResult, ffmpegResult] = await Promise.all([
-      waitForProcess(ytDlp, PROCESS_TIMEOUT_MS, false),
-      waitForProcess(ffmpeg, PROCESS_TIMEOUT_MS, false),
+      waitForProcess(ytDlp, PROCESS_TIMEOUT_MS, false, "yt_dlp_unavailable"),
+      waitForProcess(ffmpeg, PROCESS_TIMEOUT_MS, false, "ffmpeg_failed"),
     ]);
 
     if (streamedBytes > MAX_MEDIA_BYTES) {
@@ -240,6 +254,24 @@ async function streamAudio(sourceUrl: string, outputPath: string) {
       ffmpeg.kill("SIGKILL");
     }
   }
+}
+
+async function isExecutable(filePath: string) {
+  try {
+    await access(filePath, constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function getMediaRuntimeDiagnostics() {
+  const [ytDlpAvailable, ffmpegAvailable] = await Promise.all([
+    isExecutable(resolveYtDlpPath()),
+    isExecutable(resolveFfmpegPath()),
+  ]);
+
+  return { ffmpegAvailable, ytDlpAvailable };
 }
 
 export async function extractAudioWithYtDlp(sharedValue: string): Promise<ExtractedAudio> {

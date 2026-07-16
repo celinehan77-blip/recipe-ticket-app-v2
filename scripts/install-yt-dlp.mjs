@@ -8,9 +8,7 @@ const EXPECTED_SHA256 =
 const DOWNLOAD_URL = `https://github.com/yt-dlp/yt-dlp/releases/download/${VERSION}/yt-dlp_linux`;
 const destination = path.join(
   process.cwd(),
-  "node_modules",
-  ".cache",
-  "recipe-ticket",
+  "runtime-tools",
   "yt-dlp",
 );
 
