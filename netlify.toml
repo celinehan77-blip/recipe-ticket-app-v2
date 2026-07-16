@@ -6,7 +6,7 @@
   NODE_VERSION = "20"
 
 [functions]
-  included_files = ["runtime-tools/yt-dlp"]
+  included_files = ["runtime-tools/yt-dlp", "runtime-tools/ffmpeg"]
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

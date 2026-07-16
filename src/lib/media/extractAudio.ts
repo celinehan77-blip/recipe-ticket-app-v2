@@ -4,7 +4,6 @@ import { constants } from "node:fs";
 import { access, mkdir, readFile, rm, stat } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
-import ffmpegStaticPath from "ffmpeg-static";
 import { extractHttpUrlFromSharedText } from "@/lib/source/sharedInput";
 import {
   sanitizeSourceUrl,
@@ -83,7 +82,7 @@ function resolveFfmpegPath() {
     return "/opt/homebrew/bin/ffmpeg";
   }
 
-  return ffmpegStaticPath || "ffmpeg";
+  return path.join(process.cwd(), "runtime-tools", "ffmpeg");
 }
 
 function safeProcessError(value: string) {

@@ -1,16 +1,22 @@
 import { createHash } from "node:crypto";
-import { chmod, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  readFile,
+  rename,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 
 const VERSION = "2025.10.14";
 const EXPECTED_SHA256 =
   "83d2c55a8893b49d0ccd23f5c528acf06840fc59bd1100519832b60724af34b7";
 const DOWNLOAD_URL = `https://github.com/yt-dlp/yt-dlp/releases/download/${VERSION}/yt-dlp_linux`;
-const destination = path.join(
-  process.cwd(),
-  "runtime-tools",
-  "yt-dlp",
-);
+const runtimeToolsDirectory = path.join(process.cwd(), "runtime-tools");
+const destination = path.join(runtimeToolsDirectory, "yt-dlp");
+const ffmpegSource = path.join(process.cwd(), "node_modules", "ffmpeg-static", "ffmpeg");
+const ffmpegDestination = path.join(runtimeToolsDirectory, "ffmpeg");
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -42,4 +48,6 @@ if (process.platform === "linux" && process.arch === "x64") {
   }
 
   await chmod(destination, 0o755);
+  await copyFile(ffmpegSource, ffmpegDestination);
+  await chmod(ffmpegDestination, 0o755);
 }
