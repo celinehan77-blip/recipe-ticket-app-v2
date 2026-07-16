@@ -1,6 +1,6 @@
 {
   "name": "recipe-ticket-app-v2",
-  "version": "0.2.0-working.8",
+  "version": "0.2.0-working.9",
   "private": true,
   "scripts": {
     "postinstall": "node scripts/install-yt-dlp.mjs",

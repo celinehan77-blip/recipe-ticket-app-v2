@@ -68,17 +68,22 @@
 ```text
 Milestone 3：Real User Beta
 └── Phase A：Quality Baseline
-    └── Checkpoint A1：生产解析质量与成本基线（进行中）
-        ├── Task：定义单次生成安全诊断字段
-        ├── Task：记录 Provider、fallback、耗时与质量结果
-        ├── Task：扩充真实菜谱样本回归集
-        └── Task：建立 Beta 发布验收阈值
+    ├── Checkpoint A1：生产安全诊断（已完成，2026-07-16）
+    │   ├── Task：定义单次生成安全诊断字段（已完成）
+    │   ├── Task：记录 Provider、fallback、耗时与质量结果（已完成）
+    │   ├── Task：正文与小红书生产样本真实写入（已完成）
+    │   └── Task：建立 Beta 发布验收阈值（已完成）
+    └── Checkpoint A2：真实样本队列（进行中）
+        ├── Task：收集 10 条真实正文样本
+        ├── Task：收集 5 条小红书公开做饭视频
+        ├── Task：聚合成功率、fallback、耗时与质量分
+        └── Task：确定是否满足 Beta 启动门槛
 ```
 
 - Current Milestone：`Milestone 3 - Real User Beta`
 - Current Phase：`Phase A - Quality Baseline`
-- Current Checkpoint：`A1 - 生产解析质量与成本基线`
-- Current Version：`0.2.0-working.8`
+- Current Checkpoint：`A2 - 真实样本队列`
+- Current Version：`0.2.0-working.9`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
@@ -95,6 +100,8 @@ Checkpoint C1 已完成：登录用户会先按净化后的完整来源匹配自
 Checkpoint C2 已完成：超过 15 分钟的中断任务不会重新进入付费链路，新任务开始前会把当前用户的过期 processing task 安全标记为 failed；生产数据审计未发现过期任务、无菜谱完成任务或缺少食材/步骤的半成品。Milestone 2 完成。
 
 Milestone 3 目标：让 MVP 可以进入小范围真实用户 Beta，用可验证的质量、耗时、fallback 和成本数据决定后续投入。Phase 依次为：A 质量与成本基线、B 平台覆盖（优先抖音公开样本）、C 收藏与再次查找留存、D Beta 发布与运营验收。
+
+Checkpoint A1 已完成：正文样本“香菇滑鸡”和小红书公开样本“农家一碗香”均在 Vercel 登录生产会话完成并写入安全 diagnostics；两条任务均使用 DeepSeek、无 fallback、质量分分别为 86 和 98。小红书样本使用火山 Seed ASR，动态菜谱包含 14 项食材/调料和 6 个步骤。
 
 每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 
