@@ -14,6 +14,7 @@ import {
 } from "../../src/lib/data/localGeneratedRecipe";
 import type { ParsedRecipeDraft } from "../../src/types/ai";
 import {
+  getGenerationStartRoute,
   isBackgroundGenerationRouteUnavailable,
   pickReusableRecipeSlug,
 } from "../../src/lib/data/pendingRecipeGeneration";
@@ -161,4 +162,31 @@ test("completed source generation prefers local cache then cloud cache", () => {
   assert.equal(pickReusableRecipeSlug("local-recipe", "cloud-recipe"), "local-recipe");
   assert.equal(pickReusableRecipeSlug(null, "cloud-recipe"), "cloud-recipe");
   assert.equal(pickReusableRecipeSlug(null, null), null);
+});
+
+test("completed cached generation opens the existing recipe without loading", () => {
+  assert.equal(
+    getGenerationStartRoute({
+      jobId: "cached-job",
+      recipeSlug: "steamed-egg-with-garlic-shrimp",
+      sourcePlatform: "manual",
+      sourceValue: "蒜蓉虾仁蒸蛋",
+      startedAt: "2026-07-16T00:00:00.000Z",
+      status: "completed",
+    }),
+    "/recipe/steamed-egg-with-garlic-shrimp",
+  );
+});
+
+test("new generation continues through the loading route", () => {
+  assert.equal(
+    getGenerationStartRoute({
+      jobId: "new-job",
+      sourcePlatform: "manual",
+      sourceValue: "蒜蓉虾仁蒸蛋",
+      startedAt: "2026-07-16T00:00:00.000Z",
+      status: "processing",
+    }),
+    "/loading",
+  );
 });

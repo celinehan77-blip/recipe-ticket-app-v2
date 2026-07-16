@@ -29,6 +29,7 @@ RELEASE_MANAGER 以 Working Release 为单位管理版本，而不是把每个 C
 
 | Version | Commit | Phase | 状态 | Rollback |
 | --- | --- | --- | --- | --- |
+| `0.2.0-working.7` | 当前工作区 | Milestone 2 / C1 | 同来源云端任务复用、重复付费防护与缓存命中导航修复；64 tests、lint、build 通过 | `a4c7354` |
 | `0.2.0-working.6` | 当前工作区 | Milestone 2 / C1 | B1 生产登录、四表写入、动态详情与云端收藏验收通过 | `75dd3d3` |
 | `0.2.0-working.5` | 当前工作区 | Milestone 2 / B1 | Vercel 真实样本、61 tests、lint、build、Secret Scan 通过 | `b058dab` |
 | `0.2.0-working.4` | 未提交工作区 | Milestone 2 / A1 | 小红书视频语音链路本地验收完成；待 Git/Netlify 发布 | 最近安全提交 `0a35bb1` |

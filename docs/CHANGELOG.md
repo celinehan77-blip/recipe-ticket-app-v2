@@ -4,6 +4,15 @@
 
 ## 2026-07-16
 
+### Milestone 2 / Checkpoint C1 完成
+
+- 登录用户生成前按净化后的完整来源查询自己的已完成云端任务，跨设备或浏览器缓存失效后可复用既有动态菜谱。
+- 云端缓存命中时不新建 generation task，也不再次请求 ASR 或 DeepSeek。
+- 修复缓存命中后经 Loading 二次读取浏览器状态可能返回首页的问题；命中时由首页直接打开已有菜谱，新生成仍进入 Loading。
+- 生产诊断确认重复提交期间没有新的 `/api/parse-recipe` 请求，数据库没有新增重复任务。
+- 完整回归 64 项测试、lint 和 production build 通过；Build 仅保留既有 Next.js NFT 文件追踪警告。
+- Checkpoint C1 回滚基线：`a4c7354`。
+
 ### Milestone 2 / Checkpoint B1 完成
 
 - Vercel Magic Link Session 已建立，刷新 `/me` 后仍保持登录。

@@ -18,6 +18,7 @@ import { LeafMark } from "@/components/ui/LeafMark";
 import {
   beginPendingRecipeGeneration,
   consumePendingGenerationError,
+  getGenerationStartRoute,
 } from "@/lib/data/pendingRecipeGeneration";
 
 export function HomeScreen() {
@@ -56,8 +57,8 @@ export function HomeScreen() {
     generationLockRef.current = true;
     setIsGenerating(true);
     try {
-      await beginPendingRecipeGeneration(trimmedSourceUrl);
-      router.push("/loading");
+      const pending = await beginPendingRecipeGeneration(trimmedSourceUrl);
+      router.push(getGenerationStartRoute(pending));
     } catch {
       generationLockRef.current = false;
       setIsGenerating(false);

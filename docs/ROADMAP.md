@@ -87,8 +87,8 @@ Milestone 2：Production Ready MVP
 
 - Current Milestone：`Milestone 2`
 - Current Phase：`Phase C - Production Verification`
-- Current Checkpoint：`C1 - 重复生成与付费防护`
-- Current Version：`0.2.0-working.6`
+- Current Checkpoint：`C2 - 失败任务恢复与孤儿数据防护`
+- Current Version：`0.2.0-working.7`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
@@ -98,7 +98,9 @@ Milestone 2：Production Ready MVP
 1. Phase B：User Journey，完成 Netlify 生产运行时和陌生用户端到端旅程验收。
 2. Phase C：Production Verification，完成跨设备、生产数据和发布验收。
 
-Checkpoint B1 已完成：Vercel Production 已跑通游客真实小红书链路、登录用户云端菜谱写入、动态详情刷新、云端收藏和 `/me` 数据恢复。Checkpoint C1 将为登录用户复用已完成的同来源云端任务，避免跨设备或浏览器缓存失效后重复调用付费链路。
+Checkpoint B1 已完成：Vercel Production 已跑通游客真实小红书链路、登录用户云端菜谱写入、动态详情刷新、云端收藏和 `/me` 数据恢复。
+
+Checkpoint C1 已完成：登录用户会先按净化后的完整来源匹配自己已完成的云端任务，命中后复用动态菜谱 slug，不新建任务、不调用 ASR/DeepSeek；缓存命中直接打开已有菜谱，新生成仍保持 Loading 流程。Checkpoint C2 将处理超时或页面中断留下的 processing task，并验证失败后重试不会产生半成品菜谱。
 
 每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 

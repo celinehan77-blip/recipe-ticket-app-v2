@@ -224,6 +224,12 @@ export function pickReusableRecipeSlug(
   return localSlug ?? cloudSlug;
 }
 
+export function getGenerationStartRoute(pending: PendingRecipeGeneration) {
+  return pending.status === "completed" && pending.recipeSlug
+    ? `/recipe/${pending.recipeSlug}`
+    : "/loading";
+}
+
 async function requestDirectRecipeParse(
   body: Record<string, string>,
   signal: AbortSignal,
