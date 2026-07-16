@@ -73,6 +73,10 @@ export type RecipeParseResult = {
   model?: string | null;
   source?: SourceExtractionMetadata;
   sourceErrorCode?: SourceExtractionErrorCode | null;
+  pipelineErrorCode?:
+    | "deepseek_parse_failed"
+    | "recipe_quality_failed"
+    | null;
   generation?: {
     asrModel: string;
     asrProvider: "volcengine" | "aliyun_qwen";

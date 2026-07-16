@@ -14,6 +14,17 @@ export type GenerationStage =
   | "validating"
   | "completed";
 
+export type ShareLinkGenerationErrorCode =
+  | "deepseek_parse_failed"
+  | "recipe_quality_failed";
+
+export class ShareLinkGenerationError extends Error {
+  constructor(public readonly code: ShareLinkGenerationErrorCode) {
+    super(code);
+    this.name = "ShareLinkGenerationError";
+  }
+}
+
 export type ShareLinkGenerationResult = {
   asr: TranscriptionResult;
   canonicalUrl: string;
@@ -48,7 +59,7 @@ function validateGroundedRecipe(draft: ParsedRecipeDraft, transcript: string) {
     repeatedTitleSteps.length > 0 ||
     !quality.passed
   ) {
-    throw new Error("RECIPE_QUALITY_FAILED");
+    throw new ShareLinkGenerationError("recipe_quality_failed");
   }
 }
 
@@ -141,7 +152,7 @@ async function generateUncachedRecipeFromShareLink(
   stages.push({ stage: "parsing", completedAtMs: Date.now() - startedAt });
 
   if (!parsed.ok || !parsed.draft) {
-    throw new Error(parsed.errorCode || "DEEPSEEK_PARSE_FAILED");
+    throw new ShareLinkGenerationError("deepseek_parse_failed");
   }
 
   validateGroundedRecipe(parsed.draft, transcribed.transcript);

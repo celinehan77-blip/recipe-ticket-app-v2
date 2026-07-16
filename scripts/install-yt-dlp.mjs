@@ -9,9 +9,9 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 
-const VERSION = "2025.10.14";
+const VERSION = "2026.06.09";
 const EXPECTED_SHA256 =
-  "83d2c55a8893b49d0ccd23f5c528acf06840fc59bd1100519832b60724af34b7";
+  "bf8aac79b72287a6d2043074415132558b43743a8f9461a22b0141e90f16ce66";
 const DOWNLOAD_URL = `https://github.com/yt-dlp/yt-dlp/releases/download/${VERSION}/yt-dlp_linux`;
 const runtimeToolsDirectory = path.join(process.cwd(), "runtime-tools");
 const destination = path.join(runtimeToolsDirectory, "yt-dlp");

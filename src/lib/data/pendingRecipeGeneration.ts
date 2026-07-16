@@ -11,6 +11,7 @@ import {
   failGenerationTask,
   getCompletedGeneratedRecipeSlugBySource,
   type GenerationTaskDiagnostics,
+  type GenerationTaskFailureCode,
 } from "@/lib/data/generationTasks";
 import { createRecipeFromParsedDraft } from "@/lib/data/recipes";
 import {
@@ -61,6 +62,7 @@ type ParsedSourceResult =
       ok: false;
       message: string;
       shouldContinueWithFallback: boolean;
+      taskErrorCode: GenerationTaskFailureCode;
     };
 
 type BackgroundGenerationStatus = {
@@ -278,7 +280,23 @@ async function requestDirectRecipeParse(
   });
   const result = (await response.json()) as RecipeParseResult;
 
-  return response.ok ? result : null;
+  return result;
+}
+
+export function getGenerationFailureCode(
+  result: RecipeParseResult | null,
+  looksLikeUrl: boolean,
+): GenerationTaskFailureCode {
+  if (result?.pipelineErrorCode === "deepseek_parse_failed") {
+    return "deepseek_parse_failed";
+  }
+  if (result?.pipelineErrorCode === "recipe_quality_failed") {
+    return "recipe_quality_failed";
+  }
+  if (looksLikeUrl && result?.sourceErrorCode) {
+    return "source_extraction_failed";
+  }
+  return looksLikeUrl ? "source_extraction_failed" : "ai_provider_failed";
 }
 
 async function parseRecipeSource(
@@ -324,6 +342,7 @@ async function parseRecipeSource(
           ? "暂时无法读取这条分享链接，请粘贴正文或字幕。"
           : "菜谱解析请求失败，请稍后重试。",
         shouldContinueWithFallback: !looksLikeUrl,
+        taskErrorCode: getGenerationFailureCode(result, looksLikeUrl),
       };
     }
 
@@ -361,6 +380,9 @@ async function parseRecipeSource(
         ? "暂时无法读取这条分享链接，请粘贴正文或字幕。"
         : "菜谱解析超时或网络异常，请稍后重试。",
       shouldContinueWithFallback: !looksLikeUrl,
+      taskErrorCode: looksLikeUrl
+        ? "source_extraction_failed"
+        : "ai_provider_failed",
     };
   } finally {
     window.clearTimeout(timeoutId);
@@ -375,7 +397,11 @@ async function runPendingGeneration(
 
   if (!parsed.ok) {
     clearLatestParsedDraft();
-    await failGenerationTask("ai_provider_failed", "kung-pao-chicken", pending.taskId);
+    await failGenerationTask(
+      parsed.taskErrorCode,
+      "kung-pao-chicken",
+      pending.taskId,
+    );
     const failed = { ...pending, message: parsed.message, status: "failed" as const };
     savePendingGeneration(failed);
     saveGenerationError(parsed.message);

@@ -39,7 +39,10 @@ export type GenerationTaskDiagnostics = {
 export type GenerationTaskFailureCode =
   | "ai_provider_failed"
   | "ai_fallback_used"
+  | "deepseek_parse_failed"
   | "recipe_save_failed"
+  | "recipe_quality_failed"
+  | "source_extraction_failed"
   | "generation_task_update_failed"
   | "generation_interrupted"
   | "unknown";

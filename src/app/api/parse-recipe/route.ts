@@ -4,6 +4,7 @@ import { checkRateLimit } from "@/lib/security/rateLimit";
 import { extractPublicSource } from "@/lib/source";
 import {
   generateRecipeFromShareLink,
+  ShareLinkGenerationError,
   transcribeShareLink,
 } from "@/lib/generation/generateRecipeFromShareLink";
 import { AudioExtractionError } from "@/lib/media/extractAudio";
@@ -45,6 +46,29 @@ function asSourcePlatform(value: unknown): RecipeParseSourcePlatform | undefined
 }
 
 async function shareLinkFailureResponse(error: unknown, sourceUrl: string) {
+  if (error instanceof ShareLinkGenerationError) {
+    console.info("[recipe-pipeline]", {
+      errorCode: error.code,
+      stage: error.code === "recipe_quality_failed" ? "validating" : "parsing",
+    });
+    return Response.json(
+      {
+        ok: false,
+        draft: null,
+        error:
+          error.code === "recipe_quality_failed"
+            ? "视频内容已识别，但菜谱信息不足，请补充正文或字幕。"
+            : "视频语音已识别，但菜谱整理失败，请稍后重试。",
+        errorCode: "SOURCE_EXTRACTION_FAILED",
+        pipelineErrorCode: error.code,
+        provider: "deepseek",
+        sourceErrorCode: null,
+        usedFallback: false,
+      },
+      { status: 422 },
+    );
+  }
+
   const mediaErrorCode =
     error instanceof AudioExtractionError ? error.code : null;
   const extractedSource = await extractPublicSource(sourceUrl);

@@ -15,6 +15,7 @@ import {
 import type { ParsedRecipeDraft } from "../../src/types/ai";
 import {
   buildGenerationDiagnostics,
+  getGenerationFailureCode,
   getGenerationStartRoute,
   isBackgroundGenerationRouteUnavailable,
   isPendingGenerationStale,
@@ -256,4 +257,37 @@ test("generation diagnostics contain only safe quality and provider metrics", ()
   assert.ok(diagnostics.qualityScore >= 0);
   assert.equal("transcript" in diagnostics, false);
   assert.equal("sourceUrl" in diagnostics, false);
+});
+
+test("generation failure keeps the exact safe pipeline classification", () => {
+  const baseResult = {
+    ok: false,
+    draft: null,
+    error: "safe error",
+    errorCode: "SOURCE_EXTRACTION_FAILED" as const,
+    provider: "deepseek" as const,
+    usedFallback: false,
+  };
+
+  assert.equal(
+    getGenerationFailureCode(
+      { ...baseResult, pipelineErrorCode: "deepseek_parse_failed" },
+      true,
+    ),
+    "deepseek_parse_failed",
+  );
+  assert.equal(
+    getGenerationFailureCode(
+      { ...baseResult, pipelineErrorCode: "recipe_quality_failed" },
+      true,
+    ),
+    "recipe_quality_failed",
+  );
+  assert.equal(
+    getGenerationFailureCode(
+      { ...baseResult, sourceErrorCode: "fetch_blocked" },
+      true,
+    ),
+    "source_extraction_failed",
+  );
 });
