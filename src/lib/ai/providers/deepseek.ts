@@ -2,6 +2,7 @@ import {
   buildRecipeParserUserPrompt,
   recipeParserSystemPrompt,
 } from "@/lib/ai/prompts/recipeParserPrompt";
+import { groundParsedRecipeDraft } from "@/lib/ai/groundParsedRecipe";
 import { validateParsedRecipeDraft } from "@/lib/ai/validateParsedRecipe";
 import type {
   RecipeParseErrorCode,
@@ -230,9 +231,9 @@ export async function parseRecipeWithDeepSeek(
         break;
       }
 
-      const draft = parseDraftContent(content);
+      const parsedDraft = parseDraftContent(content);
 
-      if (!draft) {
+      if (!parsedDraft) {
         lastError = "DeepSeek returned invalid recipe JSON.";
         lastErrorCode = "INVALID_RESPONSE";
 
@@ -242,6 +243,8 @@ export async function parseRecipeWithDeepSeek(
 
         break;
       }
+
+      const draft = groundParsedRecipeDraft(parsedDraft, input.rawText);
 
       return {
         ok: true,
