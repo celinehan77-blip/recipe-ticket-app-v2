@@ -2,6 +2,7 @@ import { parseRecipeInput } from "@/lib/ai";
 import type { RecipeParseInput, RecipeParseSourcePlatform } from "@/types/ai";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { extractPublicSource } from "@/lib/source";
+import { generateRecipeFromShareLink } from "@/lib/generation/generateRecipeFromShareLink";
 
 export const runtime = "nodejs";
 
@@ -82,10 +83,10 @@ export async function POST(request: Request) {
   }
 
   const requestBody = body && typeof body === "object" ? body : {};
-  let sourceUrl = asOptionalString(
+  const sourceUrl = asOptionalString(
     "sourceUrl" in requestBody ? requestBody.sourceUrl : undefined,
   );
-  let rawText = asOptionalString(
+  const rawText = asOptionalString(
     "rawText" in requestBody ? requestBody.rawText : undefined,
   );
 
@@ -131,50 +132,80 @@ export async function POST(request: Request) {
     );
   }
 
-  let sourceMetadata;
-
   if (sourceUrl && !rawText) {
-    const extractedSource = await extractPublicSource(sourceUrl);
+    try {
+      const generated = await generateRecipeFromShareLink(sourceUrl);
 
-    if (!extractedSource.ok) {
+      return Response.json({
+        ok: true,
+        draft: generated.draft,
+        error: null,
+        errorCode: null,
+        model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+        provider: "deepseek",
+        usedFallback: false,
+        source: {
+          canonicalUrl: generated.canonicalUrl,
+          extractor: "combined",
+          platform: "xiaohongshu",
+          warnings: generated.asr.warnings,
+        },
+        generation: {
+          asrModel: generated.asr.model,
+          asrProvider: generated.asr.provider,
+          durationSeconds: generated.durationSeconds,
+          processingTimeMs:
+            generated.stages.at(-1)?.completedAtMs ?? generated.asr.processingTimeMs,
+          sourceHash: generated.sourceHash,
+          stages: generated.stages,
+          usedAsrFallback: generated.asr.usedFallback,
+        },
+      });
+    } catch {
+      const extractedSource = await extractPublicSource(sourceUrl);
+
+      if (!extractedSource.ok) {
+        return Response.json(
+          {
+            ok: false,
+            draft: null,
+            error: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
+            errorCode: "SOURCE_EXTRACTION_FAILED",
+            provider: "mock",
+            sourceErrorCode: extractedSource.errorCode,
+            usedFallback: false,
+          },
+          { status: 422 },
+        );
+      }
+
       return Response.json(
         {
           ok: false,
           draft: null,
-          error: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
+          error: "视频语音暂时无法识别，请粘贴正文或字幕。",
           errorCode: "SOURCE_EXTRACTION_FAILED",
           provider: "mock",
-          sourceErrorCode: extractedSource.errorCode,
+          sourceErrorCode: "no_text",
           usedFallback: false,
         },
         { status: 422 },
       );
     }
-
-    rawText = extractedSource.text;
-    sourceUrl = extractedSource.canonicalUrl;
-    sourceMetadata = {
-      canonicalUrl: extractedSource.canonicalUrl,
-      extractor: extractedSource.extractor,
-      platform: extractedSource.platform,
-      warnings: extractedSource.warnings,
-    };
   }
 
   const input: RecipeParseInput = {
     sourceUrl,
     rawText,
-    sourcePlatform:
-      sourceMetadata?.platform ??
-      asSourcePlatform(
-        "sourcePlatform" in requestBody ? requestBody.sourcePlatform : undefined,
-      ),
+    sourcePlatform: asSourcePlatform(
+      "sourcePlatform" in requestBody ? requestBody.sourcePlatform : undefined,
+    ),
     userId: null,
   };
 
   try {
     const result = await parseRecipeInput(input);
-    return Response.json(sourceMetadata ? { ...result, source: sourceMetadata } : result);
+    return Response.json(result);
   } catch {
     return Response.json(
       {

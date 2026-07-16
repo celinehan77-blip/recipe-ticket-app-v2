@@ -5,3 +5,4 @@ export * from "@/lib/data/generationTasks";
 export * from "@/lib/data/parsedDrafts";
 export * from "@/lib/data/localGeneratedRecipe";
 export * from "@/lib/data/localRecipeMigration";
+export * from "@/lib/data/sourceGenerationCache";

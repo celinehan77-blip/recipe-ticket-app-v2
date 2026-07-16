@@ -6,6 +6,7 @@ export {
   identifySourcePlatform,
   isPublicIpAddress,
   sanitizeSourceUrl,
+  upgradeInitialPlatformUrl,
   validateSourceUrl,
 } from "@/lib/source/urlSafety";
 export type {

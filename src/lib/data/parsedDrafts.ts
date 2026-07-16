@@ -8,6 +8,13 @@ const LATEST_PARSED_DRAFT_METADATA_KEY =
   "recipe-ticket:latest-parsed-draft-metadata";
 
 export type ParsedDraftMetadata = {
+  generation?: {
+    asrModel: string;
+    asrProvider: "volcengine" | "aliyun_qwen";
+    processingTimeMs: number;
+    stages: Array<{ stage: string; completedAtMs: number }>;
+    usedAsrFallback: boolean;
+  };
   model: string | null;
   provider: RecipeParseProvider;
   savedAt: string;

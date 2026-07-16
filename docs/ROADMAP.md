@@ -73,26 +73,32 @@ Milestone 2：Production Ready MVP
     │   ├── Task：失败状态与动态详情 fallback
     │   ├── Task：本地菜谱唯一 slug 与最多 50 道历史
     │   └── Task：收藏、我的菜谱和登录迁移按具体 slug 读取
-    └── Checkpoint A1：公开分享链接文字提取（等待真实链接验收）
+    └── Checkpoint A1：小红书公开视频语音转菜谱（已完成，2026-07-16）
         ├── Task：小红书 / 抖音 URL 识别与短链解析（已完成）
         ├── Task：SSRF 防护与受控公开网页抓取（已完成）
         ├── Task：公开标题、正文和页面元数据提取（已完成）
         ├── Task：接入现有 DeepSeek 管线（已完成）
-        └── Task：真实小红书 / 抖音短链验收（等待产品负责人提供样本）
+        ├── Task：yt-dlp + FFmpeg 临时音轨（已完成，两条真实样本）
+        ├── Task：Qwen ASR 失败备用 + DeepSeek 动态菜谱（已完成，两条真实样本）
+        ├── Task：火山录音文件 ASR 主 Provider（已完成，真实样本）
+        ├── Task：登录用户 Supabase 全表写入（已完成）
+        └── Task：Loading 真实阶段与动态 slug（已完成）
 ```
 
 - Current Milestone：`Milestone 2`
-- Current Phase：`Phase A - Source Acquisition`
-- Current Checkpoint：`A1 - 公开分享链接文字提取`
-- Current Version：`0.2.0-working.2`
+- Current Phase：`Phase B - User Journey`
+- Current Checkpoint：`B1 - 生产环境陌生用户端到端验收`
+- Current Version：`0.2.0-working.4`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
 
 后续 Phase：
 
-1. Phase B：User Journey，完成陌生用户端到端旅程和会话持久化。
+1. Phase B：User Journey，完成 Netlify 生产运行时和陌生用户端到端旅程验收。
 2. Phase C：Production Verification，完成跨设备、生产数据和发布验收。
+
+Checkpoint B1 当前唯一外部依赖：将本 Checkpoint 提交推送至 GitHub，并由 Netlify 使用已配置的 ASR 服务端变量完成生产部署。Git push 与生产部署按权限规则需产品负责人授权。
 
 每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 
@@ -100,9 +106,9 @@ Milestone 2：Production Ready MVP
 
 | 顺序 | 待开发项 | 状态 | 启动时必须确认 |
 | --- | --- | --- | --- |
-| 1 | DeepSeek 真实解析优化 | 已完成基础验收（2026-07-14） | 登录用户真实写入仍需产品负责人手动登录后复验 |
+| 1 | DeepSeek 真实解析优化 | 已完成（2026-07-16） | 真实 Provider 与登录用户写入均已验证 |
 | 2 | 解析样本测试体系 | 进行中（基础样本与质量评分测试已完成） | 扩充真实样本文本、成本和耗时统计 |
-| 3 | 小红书链接解析 | 待开发 | 合法内容获取方式、平台限制和失败兜底 |
+| 3 | 小红书链接解析 | 已完成（2026-07-16） | yt-dlp、火山 ASR、Qwen 备用与 DeepSeek 已验收 |
 | 4 | 抖音链接解析 | 待开发 | 合法内容获取方式、平台限制和失败兜底 |
 | 5 | OCR 图片识别 | 待开发 | 图片输入范围、OCR Provider 和隐私策略 |
 | 6 | AI 菜谱质量评分 | 待开发 | 评分维度、合格阈值和人工样本 |
@@ -133,9 +139,10 @@ Milestone 2：Production Ready MVP
 - Netlify Production 已验证 `/api/parse-recipe` 返回 `provider=deepseek`、`usedFallback=false`。
 - 线上 `/dev/parse-test` 返回 200，可用于同一接口的开发验证。
 
-未完成：
+补充验收（2026-07-16）：
 
-- 登录用户真实写入 `recipes / ingredients / recipe_steps` 仍需产品负责人完成 Magic Link 登录后复验。
+- 登录用户真实写入 `recipes / ingredients / recipe_steps / generation_tasks` 已通过。
+- 火山主 ASR 真实样本 `usedFallback=false`，Qwen 备用保留并有自动测试覆盖。
 - 真实样本的长期质量、Token 成本和耗时统计进入 Queue #2 继续推进。
 
 ### Queue #2 当前验收记录

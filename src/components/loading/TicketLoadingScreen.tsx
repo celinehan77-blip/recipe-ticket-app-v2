@@ -9,8 +9,12 @@ import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import {
   getLatestGeneratedRecipeSlug,
   getLatestParsedDraft,
-  getLatestGenerationTask,
 } from "@/lib/data";
+import {
+  clearPendingRecipeGeneration,
+  getPendingRecipeGeneration,
+  resumePendingRecipeGeneration,
+} from "@/lib/data/pendingRecipeGeneration";
 import { loadingSteps } from "@/lib/mockData";
 
 const ticketMotion = {
@@ -21,28 +25,61 @@ export function TicketLoadingScreen() {
   const router = useRouter();
   const [recipeTitle, setRecipeTitle] = useState("你的菜谱");
   const [recipeTitleEn, setRecipeTitleEn] = useState("Your Recipe");
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    const titleTimer = window.setTimeout(() => {
+    let active = true;
+    let navigationTimer: number | null = null;
+    const updateTitle = () => {
       const draft = getLatestParsedDraft();
       if (draft) {
         setRecipeTitle(draft.titleZh);
         setRecipeTitleEn(draft.titleEn || "Your Recipe");
       }
-    }, 0);
-    void getLatestGenerationTask();
+    };
+    const titleTimer = window.setTimeout(updateTitle, 0);
+    const pending = getPendingRecipeGeneration();
+    const progressTimers = [1800, 5000, 9000, 13000].map((delay, index) =>
+      window.setTimeout(() => {
+        if (active) {
+          setCurrentStep((current) => Math.max(current, index + 1));
+        }
+      }, delay),
+    );
 
-    const timer = window.setTimeout(() => {
-      void (async () => {
-        const recipeSlug = await getLatestGeneratedRecipeSlug();
+    if (pending) {
+      void resumePendingRecipeGeneration(pending).then((result) => {
+        if (!active) return;
 
-        router.push(`/recipe/${recipeSlug || "kung-pao-chicken"}`);
-      })();
-    }, 3000);
+        updateTitle();
+        if (result.ok) {
+          setCurrentStep(loadingSteps.length - 1);
+          navigationTimer = window.setTimeout(() => {
+            clearPendingRecipeGeneration();
+            router.push(`/recipe/${result.slug}`);
+          }, 700);
+        } else {
+          navigationTimer = window.setTimeout(() => {
+            clearPendingRecipeGeneration();
+            router.push("/");
+          }, 700);
+        }
+      });
+    } else {
+      navigationTimer = window.setTimeout(() => {
+        void getLatestGeneratedRecipeSlug().then((recipeSlug) => {
+          router.push(`/recipe/${recipeSlug || "kung-pao-chicken"}`);
+        });
+      }, 3000);
+    }
 
     return () => {
+      active = false;
       window.clearTimeout(titleTimer);
-      window.clearTimeout(timer);
+      if (navigationTimer !== null) {
+        window.clearTimeout(navigationTimer);
+      }
+      progressTimers.forEach((progressTimer) => window.clearTimeout(progressTimer));
     };
   }, [router]);
 
@@ -225,22 +262,22 @@ export function TicketLoadingScreen() {
               ) : null}
               <span
                 className={`relative z-10 grid h-5 w-5 place-items-center rounded-full ${
-                  index <= 2
+                  index < currentStep
                     ? "bg-[#8b9a7a] text-white"
-                    : index === 3
+                    : index === currentStep
                       ? "bg-[#c4a06f] text-white"
                       : "border border-[#d7cabb] bg-[#fbf8f3] text-[#d0bfae]"
                 }`}
               >
-                {index <= 2 ? (
+                {index < currentStep ? (
                   <Check size={13} />
-                ) : index === 3 ? (
+                ) : index === currentStep ? (
                   <span className="h-2 w-2 rounded-full bg-white/88" />
                 ) : null}
               </span>
               <span
                 className={
-                  index <= 3
+                  index <= currentStep
                     ? "font-medium text-[#5b4737]"
                     : "text-[#aa9d91]"
                 }

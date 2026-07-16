@@ -1,6 +1,7 @@
 import {
   hasOnlyPublicAddresses,
   sanitizeSourceUrl,
+  upgradeInitialPlatformUrl,
   validateSourceUrl,
   type HostLookup,
 } from "@/lib/source/urlSafety";
@@ -69,7 +70,7 @@ export async function extractPublicSource(
     timeoutMs = FETCH_TIMEOUT_MS,
   }: SourceFetchOptions = {},
 ): Promise<SourceExtractionResult> {
-  const initialSource = validateSourceUrl(sourceUrl);
+  const initialSource = validateSourceUrl(upgradeInitialPlatformUrl(sourceUrl));
 
   if (!initialSource) {
     return {

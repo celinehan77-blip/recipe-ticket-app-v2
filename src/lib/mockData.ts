@@ -581,9 +581,9 @@ export const recentRecipes: RecentRecipe[] = [
 ];
 
 export const loadingSteps: LoadingStep[] = [
-  { label: "收到旅程信息", active: true },
-  { label: "提取视频内容", active: true },
-  { label: "识别食材与调料", active: true },
-  { label: "整理烹饪步骤", active: true },
-  { label: "生成收藏卡片", active: false },
+  { label: "正在读取视频内容", active: true },
+  { label: "正在提取视频语音", active: true },
+  { label: "正在识别食材和做法", active: true },
+  { label: "正在整理菜谱", active: true },
+  { label: "正在生成收藏票根", active: false },
 ];

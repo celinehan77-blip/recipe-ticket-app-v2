@@ -73,6 +73,15 @@ export type RecipeParseResult = {
   model?: string | null;
   source?: SourceExtractionMetadata;
   sourceErrorCode?: SourceExtractionErrorCode | null;
+  generation?: {
+    asrModel: string;
+    asrProvider: "volcengine" | "aliyun_qwen";
+    durationSeconds: number;
+    processingTimeMs: number;
+    sourceHash: string;
+    stages: Array<{ stage: string; completedAtMs: number }>;
+    usedAsrFallback: boolean;
+  };
   diagnostics?: {
     attemptedProvider: RecipeParseProvider;
     model: string | null;

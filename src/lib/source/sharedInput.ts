@@ -15,3 +15,17 @@ export function extractHttpUrlFromSharedText(value: string) {
     return null;
   }
 }
+
+export function sanitizeSharedSourceForStorage(value: string) {
+  const extractedUrl = extractHttpUrlFromSharedText(value);
+  if (!extractedUrl) return value;
+
+  try {
+    const url = new URL(extractedUrl);
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return value;
+  }
+}

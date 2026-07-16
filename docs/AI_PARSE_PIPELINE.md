@@ -2,12 +2,11 @@
 
 ## 1. 当前阶段目标
 
-- 先搭建菜谱解析接口骨架。
-- 当前默认使用 Mock Parser。
-- 当前已接入 DeepSeek Provider 稳定性优化版。
-- 当前不接真实小红书 / 抖音解析。
-- 当前不调用 OpenAI、Qwen。
-- 当前 `ParsedRecipeDraft` 已可以尝试保存为真实 Supabase recipe。
+- 普通正文继续使用 DeepSeek 结构化解析，并保留 Mock fallback。
+- 小红书公开做饭视频先由 yt-dlp 与 FFmpeg 提取语音，再使用火山 ASR；火山明确失败后才使用 Qwen ASR。
+- 小红书视频链路只接受真实 transcript，不允许根据标题生成常见菜谱。
+- `ParsedRecipeDraft` 可以保存到本地，登录后可以尝试写入 Supabase recipe。
+- 当前不支持抖音、B 站、YouTube、用户上传或视频画面分析。
 
 ## 2. 输入
 
@@ -55,6 +54,8 @@
 
 ## 4. 当前流程
 
+普通正文：
+
 ```text
 POST /api/parse-recipe
 -> parseRecipeInput()
@@ -67,6 +68,22 @@ POST /api/parse-recipe
 -> 返回结构化草稿
 ```
 
+公开小红书链接：
+
+```text
+POST /api/parse-recipe
+-> normalizeShareUrl()
+-> extractAudioWithYtDlp()
+-> yt-dlp 标准输出直接管道到 FFmpeg
+-> 临时 16kHz 单声道 MP3
+-> transcribeAudio()
+-> 火山 Seed ASR 成功则结束；明确失败后调用 Qwen ASR
+-> parseRecipeWithDeepSeek(transcript)
+-> 来源一致性与质量校验
+-> 返回 ParsedRecipeDraft 与 ASR/阶段诊断
+-> finally 删除临时音频
+```
+
 当前 DeepSeek Provider 使用官方 OpenAI-compatible Chat Completions 接口。
 
 Mock Parser 会根据输入文本中的关键词返回稳定草稿：
@@ -76,12 +93,14 @@ Mock Parser 会根据输入文本中的关键词返回稳定草稿：
 - `鱼`、`fish`：清蒸鱼。
 - 无法识别时：默认宫保鸡丁，并在 `warnings` 中说明当前使用 Mock Parser。
 
-## 5. 为什么先不接爬虫
+## 5. 媒体提取边界
 
-- 链接平台复杂。
-- 小红书 / 抖音内容获取不稳定。
-- 链接解析需要失败兜底和合规判断。
-- 当前 MVP 更需要先保证 AI 菜谱结构化能力和接口格式稳定。
+- 当前只调用 yt-dlp，不增加 Playwright 或第二套媒体抓取线路。
+- 只处理无需登录即可读取的公开小红书内容。
+- 不使用用户 Cookie，不模拟登录，不绕过验证码或访问控制。
+- 不永久保存视频；临时音频在成功或失败后删除。
+- 单条视频最多 5 分钟、媒体最多 100 MB、音频最多 8 MB。
+- 没有真实 transcript 时返回中文提示，不调用 DeepSeek 生成无关内容。
 
 ## 6. 为什么 AI key 不能用 NEXT_PUBLIC
 
@@ -101,11 +120,13 @@ DEEPSEEK_TIMEOUT_MS=30000
 DEEPSEEK_MAX_RETRIES=1
 DEEPSEEK_MAX_TOKENS=3000
 
-OPENAI_API_KEY=
-OPENAI_MODEL=
-
-QWEN_API_KEY=
-QWEN_MODEL=
+ASR_PROVIDER=volcengine
+ASR_FALLBACK_PROVIDER=aliyun_qwen
+VOLC_ASR_API_KEY=
+VOLC_ASR_APP_ID=
+ALIBABA_ASR_API_KEY=
+ALIBABA_ASR_BASE_URL=
+ALIBABA_ASR_MODEL=qwen3-asr-flash
 ```
 
 说明：
@@ -119,13 +140,14 @@ QWEN_MODEL=
 - 所有 AI key 都是服务端密钥，不能使用 `NEXT_PUBLIC_` 前缀。
 - Netlify 部署时需要在 Netlify Environment Variables 中添加这些服务端环境变量。
 
-## 7. 后续阶段
+## 7. 当前真实验收
 
-- 使用真实样本验证 DeepSeek 质量、Token 成本和响应时间。
-- 首页生成流程调用 parse API。
-- 生成真实 recipe draft。
-- 用户确认后保存到 Supabase。
-- 最后再处理小红书 / 抖音链接解析。
+- 两条公开小红书做饭视频已通过 yt-dlp 与 FFmpeg。
+- 火山主 ASR 已使用真实样本成功返回口播：`provider=volcengine`、`usedFallback=false`；Qwen ASR 备用也已在火山明确失败场景通过。
+- DeepSeek 已生成“黄焖鸡”和“农家一碗香”动态菜谱，不是固定 Mock。
+- 游客动态详情、刷新持久化和本地收藏已通过浏览器验证。
+- 登录 Session 下 `recipes / ingredients / recipe_steps / generation_tasks` 真实写入、动态详情和刷新持久化已通过。
+- 首页现在会立即进入 Loading，在后台完成解析和保存后跳转真实动态 slug；失败会回到首页显示内联提示。
 
 ## 8. 首页生成流程接入 parse API
 
@@ -144,14 +166,13 @@ QWEN_MODEL=
 
 说明：
 
-- 默认 Mock Parser 可以创建演示菜谱；配置 DeepSeek 后可以基于真实 AI draft 创建菜谱。
-- 如果 `AI_PROVIDER=deepseek` 且 key 配置正确，可以基于 DeepSeek draft 创建真实菜谱。
+- 普通正文仍保留 Mock Parser fallback；视频链接没有真实 transcript 时不使用 Mock 生成假菜谱。
+- 如果 DeepSeek 与 ASR 服务端变量配置正确，可以基于真实口播创建动态菜谱。
 - 当前会尝试写入 Supabase `recipes / ingredients / recipe_steps`。
-- 当前默认仍然使用 Mock Parser。
-- 当前不会调用 OpenAI / Qwen。
-- 当前仍然不会解析真实小红书 / 抖音页面。
+- 当前视频链路会在火山失败时调用 Qwen ASR，但不会调用 OpenAI。
+- 当前只解析公开小红书视频，不解析抖音。
 - 当前 `ParsedRecipeDraft` 仍会保存在当前浏览器的 `localStorage`，作为 fallback。
-- 如果 DeepSeek 调用失败、超时、返回不完整，或 Supabase 保存失败，首页会 fallback 到原有 mock 生成流程。
+- 视频媒体、ASR 或 DeepSeek 失败时不会生成无关 Mock 菜谱；Supabase 保存失败时保留本地动态菜谱。
 - 后续阶段会继续复用同一套保存流程，并增强真实 AI 输出质量。
 
 ## 9. 稳定性与诊断

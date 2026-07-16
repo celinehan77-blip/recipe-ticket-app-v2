@@ -15,6 +15,8 @@ const JSON_TEXT_KEYS = new Set([
   "headline",
   "name",
   "notetext",
+  "subtitle",
+  "transcript",
   "title",
 ]);
 
@@ -108,6 +110,70 @@ function collectJsonText(
   }
 }
 
+function replaceUndefinedOutsideStrings(source: string) {
+  let result = "";
+  let quote: "\"" | "'" | null = null;
+  let escaped = false;
+
+  const isBoundary = (value: string | undefined) =>
+    !value || !/[\w$]/.test(value);
+
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+
+    if (quote) {
+      result += character;
+
+      if (escaped) {
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === quote) {
+        quote = null;
+      }
+
+      continue;
+    }
+
+    if (character === '"' || character === "'") {
+      quote = character;
+      result += character;
+      continue;
+    }
+
+    if (
+      source.startsWith("undefined", index) &&
+      isBoundary(source[index - 1]) &&
+      isBoundary(source[index + 9])
+    ) {
+      result += "null";
+      index += 8;
+      continue;
+    }
+
+    result += character;
+  }
+
+  return result;
+}
+
+export function parseSafeEmbeddedState(rawScript: string): unknown | null {
+  const script = rawScript
+    .trim()
+    .replace(/^window\.__INITIAL_STATE__\s*=\s*/, "")
+    .replace(/;\s*$/, "");
+
+  if (!script || script.length > 1_000_000) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(replaceUndefinedOutsideStrings(script));
+  } catch {
+    return null;
+  }
+}
+
 function parseJsonScript(rawScript: string, fragments: string[]) {
   const script = rawScript.trim();
 
@@ -115,12 +181,14 @@ function parseJsonScript(rawScript: string, fragments: string[]) {
     return false;
   }
 
-  try {
-    collectJsonText(JSON.parse(script), fragments);
-    return true;
-  } catch {
+  const parsed = parseSafeEmbeddedState(script);
+
+  if (!parsed) {
     return false;
   }
+
+  collectJsonText(parsed, fragments);
+  return true;
 }
 
 function hasBlockedPageMarker(text: string) {
@@ -167,6 +235,14 @@ export function extractPublicTextFromHtml(html: string): HtmlExtractionResult {
 
     $('script[type="application/json"], script#__NEXT_DATA__').each((_, element) => {
       parseJsonScript($(element).text(), embeddedFragments);
+    });
+
+    $("script").each((_, element) => {
+      const script = $(element).text();
+
+      if (script.includes("window.__INITIAL_STATE__=")) {
+        parseJsonScript(script, embeddedFragments);
+      }
     });
 
     $("article, main, [class*='desc'], [class*='content'], [class*='caption']")

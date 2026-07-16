@@ -29,6 +29,6 @@ RELEASE_MANAGER 以 Working Release 为单位管理版本，而不是把每个 C
 
 | Version | Commit | Phase | 状态 | Rollback |
 | --- | --- | --- | --- | --- |
-| `0.1.0-working` | 未提交工作区 | Phase 12 | Working Release；无 Git Tag | 最近已提交版本 `d925911` |
+| `0.2.0-working.4` | 未提交工作区 | Milestone 2 / A1 | 小红书视频语音链路本地验收完成；待 Git/Netlify 发布 | 最近安全提交 `0a35bb1` |
 
 仓库当前没有 Git Tag，因此不能声称已有 Stable Release。Git 权限未明确授权时，只生成建议版本和 Release Note，不执行 Commit、Tag、Push 或 GitHub Release。

@@ -66,6 +66,29 @@ export function validateSourceUrl(
   return { platform, url };
 }
 
+export function upgradeInitialPlatformUrl(sourceUrl: string) {
+  let url: URL;
+
+  try {
+    url = new URL(sourceUrl);
+  } catch {
+    return sourceUrl;
+  }
+
+  if (
+    url.protocol === "http:" &&
+    !url.username &&
+    !url.password &&
+    !url.port &&
+    identifySourcePlatform(url.hostname)
+  ) {
+    url.protocol = "https:";
+    return url.toString();
+  }
+
+  return sourceUrl;
+}
+
 function isPrivateIpv4(address: string) {
   const octets = address.split(".").map(Number);
 

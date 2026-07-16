@@ -2,6 +2,31 @@
 
 本文件记录 Recipe Ticket / 日食笔记的重要产品、代码和项目治理变化。
 
+## 2026-07-16
+
+### 小红书公开视频语音转菜谱 Working Release
+
+- 新增小红书分享链接到 `yt-dlp` 的公开媒体解析，只支持小红书且不使用 Cookie。
+- Netlify Linux 构建会下载固定版本的 yt-dlp 独立二进制并校验 SHA-256，不依赖函数运行时 Python。
+- 媒体通过管道交给 FFmpeg，磁盘只产生随机临时 MP3；成功和失败都会删除临时目录。
+- 新增统一 `transcribeAudio()`：火山 Seed ASR 主 Provider，明确失败后才调用阿里 Qwen ASR。
+- 新增 transcript 来源一致性与菜谱质量校验；没有真实口播时不根据标题生成假菜谱。
+- 新增 source hash 运行期去重和浏览器成功 slug 缓存，降低刷新或重复提交导致的重复付费。
+- Loading 保持原设计并使用真实管线阶段数据，完成后跳转动态 recipe slug。
+- 首页只负责创建待处理任务并立即进入 Loading；刷新 Loading 可恢复当前任务，不再先等待服务端完成后才展示动画。
+- 待处理分享 URL 落盘前移除查询参数和 fragment，原始链接只用于当前内存请求。
+- Supabase 表和 RLS 已只读复核，未关闭 RLS、未使用 service role、未修改 schema。
+
+### 真实样本验收
+
+- `一个神秘调料，让你的黄焖鸡有了灵魂！`：媒体和 FFmpeg 成功，Qwen ASR 备用成功，DeepSeek 生成 7 项食材、6 项调料和 9 个步骤。
+- `省油版农家一碗香`：浏览器完整流程成功，生成动态 `/recipe/local-recipe-*`，刷新后仍存在，游客收藏页可读取。
+- 火山主 ASR 使用真实样本成功：`provider=volcengine`、`model=seed-asr-2.0-turbo`、`usedFallback=false`，DeepSeek 生成“黄焖鸡”并通过质量校验。
+- 该真实链路端到端约 16.5 秒；媒体约 5.6 秒，ASR 约 9.1 秒。
+- 登录 Session 下普通正文生成已写入真实 `recipes / ingredients / recipe_steps / generation_tasks`，动态详情刷新后仍存在。
+- Loading 回归生成 `/recipe/stir-fried-broccoli`；数据库包含 4 项食材、4 个步骤和 1 个已完成任务。
+- 完整回归 60 项测试、lint 和 production build 通过；Build 仅保留 Next.js NFT 动态文件追踪警告。
+
 ## 2026-07-15
 
 ### Milestone 2 数据一致性基础 Checkpoint

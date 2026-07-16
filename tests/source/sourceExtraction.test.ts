@@ -1,8 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { extractPublicTextFromHtml } from "../../src/lib/source/extractHtml";
+import {
+  extractPublicTextFromHtml,
+  parseSafeEmbeddedState,
+} from "../../src/lib/source/extractHtml";
 import { extractPublicSource } from "../../src/lib/source/extractSource";
-import { extractHttpUrlFromSharedText } from "../../src/lib/source/sharedInput";
+import {
+  extractHttpUrlFromSharedText,
+  sanitizeSharedSourceForStorage,
+} from "../../src/lib/source/sharedInput";
+import {
+  AudioExtractionError,
+  normalizeShareUrl,
+} from "../../src/lib/media/extractAudio";
 import {
   identifySourcePlatform,
   isPublicIpAddress,
@@ -46,6 +56,20 @@ test("accepts only safe HTTPS platform URLs", () => {
   assert.equal(validateSourceUrl("https://example.com/abc"), null);
 });
 
+test("upgrades an initial official HTTP share link before fetching", async () => {
+  let requestedUrl = "";
+  const result = await extractPublicSource("http://xhslink.com/o/abc", {
+    fetchImpl: async (input) => {
+      requestedUrl = String(input);
+      return new Response(recipeHtml);
+    },
+    lookupHost: publicLookup,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(requestedUrl, "https://xhslink.com/o/abc");
+});
+
 test("rejects private and reserved network addresses", () => {
   assert.equal(isPublicIpAddress("8.8.8.8"), true);
   assert.equal(isPublicIpAddress("10.0.0.1"), false);
@@ -68,6 +92,42 @@ test("extracts a clean URL from copied share text", () => {
   assert.equal(extractHttpUrlFromSharedText("只有普通菜谱正文"), null);
 });
 
+test("does not persist share query tokens in pending browser state", () => {
+  assert.equal(
+    sanitizeSharedSourceForStorage(
+      "菜谱链接 https://xhslink.com/o/abc?share_token=private#fragment",
+    ),
+    "https://xhslink.com/o/abc",
+  );
+  assert.equal(
+    sanitizeSharedSourceForStorage("鸡腿切块后加入生抽腌制"),
+    "鸡腿切块后加入生抽腌制",
+  );
+});
+
+test("normalizes copied Xiaohongshu share text to a stable source hash", () => {
+  const fromHttp = normalizeShareUrl(
+    "一个神秘调料 http://xhslink.com/o/abc?share_token=private#fragment",
+  );
+  const fromHttps = normalizeShareUrl("https://xhslink.com/o/abc");
+
+  assert.equal(fromHttp.canonicalUrl, "https://xhslink.com/o/abc");
+  assert.equal(fromHttp.sourceHash, fromHttps.sourceHash);
+});
+
+test("media extraction rejects unsupported platforms before starting a process", () => {
+  assert.throws(
+    () => normalizeShareUrl("https://v.douyin.com/abc"),
+    (error: unknown) =>
+      error instanceof AudioExtractionError && error.code === "unsupported_url",
+  );
+  assert.throws(
+    () => normalizeShareUrl("https://xhslink.com.evil.test/o/abc"),
+    (error: unknown) =>
+      error instanceof AudioExtractionError && error.code === "unsupported_url",
+  );
+});
+
 test("extracts and deduplicates metadata, JSON-LD and embedded JSON", () => {
   const result = extractPublicTextFromHtml(recipeHtml);
 
@@ -79,6 +139,16 @@ test("extracts and deduplicates metadata, JSON-LD and embedded JSON", () => {
   assert.match(result.text, /倒回鸡蛋/);
   assert.equal(result.extractor, "combined");
   assert.equal(result.text.match(/番茄切块/g)?.length, 1);
+});
+
+test("safely parses Xiaohongshu initial state without executing JavaScript", () => {
+  const parsed = parseSafeEmbeddedState(
+    'window.__INITIAL_STATE__={"note":{"desc":"undefined flavor","subtitle":"切块后翻炒"},"prompt":undefined};',
+  ) as { note: { desc: string; subtitle: string }; prompt: null } | null;
+
+  assert.equal(parsed?.prompt, null);
+  assert.equal(parsed?.note.desc, "undefined flavor");
+  assert.equal(parsed?.note.subtitle, "切块后翻炒");
 });
 
 test("classifies empty and blocked pages safely", () => {

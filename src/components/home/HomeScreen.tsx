@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -16,148 +16,9 @@ import { IphoneFrame } from "@/components/layout/IphoneFrame";
 import { TabBar } from "@/components/layout/TabBar";
 import { LeafMark } from "@/components/ui/LeafMark";
 import {
-  clearLatestParsedDraft,
-  completeMockGenerationTask,
-  createMockGenerationTask,
-  createRecipeFromParsedDraft,
-  failGenerationTask,
-  isParsedRecipeDraft,
-  saveLatestParsedDraft,
-} from "@/lib/data";
-import type {
-  ParsedRecipeDraft,
-  RecipeParseResult,
-  RecipeParseSourcePlatform,
-} from "@/types/ai";
-import { extractHttpUrlFromSharedText } from "@/lib/source/sharedInput";
-
-const PARSE_TIMEOUT_MS = 70000;
-
-function isLikelyUrl(value: string) {
-  const normalizedValue = value.toLowerCase();
-
-  return (
-    /^https?:\/\//.test(normalizedValue) ||
-    normalizedValue.startsWith("www.") ||
-    normalizedValue.includes("xiaohongshu") ||
-    normalizedValue.includes("xhs") ||
-    normalizedValue.includes("douyin") ||
-    normalizedValue.includes(".com") ||
-    normalizedValue.includes(".cn")
-  );
-}
-
-function getSourcePlatform(value: string): RecipeParseSourcePlatform {
-  const normalizedValue = value.toLowerCase();
-
-  if (normalizedValue.includes("xiaohongshu") || normalizedValue.includes("xhs")) {
-    return "xiaohongshu";
-  }
-
-  if (normalizedValue.includes("douyin")) {
-    return "douyin";
-  }
-
-  return isLikelyUrl(value) ? "mock" : "manual";
-}
-
-type ParsedSourceResult =
-  | {
-      ok: true;
-      draft: ParsedRecipeDraft;
-      sourcePlatform: RecipeParseSourcePlatform;
-      sourceUrl?: string;
-      usedFallback: boolean;
-    }
-  | {
-      ok: false;
-      failureCode: "ai_provider_failed" | "ai_fallback_used";
-      message: string;
-      shouldContinueWithFallback: boolean;
-    };
-
-async function parseRecipeSource(
-  sourceValue: string,
-): Promise<ParsedSourceResult> {
-  const extractedUrl = extractHttpUrlFromSharedText(sourceValue);
-  const looksLikeUrl = Boolean(extractedUrl) || isLikelyUrl(sourceValue);
-  const sourcePlatform = getSourcePlatform(sourceValue);
-
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
-
-  try {
-    const response = await fetch("/api/parse-recipe", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sourceUrl: looksLikeUrl ? extractedUrl ?? sourceValue : undefined,
-        rawText: looksLikeUrl ? undefined : sourceValue,
-        sourcePlatform,
-      }),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      let result: RecipeParseResult | null = null;
-
-      try {
-        result = (await response.json()) as RecipeParseResult;
-      } catch {
-        result = null;
-      }
-
-      return {
-        ok: false,
-        failureCode: "ai_provider_failed",
-        message:
-          looksLikeUrl && result?.errorCode === "SOURCE_EXTRACTION_FAILED"
-            ? "暂时无法读取这条分享链接，请粘贴正文或字幕。"
-            : "菜谱解析请求失败，请稍后重试。",
-        shouldContinueWithFallback: !looksLikeUrl,
-      };
-    }
-
-    const result = (await response.json()) as RecipeParseResult;
-
-    if (!result.ok || !isParsedRecipeDraft(result.draft)) {
-      return {
-        ok: false,
-        failureCode: "ai_provider_failed",
-        message: "没有识别出完整菜谱，请补充食材和步骤后重试。",
-        shouldContinueWithFallback: !looksLikeUrl,
-      };
-    }
-
-    saveLatestParsedDraft(result.draft, {
-      model: result.model ?? result.diagnostics?.model ?? null,
-      provider: result.provider,
-      usedFallback: result.usedFallback,
-    });
-    return {
-      ok: true,
-      draft: result.draft,
-      sourcePlatform,
-      sourceUrl: looksLikeUrl
-        ? result.source?.canonicalUrl ?? sourceValue
-        : undefined,
-      usedFallback: result.usedFallback,
-    };
-  } catch {
-    return {
-      ok: false,
-      failureCode: "ai_provider_failed",
-      message: looksLikeUrl
-        ? "暂时无法读取这条分享链接，请粘贴正文或字幕。"
-        : "菜谱解析超时或网络异常，请稍后重试。",
-      shouldContinueWithFallback: !looksLikeUrl,
-    };
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
-}
+  beginPendingRecipeGeneration,
+  consumePendingGenerationError,
+} from "@/lib/data/pendingRecipeGeneration";
 
 export function HomeScreen() {
   const router = useRouter();
@@ -165,6 +26,17 @@ export function HomeScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const generationLockRef = useRef(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const pendingError = consumePendingGenerationError();
+      if (pendingError) {
+        setErrorMessage(pendingError);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const handleGenerateRecipe = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -183,62 +55,14 @@ export function HomeScreen() {
     setErrorMessage("");
     generationLockRef.current = true;
     setIsGenerating(true);
-    const parsedSource = await parseRecipeSource(trimmedSourceUrl);
-
-    if (!parsedSource.ok) {
-      clearLatestParsedDraft();
-
-      if (!parsedSource.shouldContinueWithFallback) {
-        setErrorMessage(parsedSource.message);
-        generationLockRef.current = false;
-        setIsGenerating(false);
-        return;
-      }
-
-      const task = await createMockGenerationTask(
-        trimmedSourceUrl,
-        getSourcePlatform(trimmedSourceUrl),
-      );
-      await failGenerationTask(
-        parsedSource.failureCode,
-        "kung-pao-chicken",
-        task.id,
-      );
+    try {
+      await beginPendingRecipeGeneration(trimmedSourceUrl);
       router.push("/loading");
-      return;
+    } catch {
+      generationLockRef.current = false;
+      setIsGenerating(false);
+      setErrorMessage("生成任务暂时无法启动，请稍后重试。");
     }
-
-    const task = await createMockGenerationTask(
-      parsedSource.sourceUrl ?? trimmedSourceUrl,
-      parsedSource.sourcePlatform,
-    );
-
-    const createdRecipe = await createRecipeFromParsedDraft({
-      draft: parsedSource.draft,
-      preferLocal: parsedSource.usedFallback,
-      sourcePlatform: parsedSource.sourcePlatform,
-      sourceUrl: parsedSource.sourceUrl,
-    });
-
-    if (parsedSource.usedFallback) {
-      await failGenerationTask("ai_fallback_used", createdRecipe.slug, task.id);
-      router.push("/loading");
-      return;
-    }
-
-    if (createdRecipe.usedFallback) {
-      await failGenerationTask(
-        "recipe_save_failed",
-        createdRecipe.slug,
-        task.id,
-      );
-      router.push("/loading");
-      return;
-    }
-
-    await completeMockGenerationTask(createdRecipe.slug, task.id);
-
-    router.push("/loading");
   };
 
   return (
