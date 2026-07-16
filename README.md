@@ -158,20 +158,22 @@ ALIBABA_ASR_MODEL=qwen3-asr-flash
 
 ## Deployment
 
-当前部署平台：
+当前同时保留两个部署平台：
 
-- Netlify
+- Vercel：主要测试站点
+- Netlify：备用站点，Credits 恢复后可继续部署
 
 部署前需要：
 
 - GitHub 仓库：`celinehan77-blip/recipe-ticket-app-v2`
-- Netlify 账号
+- Vercel / Netlify 账号
 - Supabase 项目的 Project URL 和 anon public key
 
 说明：
 
-- Vercel 因手机号验证暂时未使用。
-- Netlify 已连接 GitHub，会在 `main` 分支更新后自动部署。
+- 两个平台连接同一个 GitHub `main` 分支，但环境变量需要分别维护。
+- Vercel 使用 Next.js `/api/parse-recipe` 完成链接生成；Netlify 优先使用 Background Functions。
+- 不要删除 `netlify.toml`、`netlify/functions` 或 Vercel 项目配置。
 - 构建命令：`npm run build`
 - 发布目录：`.next`
 - Next.js 插件：`@netlify/plugin-nextjs`
@@ -198,6 +200,8 @@ DEEPSEEK_MAX_TOKENS=3000
 - 不要把真实 Supabase URL 或 anon key 写进 GitHub。
 - 不要把真实 DeepSeek key 写进 GitHub，也不要使用 `NEXT_PUBLIC_`。
 - Netlify 不会自动读取本地 `.env.local`，线上环境变量需要在 Netlify 后台单独配置。
+- Vercel 同样不会自动读取本地 `.env.local`。
+- 双平台配置和运行差异见 [`docs/DUAL_PLATFORM_DEPLOYMENT.md`](docs/DUAL_PLATFORM_DEPLOYMENT.md)。
 - 环境变量更新后需要重新部署。
 - 如果 Supabase 不可用，线上页面会继续 fallback 到 `mockData`。
 - 如果 DeepSeek 不配置或调用失败，线上解析会 fallback 到 mock parser。

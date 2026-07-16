@@ -64,6 +64,11 @@ type BackgroundGenerationStatus = {
   status: "pending" | "processing" | "completed" | "failed";
 };
 
+type BackgroundGenerationAttempt = {
+  available: boolean;
+  result: RecipeParseResult | null;
+};
+
 const activeJobs = new Map<string, Promise<PendingRecipeGenerationResult>>();
 
 function canUseLocalStorage() {
@@ -164,7 +169,7 @@ async function waitForBackgroundGeneration(
   jobId: string,
   sourceUrl: string,
   signal: AbortSignal,
-) {
+): Promise<BackgroundGenerationAttempt> {
   const startResponse = await fetch("/api/generate-recipe-background", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -172,8 +177,12 @@ async function waitForBackgroundGeneration(
     signal,
   });
 
+  if (isBackgroundGenerationRouteUnavailable(startResponse.status)) {
+    return { available: false, result: null };
+  }
+
   if (!startResponse.ok) {
-    return null;
+    return { available: true, result: null };
   }
 
   while (!signal.aborted) {
@@ -182,17 +191,44 @@ async function waitForBackgroundGeneration(
       cache: "no-store",
       signal,
     });
+
+    if (isBackgroundGenerationRouteUnavailable(statusResponse.status)) {
+      return { available: false, result: null };
+    }
+    if (!statusResponse.ok) {
+      return { available: true, result: null };
+    }
+
     const status = (await statusResponse.json()) as BackgroundGenerationStatus;
 
     if (status.status === "completed" && status.result) {
-      return status.result;
+      return { available: true, result: status.result };
     }
     if (status.status === "failed") {
-      return null;
+      return { available: true, result: null };
     }
   }
 
-  return null;
+  return { available: true, result: null };
+}
+
+export function isBackgroundGenerationRouteUnavailable(status: number) {
+  return status === 404 || status === 405;
+}
+
+async function requestDirectRecipeParse(
+  body: Record<string, string>,
+  signal: AbortSignal,
+) {
+  const response = await fetch("/api/parse-recipe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+  const result = (await response.json()) as RecipeParseResult;
+
+  return response.ok ? result : null;
 }
 
 async function parseRecipeSource(
@@ -209,23 +245,26 @@ async function parseRecipeSource(
     let result: RecipeParseResult | null;
 
     if (looksLikeUrl) {
-      result = await waitForBackgroundGeneration(
+      const background = await waitForBackgroundGeneration(
         jobId,
         extractedUrl ?? sourceValue,
         controller.signal,
       );
-    } else {
-      const response = await fetch("/api/parse-recipe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText: sourceValue, sourcePlatform }),
-        signal: controller.signal,
-      });
-      result = (await response.json()) as RecipeParseResult;
 
-      if (!response.ok) {
-        result = null;
-      }
+      result = background.available
+        ? background.result
+        : await requestDirectRecipeParse(
+            {
+              sourcePlatform,
+              sourceUrl: extractedUrl ?? sourceValue,
+            },
+            controller.signal,
+          );
+    } else {
+      result = await requestDirectRecipeParse(
+        { rawText: sourceValue, sourcePlatform },
+        controller.signal,
+      );
     }
 
     if (!result?.ok || !isParsedRecipeDraft(result.draft)) {

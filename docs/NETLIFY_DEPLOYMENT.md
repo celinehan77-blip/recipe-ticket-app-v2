@@ -2,7 +2,7 @@
 
 本文档用于 Recipe Ticket / 日食笔记 的 Netlify 部署和线上检查。
 
-当前使用 Netlify，是因为 Vercel 暂时受手机号验证影响，无法顺利完成部署。Netlify 同样可以部署 Next.js 项目，并且已经连接 GitHub 仓库。
+Netlify 是当前备用部署平台，与 Vercel 连接同一个 GitHub 仓库。Netlify Credits 暂停时不删除站点或配置，额度恢复后可继续从 `main` 部署。
 
 ## 当前部署信息
 
@@ -97,6 +97,8 @@ DEEPSEEK_MODEL=deepseek-v4-flash
 - `DEEPSEEK_BASE_URL` 和 `DEEPSEEK_MODEL` 可根据 DeepSeek 官方文档调整。
 - 如果不配置这些变量，线上仍然使用 mock parser。
 - 如果真实 AI 调用失败，接口会 fallback 到 mock parser。
+
+小红书视频语音链路还需要按 `.env.example` 配置火山 ASR、阿里备用 ASR 和 `ASR_PROVIDER`。这些变量不会从 Vercel 自动同步到 Netlify。
 
 ### Step 6：添加环境变量后重新部署
 

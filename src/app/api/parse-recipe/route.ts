@@ -9,6 +9,7 @@ import {
 import { AudioExtractionError } from "@/lib/media/extractAudio";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const allowedSourcePlatforms = new Set<RecipeParseSourcePlatform>([
   "xiaohongshu",

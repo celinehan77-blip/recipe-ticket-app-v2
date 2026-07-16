@@ -13,6 +13,7 @@ import {
   saveLocalGeneratedRecipe,
 } from "../../src/lib/data/localGeneratedRecipe";
 import type { ParsedRecipeDraft } from "../../src/types/ai";
+import { isBackgroundGenerationRouteUnavailable } from "../../src/lib/data/pendingRecipeGeneration";
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>();
@@ -145,4 +146,10 @@ test("each saved local recipe keeps a unique slug and its own draft", () => {
     getLocalGeneratedRecipeBySlug(secondRecipe.slug)?.titleZh,
     "青椒肉丝",
   );
+});
+
+test("Vercel can fall back when Netlify background routes are unavailable", () => {
+  assert.equal(isBackgroundGenerationRouteUnavailable(404), true);
+  assert.equal(isBackgroundGenerationRouteUnavailable(405), true);
+  assert.equal(isBackgroundGenerationRouteUnavailable(500), false);
 });

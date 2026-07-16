@@ -88,7 +88,7 @@ Milestone 2：Production Ready MVP
 - Current Milestone：`Milestone 2`
 - Current Phase：`Phase B - User Journey`
 - Current Checkpoint：`B1 - 生产环境陌生用户端到端验收`
-- Current Version：`0.2.0-working.4`
+- Current Version：`0.2.0-working.5`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
@@ -98,7 +98,7 @@ Milestone 2：Production Ready MVP
 1. Phase B：User Journey，完成 Netlify 生产运行时和陌生用户端到端旅程验收。
 2. Phase C：Production Verification，完成跨设备、生产数据和发布验收。
 
-Checkpoint B1 当前唯一外部依赖：将本 Checkpoint 提交推送至 GitHub，并由 Netlify 使用已配置的 ASR 服务端变量完成生产部署。Git push 与生产部署按权限规则需产品负责人授权。
+Checkpoint B1 当前状态：Vercel Production 已用真实小红书样本跑通媒体、火山 ASR 与 DeepSeek；正在完成双平台首页旅程和登录用户 Supabase 持久化验收。Netlify 因 Credits 暂停，配置保留为备用部署路径。
 
 每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 

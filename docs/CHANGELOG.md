@@ -4,6 +4,13 @@
 
 ## 2026-07-16
 
+### Vercel / Netlify 双平台兼容
+
+- Vercel Production 已部署 GitHub `main` 提交 `b058dab`，页面、Supabase、DeepSeek、yt-dlp、FFmpeg 和火山 ASR 运行信号通过。
+- Vercel 真实小红书样本在 24.9 秒内完成 `yt-dlp -> FFmpeg -> 火山 ASR -> DeepSeek`，返回“黄焖鸡”动态草稿。
+- 首页在 Netlify Background Functions 不存在（404/405）时改走 Next.js `/api/parse-recipe`，保留 Netlify 后台任务路径且不重复创建业务实现。
+- `/api/parse-recipe` 明确配置 60 秒最长运行时间，并补充双平台环境变量与部署策略文档。
+
 ### 小红书公开视频语音转菜谱 Working Release
 
 - 新增小红书分享链接到 `yt-dlp` 的公开媒体解析，只支持小红书且不使用 Cookie。
