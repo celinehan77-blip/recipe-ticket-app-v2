@@ -24,6 +24,18 @@ const STALE_GENERATION_TASK_MS = 15 * 60 * 1000;
 
 export type GenerationTaskSyncMode = "local" | "cloud" | "fallback";
 
+export type GenerationTaskDiagnostics = {
+  asrModel: string | null;
+  asrProvider: string | null;
+  model: string | null;
+  processingTimeMs: number;
+  provider: string;
+  qualityScore: number;
+  totalTokens: number | null;
+  usedAsrFallback: boolean;
+  usedFallback: boolean;
+};
+
 export type GenerationTaskFailureCode =
   | "ai_provider_failed"
   | "ai_fallback_used"
@@ -139,6 +151,7 @@ export async function createMockGenerationTask(
 export async function completeMockGenerationTask(
   generatedRecipeSlug?: string,
   taskId?: string,
+  diagnostics?: GenerationTaskDiagnostics,
 ): Promise<GenerationTask | null> {
   const user = await getCurrentUser();
   const safeSlug =
@@ -155,6 +168,7 @@ export async function completeMockGenerationTask(
       const completed = await tryCompleteGenerationTaskInSupabase(
         cloudTaskId,
         safeSlug,
+        diagnostics,
       );
 
       if (completed.ok) {

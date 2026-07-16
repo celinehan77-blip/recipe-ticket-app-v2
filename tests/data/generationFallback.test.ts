@@ -14,6 +14,7 @@ import {
 } from "../../src/lib/data/localGeneratedRecipe";
 import type { ParsedRecipeDraft } from "../../src/types/ai";
 import {
+  buildGenerationDiagnostics,
   getGenerationStartRoute,
   isBackgroundGenerationRouteUnavailable,
   isPendingGenerationStale,
@@ -225,4 +226,34 @@ test("recent or completed generation remains resumable", () => {
     isPendingGenerationStale({ ...pending, status: "completed" }, now + 3_600_000),
     false,
   );
+});
+
+test("generation diagnostics contain only safe quality and provider metrics", () => {
+  const diagnostics = buildGenerationDiagnostics(
+    {
+      ok: true,
+      draft,
+      error: null,
+      errorCode: null,
+      provider: "deepseek",
+      usedFallback: false,
+      diagnostics: {
+        attemptedProvider: "deepseek",
+        model: "deepseek-v4-flash",
+        durationMs: 1200,
+        attemptCount: 1,
+        finishReason: "stop",
+        usage: { promptTokens: 100, completionTokens: 80, totalTokens: 180 },
+      },
+    },
+    draft,
+  );
+
+  assert.equal(diagnostics.provider, "deepseek");
+  assert.equal(diagnostics.model, "deepseek-v4-flash");
+  assert.equal(diagnostics.processingTimeMs, 1200);
+  assert.equal(diagnostics.totalTokens, 180);
+  assert.ok(diagnostics.qualityScore >= 0);
+  assert.equal("transcript" in diagnostics, false);
+  assert.equal("sourceUrl" in diagnostics, false);
 });

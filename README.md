@@ -143,6 +143,7 @@ ALIBABA_ASR_MODEL=qwen3-asr-flash
 - 游客生成的每道本地菜谱使用唯一 slug，保存失败时仍保留可用的本地动态菜谱。
 - 真实小红书做饭视频已通过 yt-dlp、FFmpeg、火山 Seed ASR 主调用和 DeepSeek 验收；Qwen ASR 保留为火山明确失败后的备用。
 - 首页提交后会立即进入 Loading，处理完成后跳转真实动态菜谱；登录用户的 `recipes / ingredients / recipe_steps / generation_tasks` 持久化已通过验证。
+- 登录用户的新 generation task 会保存 Provider、模型、fallback、耗时、质量分和 Token 数等安全诊断指标，不保存原始口播或 Secret。
 - AI key 只使用服务端环境变量，不使用 `NEXT_PUBLIC_`。
 
 ## 当前阶段说明

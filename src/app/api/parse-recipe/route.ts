@@ -219,6 +219,7 @@ export async function POST(request: Request) {
         model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
         provider: "deepseek",
         usedFallback: false,
+        diagnostics: generated.diagnostics,
         source: {
           canonicalUrl: generated.canonicalUrl,
           extractor: "combined",

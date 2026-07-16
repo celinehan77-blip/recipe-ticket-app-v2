@@ -10,6 +10,7 @@ import {
   createMockGenerationTask,
   failGenerationTask,
   getCompletedGeneratedRecipeSlugBySource,
+  type GenerationTaskDiagnostics,
 } from "@/lib/data/generationTasks";
 import { createRecipeFromParsedDraft } from "@/lib/data/recipes";
 import {
@@ -25,6 +26,7 @@ import type {
   RecipeParseResult,
   RecipeParseSourcePlatform,
 } from "@/types/ai";
+import { scoreParsedRecipeDraft } from "@/lib/ai/scoreParsedRecipe";
 
 const PENDING_GENERATION_KEY = "recipe-ticket:pending-recipe-generation";
 const GENERATION_ERROR_KEY = "recipe-ticket:pending-generation-error";
@@ -53,6 +55,7 @@ type ParsedSourceResult =
       sourcePlatform: RecipeParseSourcePlatform;
       sourceUrl?: string;
       usedFallback: boolean;
+      diagnostics: GenerationTaskDiagnostics;
     }
   | {
       ok: false;
@@ -243,6 +246,26 @@ export function isPendingGenerationStale(
   );
 }
 
+export function buildGenerationDiagnostics(
+  result: RecipeParseResult,
+  draft: ParsedRecipeDraft,
+): GenerationTaskDiagnostics {
+  const quality = scoreParsedRecipeDraft(draft);
+
+  return {
+    asrModel: result.generation?.asrModel ?? null,
+    asrProvider: result.generation?.asrProvider ?? null,
+    model: result.model ?? result.diagnostics?.model ?? null,
+    processingTimeMs:
+      result.generation?.processingTimeMs ?? result.diagnostics?.durationMs ?? 0,
+    provider: result.provider,
+    qualityScore: quality.score,
+    totalTokens: result.diagnostics?.usage?.totalTokens ?? null,
+    usedAsrFallback: result.generation?.usedAsrFallback ?? false,
+    usedFallback: result.usedFallback,
+  };
+}
+
 async function requestDirectRecipeParse(
   body: Record<string, string>,
   signal: AbortSignal,
@@ -324,6 +347,7 @@ async function parseRecipeSource(
     return {
       ok: true,
       draft: result.draft,
+      diagnostics: buildGenerationDiagnostics(result, result.draft),
       sourcePlatform,
       sourceUrl: looksLikeUrl
         ? result.source?.canonicalUrl ?? extractedUrl ?? sourceValue
@@ -370,7 +394,11 @@ async function runPendingGeneration(
   } else if (createdRecipe.usedFallback) {
     await failGenerationTask("recipe_save_failed", createdRecipe.slug, pending.taskId);
   } else {
-    await completeMockGenerationTask(createdRecipe.slug, pending.taskId);
+    await completeMockGenerationTask(
+      createdRecipe.slug,
+      pending.taskId,
+      parsed.diagnostics,
+    );
   }
 
   if (parsed.sourceUrl) {

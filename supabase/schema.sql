@@ -92,6 +92,7 @@ create table if not exists public.generation_tasks (
   status text not null default 'pending',
   generated_recipe_id uuid references public.recipes(id) on delete set null,
   error_message text,
+  diagnostics jsonb not null default '{}'::jsonb,
   created_at timestamptz default now(),
   completed_at timestamptz,
   constraint generation_tasks_status_check check (

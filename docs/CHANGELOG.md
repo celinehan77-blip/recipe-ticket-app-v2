@@ -4,6 +4,14 @@
 
 ## 2026-07-16
 
+### Milestone 3 / Checkpoint A1 Working Release
+
+- 复用现有解析响应，为 generation task 生成 Provider、模型、ASR Provider、fallback、耗时、质量分和 Token 数安全诊断。
+- 小红书真实链路现在向前端返回 DeepSeek diagnostics，正文和视频流程使用同一诊断结构。
+- `generation_tasks` 增加 `diagnostics jsonb` 字段；迁移后 RLS 保持开启，原有 3 条策略保持不变。
+- 诊断数据不包含原始口播、完整来源链接、邮箱、Authorization 或 Secret。
+- 本地 67 项测试、lint 和 production build 通过；待 Vercel 登录生产会话生成一条新任务完成真实写入验收。
+
 ### Milestone 2 / Checkpoint C2 完成
 
 - 超过 15 分钟的浏览器 processing 状态不再自动恢复付费解析，改为安全失败并提示重新提交。

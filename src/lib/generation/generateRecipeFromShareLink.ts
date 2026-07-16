@@ -4,6 +4,7 @@ import { transcribeAudio, type TranscriptionResult } from "@/lib/asr/transcribeA
 import { extractAudioWithYtDlp } from "@/lib/media/extractAudio";
 import { normalizeShareUrl } from "@/lib/media/extractAudio";
 import type { ParsedRecipeDraft } from "@/types/ai";
+import type { RecipeParseResult } from "@/types/ai";
 
 export type GenerationStage =
   | "resolving_link"
@@ -22,11 +23,12 @@ export type ShareLinkGenerationResult = {
   stages: Array<{ stage: GenerationStage; completedAtMs: number }>;
   title: string | null;
   transcript: string;
+  diagnostics: RecipeParseResult["diagnostics"];
 };
 
 export type ShareLinkTranscriptionResult = Omit<
   ShareLinkGenerationResult,
-  "draft"
+  "diagnostics" | "draft"
 >;
 
 function validateGroundedRecipe(draft: ParsedRecipeDraft, transcript: string) {
@@ -155,6 +157,7 @@ async function generateUncachedRecipeFromShareLink(
     stages,
     title: transcribed.title,
     transcript: transcribed.transcript,
+    diagnostics: parsed.diagnostics,
   };
 }
 

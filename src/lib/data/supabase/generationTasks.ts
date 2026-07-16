@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
+import type { GenerationTaskDiagnostics } from "@/lib/data/generationTasks";
 
 export type SupabaseGenerationTaskStatus =
   | "pending"
@@ -106,6 +107,7 @@ export async function createGenerationTaskInSupabase(
 export async function tryCompleteGenerationTaskInSupabase(
   taskId: string,
   generatedRecipeSlug: string,
+  diagnostics?: GenerationTaskDiagnostics,
 ): Promise<SupabaseResult<boolean>> {
   const supabase = getSupabaseClient();
   const recipeId = await getRecipeIdBySlug(generatedRecipeSlug);
@@ -121,6 +123,7 @@ export async function tryCompleteGenerationTaskInSupabase(
       generated_recipe_id: recipeId,
       error_message: null,
       completed_at: new Date().toISOString(),
+      diagnostics: diagnostics ?? {},
     })
     .eq("id", taskId)
     .select("id")
@@ -194,9 +197,14 @@ export async function tryFailStaleGenerationTasksInSupabase(
 export async function completeGenerationTaskInSupabase(
   taskId: string,
   generatedRecipeSlug: string,
+  diagnostics?: GenerationTaskDiagnostics,
 ): Promise<boolean> {
   return (
-    await tryCompleteGenerationTaskInSupabase(taskId, generatedRecipeSlug)
+    await tryCompleteGenerationTaskInSupabase(
+      taskId,
+      generatedRecipeSlug,
+      diagnostics,
+    )
   ).data;
 }
 
