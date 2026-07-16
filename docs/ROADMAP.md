@@ -78,17 +78,17 @@ Milestone 3：Real User Beta
     │   ├── Task：收集 5 条小红书公开做饭视频（5 / 5）
     │   ├── Task：聚合成功率、fallback、耗时与质量分（已完成）
     │   └── Task：增加来源事实校验和用量估算标记（已完成）
-    └── Checkpoint A3：小红书完成率修复（进行中）
+    └── Checkpoint A3：小红书完成率修复（已完成，2026-07-16）
         ├── Task：按安全失败分类定位 2 条失败路径（已完成）
-        ├── Task：验证新版 yt-dlp 的公开链接覆盖率（待新样本）
-        ├── Task：验证 ASR 后解析与质量失败率（待新样本）
-        └── Task：将小红书完成率提升到至少 80%（待验证）
+        ├── Task：验证新版 yt-dlp 的公开链接覆盖率（7 / 7）
+        ├── Task：验证 ASR 后解析与质量失败率（7 / 7）
+        └── Task：将小红书完成率提升到至少 80%（合并样本 10 / 12，83.3%）
 ```
 
 - Current Milestone：`Milestone 3 - Real User Beta`
-- Current Phase：`Phase A - Quality Baseline`
-- Current Checkpoint：`A3 - 小红书完成率修复`
-- Current Version：`0.2.0-working.11`
+- Current Phase：`Phase B - Platform Coverage`
+- Current Checkpoint：`B1 - 抖音公开链接能力边界与 MVP 方案`
+- Current Version：`0.2.0-working.12`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
@@ -111,6 +111,8 @@ Checkpoint A1 已完成：正文样本“香菇滑鸡”和小红书公开样本
 Checkpoint A2 首轮结果：5 条小红书公开样本中 3 条完成、2 条安全失败，成功率 60%，成功样本平均质量分 94.7、P95 处理耗时约 30.9 秒、fallback 为 0。失败样本中一条未进入媒体提取，另一条完成火山 ASR 后在 DeepSeek 解析或质量校验阶段失败。成功率尚未达到 80% Beta 门槛。
 
 Checkpoint A2 正文结果：10 条真实正文全部完成，完成率 100%、平均质量分 92.6、P95 约 9.8 秒、fallback 为 0。新增 8 条样本每条只调用一次 DeepSeek，共 15979 Tokens。Reviewer 发现模型会估算原文未提供的步骤时长并补充常识 tips，因此增加来源事实校验：用量允许按 2 人份估算并明确标记，步骤时间、火候和重点提醒必须有原文依据。
+
+Checkpoint A3 已完成：新增 7 条从未使用的小红书公开样本，7 条均完成 `yt-dlp -> FFmpeg -> 火山 ASR -> DeepSeek`，无 ASR fallback。6 条本地完整链路平均约 44.8 秒、P95 约 48.9 秒、平均质量分 86.3；另 1 条 Vercel Production 样本约 29.2 秒、质量分 78，并正确保留原文时间与火候、标记 2 人份 AI 估算。合并 A2 历史样本后为 10 / 12，完成率 83.3%，达到 Beta 的 80% 门槛。第 8 条备用链接未调用，避免无必要计费。
 
 每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 

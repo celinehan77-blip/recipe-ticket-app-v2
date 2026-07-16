@@ -4,6 +4,16 @@
 
 ## 2026-07-16
 
+### Milestone 3 / Checkpoint A3 完成
+
+- 使用 7 条全新小红书公开做饭视频完成真实复验，7 条全部通过 `yt-dlp -> FFmpeg -> 火山 ASR -> DeepSeek`，无 fallback。
+- 6 条本地完整链路平均约 44.8 秒、P95 约 48.9 秒、平均质量分 86.3；另 1 条 Vercel Production 样本约 29.2 秒、质量分 78。
+- 合并 A2 历史样本后，小红书公开链接完成率为 10 / 12，即 83.3%，达到 Beta 80% 门槛。
+- Production 样本确认用量缺失时按 2 人份透明估算；步骤时间、火候和重点提醒仍以来源为准，没有为提高评分而补写事实。
+- 新版 yt-dlp 与现有单一路线未再复现媒体获取、ASR、AI 解析或质量失败；保留第 8 条备用链接未调用。
+- 本轮未修改业务代码、UI、Auth、收藏、数据库 schema、RLS、Station 或风味地图。
+- Checkpoint A3 完成并进入 Milestone 3 / Phase B；版本 `0.2.0-working.12`，代码回滚点 `c5d0c2d`。
+
 ### Milestone 3 / Checkpoint A2 完成
 
 - 补齐 8 条真实正文样本，覆盖简单菜、详细菜谱、口语化转录和多做法合集；8 条均由 DeepSeek 单次调用成功解析，无 fallback。
