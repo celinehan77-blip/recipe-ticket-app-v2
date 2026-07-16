@@ -17,6 +17,8 @@
     "test:source": "tsx --test --test-concurrency=1 tests/source/*.test.ts"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.9",
+    "@netlify/functions": "^5.3.0",
     "@supabase/supabase-js": "^2.108.2",
     "cheerio": "^1.2.0",
     "ffmpeg-static": "^5.3.0",

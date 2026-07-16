@@ -27,7 +27,7 @@ import type {
 
 const PENDING_GENERATION_KEY = "recipe-ticket:pending-recipe-generation";
 const GENERATION_ERROR_KEY = "recipe-ticket:pending-generation-error";
-const PARSE_TIMEOUT_MS = 70_000;
+const PARSE_TIMEOUT_MS = 120_000;
 
 export type PendingRecipeGeneration = {
   jobId: string;
@@ -58,11 +58,10 @@ type ParsedSourceResult =
       shouldContinueWithFallback: boolean;
     };
 
-type ShareTranscriptionResponse = {
-  ok: boolean;
-  transcript?: string;
-  source?: { canonicalUrl?: string };
-  generation?: RecipeParseResult["generation"];
+type BackgroundGenerationStatus = {
+  errorCode?: string;
+  result?: RecipeParseResult;
+  status: "pending" | "processing" | "completed" | "failed";
 };
 
 const activeJobs = new Map<string, Promise<PendingRecipeGenerationResult>>();
@@ -147,7 +146,59 @@ function saveGenerationError(message: string) {
   }
 }
 
-async function parseRecipeSource(sourceValue: string): Promise<ParsedSourceResult> {
+function waitForPoll(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = window.setTimeout(resolve, delayMs);
+    signal.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timer);
+        reject(new DOMException("Generation aborted.", "AbortError"));
+      },
+      { once: true },
+    );
+  });
+}
+
+async function waitForBackgroundGeneration(
+  jobId: string,
+  sourceUrl: string,
+  signal: AbortSignal,
+) {
+  const startResponse = await fetch("/api/generate-recipe-background", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobId, sourceUrl }),
+    signal,
+  });
+
+  if (!startResponse.ok) {
+    return null;
+  }
+
+  while (!signal.aborted) {
+    await waitForPoll(1500, signal);
+    const statusResponse = await fetch(`/api/generation-status/${jobId}`, {
+      cache: "no-store",
+      signal,
+    });
+    const status = (await statusResponse.json()) as BackgroundGenerationStatus;
+
+    if (status.status === "completed" && status.result) {
+      return status.result;
+    }
+    if (status.status === "failed") {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+async function parseRecipeSource(
+  sourceValue: string,
+  jobId: string,
+): Promise<ParsedSourceResult> {
   const extractedUrl = extractHttpUrlFromSharedText(sourceValue);
   const looksLikeUrl = Boolean(extractedUrl) || isLikelyRecipeUrl(sourceValue);
   const sourcePlatform = getRecipeSourcePlatform(sourceValue);
@@ -155,47 +206,29 @@ async function parseRecipeSource(sourceValue: string): Promise<ParsedSourceResul
   const timeoutId = window.setTimeout(() => controller.abort(), PARSE_TIMEOUT_MS);
 
   try {
-    let transcription: ShareTranscriptionResponse | null = null;
-    let canonicalSourceUrl = extractedUrl ?? sourceValue;
+    let result: RecipeParseResult | null;
 
     if (looksLikeUrl) {
-      const transcriptionResponse = await fetch("/api/parse-recipe", {
+      result = await waitForBackgroundGeneration(
+        jobId,
+        extractedUrl ?? sourceValue,
+        controller.signal,
+      );
+    } else {
+      const response = await fetch("/api/parse-recipe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          operation: "transcribe",
-          sourceUrl: canonicalSourceUrl,
-          sourcePlatform,
-        }),
+        body: JSON.stringify({ rawText: sourceValue, sourcePlatform }),
         signal: controller.signal,
       });
-      transcription = (await transcriptionResponse.json()) as ShareTranscriptionResponse;
+      result = (await response.json()) as RecipeParseResult;
 
-      if (!transcriptionResponse.ok || !transcription.ok || !transcription.transcript) {
-        return {
-          ok: false,
-          message: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
-          shouldContinueWithFallback: false,
-        };
+      if (!response.ok) {
+        result = null;
       }
-
-      canonicalSourceUrl =
-        transcription.source?.canonicalUrl ?? canonicalSourceUrl;
     }
 
-    const response = await fetch("/api/parse-recipe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sourceUrl: looksLikeUrl ? canonicalSourceUrl : undefined,
-        rawText: looksLikeUrl ? transcription?.transcript : sourceValue,
-        sourcePlatform,
-      }),
-      signal: controller.signal,
-    });
-    const result = (await response.json()) as RecipeParseResult;
-
-    if (!response.ok || !result.ok || !isParsedRecipeDraft(result.draft)) {
+    if (!result?.ok || !isParsedRecipeDraft(result.draft)) {
       return {
         ok: false,
         message: looksLikeUrl
@@ -205,7 +238,7 @@ async function parseRecipeSource(sourceValue: string): Promise<ParsedSourceResul
       };
     }
 
-    const generation = transcription?.generation ?? result.generation;
+    const generation = result.generation;
 
     saveLatestParsedDraft(result.draft, {
       generation: generation
@@ -227,10 +260,7 @@ async function parseRecipeSource(sourceValue: string): Promise<ParsedSourceResul
       draft: result.draft,
       sourcePlatform,
       sourceUrl: looksLikeUrl
-        ? transcription?.source?.canonicalUrl ??
-          result.source?.canonicalUrl ??
-          extractedUrl ??
-          sourceValue
+        ? result.source?.canonicalUrl ?? extractedUrl ?? sourceValue
         : undefined,
       usedFallback: result.usedFallback,
     };
@@ -251,7 +281,7 @@ async function runPendingGeneration(
   pending: PendingRecipeGeneration,
   requestSourceValue = pending.sourceValue,
 ): Promise<PendingRecipeGenerationResult> {
-  const parsed = await parseRecipeSource(requestSourceValue);
+  const parsed = await parseRecipeSource(requestSourceValue, pending.jobId);
 
   if (!parsed.ok) {
     clearLatestParsedDraft();

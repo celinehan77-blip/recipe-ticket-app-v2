@@ -5,7 +5,10 @@
 [build.environment]
   NODE_VERSION = "20"
 
-[functions]
+[functions."___netlify-server-handler"]
+  included_files = ["runtime-tools/yt-dlp", "runtime-tools/ffmpeg"]
+
+[functions."generate-recipe-background"]
   included_files = ["runtime-tools/yt-dlp", "runtime-tools/ffmpeg"]
 
 [[plugins]]
