@@ -5,5 +5,8 @@
 [build.environment]
   NODE_VERSION = "20"
 
+[functions]
+  included_files = ["node_modules/.cache/recipe-ticket/yt-dlp"]
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"

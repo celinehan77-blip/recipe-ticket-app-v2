@@ -3,6 +3,7 @@ import type { RecipeParseInput, RecipeParseSourcePlatform } from "@/types/ai";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { extractPublicSource } from "@/lib/source";
 import { generateRecipeFromShareLink } from "@/lib/generation/generateRecipeFromShareLink";
+import { AudioExtractionError } from "@/lib/media/extractAudio";
 
 export const runtime = "nodejs";
 
@@ -161,7 +162,9 @@ export async function POST(request: Request) {
           usedAsrFallback: generated.asr.usedFallback,
         },
       });
-    } catch {
+    } catch (error) {
+      const mediaErrorCode =
+        error instanceof AudioExtractionError ? error.code : null;
       const extractedSource = await extractPublicSource(sourceUrl);
 
       if (!extractedSource.ok) {
@@ -172,7 +175,7 @@ export async function POST(request: Request) {
             error: "暂时无法读取这条分享链接，请粘贴正文或字幕。",
             errorCode: "SOURCE_EXTRACTION_FAILED",
             provider: "mock",
-            sourceErrorCode: extractedSource.errorCode,
+            sourceErrorCode: mediaErrorCode ?? extractedSource.errorCode,
             usedFallback: false,
           },
           { status: 422 },
@@ -186,7 +189,7 @@ export async function POST(request: Request) {
           error: "视频语音暂时无法识别，请粘贴正文或字幕。",
           errorCode: "SOURCE_EXTRACTION_FAILED",
           provider: "mock",
-          sourceErrorCode: "no_text",
+          sourceErrorCode: mediaErrorCode ?? "no_text",
           usedFallback: false,
         },
         { status: 422 },
