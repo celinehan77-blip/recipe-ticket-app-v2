@@ -29,6 +29,7 @@ import type {
 const PENDING_GENERATION_KEY = "recipe-ticket:pending-recipe-generation";
 const GENERATION_ERROR_KEY = "recipe-ticket:pending-generation-error";
 const PARSE_TIMEOUT_MS = 120_000;
+const PENDING_GENERATION_STALE_MS = 15 * 60 * 1000;
 
 export type PendingRecipeGeneration = {
   jobId: string;
@@ -230,6 +231,18 @@ export function getGenerationStartRoute(pending: PendingRecipeGeneration) {
     : "/loading";
 }
 
+export function isPendingGenerationStale(
+  pending: PendingRecipeGeneration,
+  now = Date.now(),
+) {
+  const startedAt = Date.parse(pending.startedAt);
+
+  return (
+    pending.status === "processing" &&
+    (!Number.isFinite(startedAt) || now - startedAt > PENDING_GENERATION_STALE_MS)
+  );
+}
+
 async function requestDirectRecipeParse(
   body: Record<string, string>,
   signal: AbortSignal,
@@ -425,6 +438,19 @@ export function resumePendingRecipeGeneration(
       ok: false,
       message: pending.message || "生成失败，请稍后重试。",
     });
+  }
+
+  if (isPendingGenerationStale(pending)) {
+    const message = "上一次生成已中断，请重新提交。";
+    const failed = { ...pending, message, status: "failed" as const };
+
+    savePendingGeneration(failed);
+    saveGenerationError(message);
+    return failGenerationTask(
+      "generation_interrupted",
+      "kung-pao-chicken",
+      pending.taskId,
+    ).then(() => ({ ok: false, message }));
   }
 
   const active = activeJobs.get(pending.jobId);

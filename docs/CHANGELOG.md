@@ -4,6 +4,16 @@
 
 ## 2026-07-16
 
+### Milestone 2 / Checkpoint C2 完成
+
+- 超过 15 分钟的浏览器 processing 状态不再自动恢复付费解析，改为安全失败并提示重新提交。
+- 登录用户创建新任务前，会把自己的过期 processing task 标记为 `generation_interrupted`，不影响其他用户或已完成任务。
+- 保留现有菜谱写入失败级联清理；未修改数据库 schema、RLS 或 UI。
+- 生产只读审计结果：过期 processing task、completed 无 recipe、生成菜谱缺 ingredients、缺 steps 均为 0。
+- 完整回归 66 项测试、lint 和 production build 通过；Build 仅保留既有 Next.js NFT 文件追踪警告。
+- Milestone 2 完成，进入 Milestone 3 / Phase A / Checkpoint A1。
+- Checkpoint C2 回滚基线：`51303c6`。
+
 ### Milestone 2 / Checkpoint C1 完成
 
 - 登录用户生成前按净化后的完整来源查询自己的已完成云端任务，跨设备或浏览器缓存失效后可复用既有动态菜谱。

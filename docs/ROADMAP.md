@@ -66,29 +66,19 @@
 ## 当前四级推进状态
 
 ```text
-Milestone 2：Production Ready MVP
-└── Phase A：Source Acquisition
-    ├── Checkpoint A0：数据一致性基础（已完成，2026-07-15）
-    │   ├── Task：生成任务精确绑定当前 Task ID
-    │   ├── Task：失败状态与动态详情 fallback
-    │   ├── Task：本地菜谱唯一 slug 与最多 50 道历史
-    │   └── Task：收藏、我的菜谱和登录迁移按具体 slug 读取
-    └── Checkpoint A1：小红书公开视频语音转菜谱（已完成，2026-07-16）
-        ├── Task：小红书 / 抖音 URL 识别与短链解析（已完成）
-        ├── Task：SSRF 防护与受控公开网页抓取（已完成）
-        ├── Task：公开标题、正文和页面元数据提取（已完成）
-        ├── Task：接入现有 DeepSeek 管线（已完成）
-        ├── Task：yt-dlp + FFmpeg 临时音轨（已完成，两条真实样本）
-        ├── Task：Qwen ASR 失败备用 + DeepSeek 动态菜谱（已完成，两条真实样本）
-        ├── Task：火山录音文件 ASR 主 Provider（已完成，真实样本）
-        ├── Task：登录用户 Supabase 全表写入（已完成）
-        └── Task：Loading 真实阶段与动态 slug（已完成）
+Milestone 3：Real User Beta
+└── Phase A：Quality Baseline
+    └── Checkpoint A1：生产解析质量与成本基线（进行中）
+        ├── Task：定义单次生成安全诊断字段
+        ├── Task：记录 Provider、fallback、耗时与质量结果
+        ├── Task：扩充真实菜谱样本回归集
+        └── Task：建立 Beta 发布验收阈值
 ```
 
-- Current Milestone：`Milestone 2`
-- Current Phase：`Phase C - Production Verification`
-- Current Checkpoint：`C2 - 失败任务恢复与孤儿数据防护`
-- Current Version：`0.2.0-working.7`
+- Current Milestone：`Milestone 3 - Real User Beta`
+- Current Phase：`Phase A - Quality Baseline`
+- Current Checkpoint：`A1 - 生产解析质量与成本基线`
+- Current Version：`0.2.0-working.8`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
@@ -100,7 +90,11 @@ Milestone 2：Production Ready MVP
 
 Checkpoint B1 已完成：Vercel Production 已跑通游客真实小红书链路、登录用户云端菜谱写入、动态详情刷新、云端收藏和 `/me` 数据恢复。
 
-Checkpoint C1 已完成：登录用户会先按净化后的完整来源匹配自己已完成的云端任务，命中后复用动态菜谱 slug，不新建任务、不调用 ASR/DeepSeek；缓存命中直接打开已有菜谱，新生成仍保持 Loading 流程。Checkpoint C2 将处理超时或页面中断留下的 processing task，并验证失败后重试不会产生半成品菜谱。
+Checkpoint C1 已完成：登录用户会先按净化后的完整来源匹配自己已完成的云端任务，命中后复用动态菜谱 slug，不新建任务、不调用 ASR/DeepSeek；缓存命中直接打开已有菜谱，新生成仍保持 Loading 流程。Checkpoint C2 负责处理超时或页面中断留下的 processing task，并验证失败后重试不会产生半成品菜谱。
+
+Checkpoint C2 已完成：超过 15 分钟的中断任务不会重新进入付费链路，新任务开始前会把当前用户的过期 processing task 安全标记为 failed；生产数据审计未发现过期任务、无菜谱完成任务或缺少食材/步骤的半成品。Milestone 2 完成。
+
+Milestone 3 目标：让 MVP 可以进入小范围真实用户 Beta，用可验证的质量、耗时、fallback 和成本数据决定后续投入。Phase 依次为：A 质量与成本基线、B 平台覆盖（优先抖音公开样本）、C 收藏与再次查找留存、D Beta 发布与运营验收。
 
 每个 Checkpoint 必须依次完成 Architect Review、QA、Reviewer、Debug、Release、CHANGELOG 和 Git Commit。网络中断或新会话启动时，从本节最近一个已完成 Checkpoint 继续。
 

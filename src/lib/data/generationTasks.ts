@@ -11,6 +11,7 @@ import {
   tryCompleteGenerationTaskInSupabase,
   tryCreateGenerationTaskInSupabase,
   tryFailGenerationTaskInSupabase,
+  tryFailStaleGenerationTasksInSupabase,
   tryGetCompletedGeneratedRecipeSlugBySourceFromSupabase,
   tryGetLatestGeneratedRecipeSlugFromSupabase,
   tryGetLatestGenerationTaskFromSupabase,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/data/supabase/generationTasks";
 
 const DEFAULT_GENERATED_RECIPE_SLUG = "kung-pao-chicken";
+const STALE_GENERATION_TASK_MS = 15 * 60 * 1000;
 
 export type GenerationTaskSyncMode = "local" | "cloud" | "fallback";
 
@@ -27,6 +29,7 @@ export type GenerationTaskFailureCode =
   | "ai_fallback_used"
   | "recipe_save_failed"
   | "generation_task_update_failed"
+  | "generation_interrupted"
   | "unknown";
 
 export type GenerationTask = {
@@ -111,6 +114,11 @@ export async function createMockGenerationTask(
   if (!user) {
     return mapLocalTask(localTask) as GenerationTask;
   }
+
+  await tryFailStaleGenerationTasksInSupabase(
+    user.id,
+    new Date(Date.now() - STALE_GENERATION_TASK_MS).toISOString(),
+  );
 
   const cloudTask = await tryCreateGenerationTaskInSupabase(
     user.id,

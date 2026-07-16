@@ -162,6 +162,35 @@ export async function tryFailGenerationTaskInSupabase(
   return { data: true, ok: true };
 }
 
+export async function tryFailStaleGenerationTasksInSupabase(
+  userId: string,
+  staleBefore: string,
+): Promise<SupabaseResult<number>> {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    return { data: 0, ok: false };
+  }
+
+  const { data, error } = await supabase
+    .from("generation_tasks")
+    .update({
+      status: "failed",
+      error_message: "generation_interrupted",
+      completed_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("status", "processing")
+    .lt("created_at", staleBefore)
+    .select("id");
+
+  if (error) {
+    return { data: 0, ok: false };
+  }
+
+  return { data: data?.length ?? 0, ok: true };
+}
+
 export async function completeGenerationTaskInSupabase(
   taskId: string,
   generatedRecipeSlug: string,

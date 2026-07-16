@@ -8,7 +8,7 @@
 >
 > 产品战略最高层：[`MASTER_PLAN.md`](MASTER_PLAN.md)
 
-当前项目处于 **Milestone 2：Production Ready MVP**。当前最高优先级是小红书公开做饭视频的真实语音转菜谱链路，完整四级进度以 ROADMAP 为准。
+**Milestone 2：Production Ready MVP 已完成。** 当前进入 **Milestone 3：Real User Beta**，优先建立生产解析质量、耗时、fallback 与成本基线；完整四级进度以 ROADMAP 为准。
 
 ## 当前功能
 
@@ -131,7 +131,7 @@ ALIBABA_ASR_MODEL=qwen3-asr-flash
 - 已新增小红书公开视频语音提取链路：短链规范化、yt-dlp 公开媒体解析、FFmpeg 临时音轨、火山 ASR 主调用与 Qwen ASR 失败备用。
 - 当前 Checkpoint 只支持小红书，不处理抖音、B 站、YouTube、私密内容或需要登录的内容。
 - 链接抓取只读取无需登录即可访问的公开内容，不执行页面脚本，不绕过登录、验证码或平台访问控制。
-- 当前已接入 DeepSeek Provider，并已完成 Netlify Production 基础验收。
+- 当前已接入 DeepSeek Provider，并已完成 Vercel Production 真实链路验收；Netlify 保留为备用部署平台。
 - DeepSeek 请求支持可配置超时、受控重试和 JSON 输出截断检测。
 - 开发诊断会显示 attempted provider、模型、耗时、尝试次数、finish reason 和 Token 用量。
 - 设置 `AI_PROVIDER=deepseek` 且填写 `DEEPSEEK_API_KEY` 后，服务端会尝试调用 DeepSeek。
@@ -220,8 +220,8 @@ DEEPSEEK_MAX_TOKENS=3000
 ## 后续计划
 
 - 当前完整路线、Phase 状态和验收标准见 [`docs/ROADMAP.md`](docs/ROADMAP.md)。
-- Current Phase：`Phase 12`。
-- Next Queue 当前项：解析样本测试体系；后续依次推进小红书、抖音、OCR、质量评分、Embedding 搜索、收藏夹、iOS PWA、数据分析与正式上线。
+- Current Milestone：`Milestone 3 - Real User Beta`。
+- Current Phase：`Phase A - Quality Baseline`；后续依次推进抖音公开样本、收藏与再次查找留存、Beta 发布验收。
 - Git commit、Git push、真实账号、API Key、付费和生产环境变更仍需人工授权。
 
 ## AI Software Company

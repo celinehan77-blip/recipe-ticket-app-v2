@@ -16,6 +16,7 @@ import type { ParsedRecipeDraft } from "../../src/types/ai";
 import {
   getGenerationStartRoute,
   isBackgroundGenerationRouteUnavailable,
+  isPendingGenerationStale,
   pickReusableRecipeSlug,
 } from "../../src/lib/data/pendingRecipeGeneration";
 
@@ -188,5 +189,40 @@ test("new generation continues through the loading route", () => {
       status: "processing",
     }),
     "/loading",
+  );
+});
+
+test("old interrupted generation is stale and must not restart paid work", () => {
+  const now = Date.parse("2026-07-16T12:30:01.000Z");
+
+  assert.equal(
+    isPendingGenerationStale(
+      {
+        jobId: "old-job",
+        sourcePlatform: "xiaohongshu",
+        sourceValue: "https://www.xiaohongshu.com/explore/example",
+        startedAt: "2026-07-16T12:15:00.000Z",
+        status: "processing",
+      },
+      now,
+    ),
+    true,
+  );
+});
+
+test("recent or completed generation remains resumable", () => {
+  const now = Date.parse("2026-07-16T12:10:00.000Z");
+  const pending = {
+    jobId: "recent-job",
+    sourcePlatform: "manual" as const,
+    sourceValue: "番茄炒蛋",
+    startedAt: "2026-07-16T12:00:00.000Z",
+    status: "processing" as const,
+  };
+
+  assert.equal(isPendingGenerationStale(pending, now), false);
+  assert.equal(
+    isPendingGenerationStale({ ...pending, status: "completed" }, now + 3_600_000),
+    false,
   );
 });
