@@ -8,9 +8,9 @@ import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { PublicSourcePlatform } from "@/lib/source/types";
 import {
-  resolveDouyinMedia,
+  resolveAlapiMedia,
   validatePublicMediaUrl,
-} from "@/lib/media/tikhubDouyin";
+} from "@/lib/media/alapiMedia";
 import {
   AudioExtractionError,
   type AudioExtractionErrorCode,
@@ -367,16 +367,16 @@ export async function getMediaRuntimeDiagnostics() {
   return { ffmpegAvailable, ytDlpAvailable };
 }
 
-export async function extractAudioWithYtDlp(sharedValue: string): Promise<ExtractedAudio> {
+export async function extractAudioFromShareLink(sharedValue: string): Promise<ExtractedAudio> {
   const normalized = normalizeShareUrl(sharedValue);
-  const douyin = normalized.platform === "douyin"
-    ? await resolveDouyinMedia(normalized.canonicalUrl)
+  const resolvedMedia = normalized.platform === "douyin"
+    ? await resolveAlapiMedia(normalized.canonicalUrl)
     : null;
-  const metadata = douyin ? null : await readMetadata(normalized.canonicalUrl);
-  const durationSeconds = douyin?.durationSeconds ?? Number(metadata?.duration ?? 0);
+  const metadata = resolvedMedia ? null : await readMetadata(normalized.canonicalUrl);
+  const durationSeconds = resolvedMedia?.durationSeconds ?? Number(metadata?.duration ?? 0);
   const mediaBytes = Number(metadata?.filesize ?? metadata?.filesize_approx ?? 0);
 
-  if (!durationSeconds || durationSeconds > MAX_MEDIA_DURATION_SECONDS) {
+  if ((!resolvedMedia && !durationSeconds) || durationSeconds > MAX_MEDIA_DURATION_SECONDS) {
     throw new AudioExtractionError("media_too_long", "Media duration exceeds 5 minutes.");
   }
   if (mediaBytes > MAX_MEDIA_BYTES) {
@@ -388,8 +388,8 @@ export async function extractAudioWithYtDlp(sharedValue: string): Promise<Extrac
 
   await mkdir(tempDirectory, { recursive: true });
   try {
-    if (douyin?.mediaUrl) {
-      await streamRemoteMediaAudio(douyin.mediaUrl, audioPath);
+    if (resolvedMedia?.mediaUrl) {
+      await streamRemoteMediaAudio(resolvedMedia.mediaUrl, audioPath);
     } else {
       await streamAudio(normalized.canonicalUrl, audioPath);
     }
@@ -410,10 +410,10 @@ export async function extractAudioWithYtDlp(sharedValue: string): Promise<Extrac
       audio: await readFile(/* turbopackIgnore: true */ audioPath),
       canonicalUrl: metadataUrl
         ? sanitizeSourceUrl(metadataUrl.url)
-        : douyin?.canonicalUrl ?? normalized.canonicalUrl,
+        : resolvedMedia?.canonicalUrl ?? normalized.canonicalUrl,
       durationSeconds,
       sourceHash: normalized.sourceHash,
-      title: douyin?.description ??
+      title: resolvedMedia?.description ??
         (typeof metadata?.title === "string" ? metadata.title.slice(0, 160) : null),
       platform: normalized.platform,
     };

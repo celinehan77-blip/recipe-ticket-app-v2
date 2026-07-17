@@ -1,7 +1,7 @@
 import { parseRecipeWithDeepSeek } from "@/lib/ai/providers/deepseek";
 import { scoreParsedRecipeDraft } from "@/lib/ai/scoreParsedRecipe";
 import { transcribeAudio, type TranscriptionResult } from "@/lib/asr/transcribeAudio";
-import { extractAudioWithYtDlp } from "@/lib/media/extractAudio";
+import { extractAudioFromShareLink } from "@/lib/media/extractAudio";
 import { normalizeShareUrl } from "@/lib/media/extractAudio";
 import type { ParsedRecipeDraft } from "@/types/ai";
 import type { RecipeParseResult } from "@/types/ai";
@@ -85,7 +85,7 @@ async function transcribeUncachedShareLink(
   const stages: ShareLinkGenerationResult["stages"] = [
     { stage: "resolving_link", completedAtMs: 0 },
   ];
-  const audio = await extractAudioWithYtDlp(sourceUrl);
+  const audio = await extractAudioFromShareLink(sourceUrl);
   stages.push({ stage: "extracting_audio", completedAtMs: Date.now() - startedAt });
   console.info("[recipe-pipeline]", {
     elapsedMs: stages.at(-1)?.completedAtMs,

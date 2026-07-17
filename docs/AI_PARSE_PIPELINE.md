@@ -6,7 +6,7 @@
 - 小红书公开做饭视频先由 yt-dlp 与 FFmpeg 提取语音，再使用火山 ASR；火山明确失败后才使用 Qwen ASR。
 - 视频链路只接受真实 transcript，不允许根据标题生成常见菜谱。
 - `ParsedRecipeDraft` 可以保存到本地，登录后可以尝试写入 Supabase recipe。
-- 抖音公开视频已接入 TikHub 媒体解析适配器；当前不支持 B 站、YouTube、用户上传或视频画面分析。
+- 抖音公开视频已接入 ALAPI 媒体解析适配器；当前不支持 B 站、YouTube、用户上传或视频画面分析。
 
 ## 2. 输入
 
@@ -74,7 +74,7 @@ POST /api/parse-recipe
 POST /api/parse-recipe
 -> normalizeShareUrl()
 -> extractAudioWithYtDlp()
--> 小红书由 yt-dlp、抖音由 TikHub App V3 取得公开媒体流
+-> 小红书由 yt-dlp、抖音由 ALAPI 取得公开媒体流
 -> 媒体流直接管道到 FFmpeg
 -> 临时 16kHz 单声道 MP3
 -> transcribeAudio()
@@ -96,7 +96,7 @@ Mock Parser 会根据输入文本中的关键词返回稳定草稿：
 
 ## 5. 媒体提取边界
 
-- 小红书调用 yt-dlp；抖音调用一个最小 TikHub App V3 服务端适配器，不增加 Playwright。
+- 小红书调用 yt-dlp；抖音调用一个最小 ALAPI 服务端适配器，不增加 Playwright。
 - 只处理无需登录即可读取的公开小红书与抖音内容。
 - 不使用用户 Cookie，不模拟登录，不绕过验证码或访问控制。
 - 不永久保存视频；临时音频在成功或失败后删除。
@@ -171,7 +171,7 @@ ALIBABA_ASR_MODEL=qwen3-asr-flash
 - 如果 DeepSeek 与 ASR 服务端变量配置正确，可以基于真实口播创建动态菜谱。
 - 当前会尝试写入 Supabase `recipes / ingredients / recipe_steps`。
 - 当前视频链路会在火山失败时调用 Qwen ASR，但不会调用 OpenAI。
-- 当前解析公开小红书与抖音视频；抖音真实样本验收需服务端 TikHub Key。
+- 当前解析公开小红书与抖音视频；ALAPI Token 只在服务端读取，不进入浏览器代码。
 - 当前 `ParsedRecipeDraft` 仍会保存在当前浏览器的 `localStorage`，作为 fallback。
 - 视频媒体、ASR 或 DeepSeek 失败时不会生成无关 Mock 菜谱；Supabase 保存失败时保留本地动态菜谱。
 - 后续阶段会继续复用同一套保存流程，并增强真实 AI 输出质量。

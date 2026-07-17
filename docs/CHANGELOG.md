@@ -2,6 +2,14 @@
 
 ## 2026-07-17
 
+### Milestone 3 / Checkpoint B1 ALAPI 替换
+
+- 按面向中国大陆用户的 Provider 选型规则，完整移除 TikHub 代码、环境变量和测试，替换为 ALAPI 短视频聚合解析。
+- Next.js 服务端使用 `POST https://v3.alapi.cn/api/video/url`，从 `ALAPI_TOKEN` 读取鉴权信息，不向浏览器暴露 Token。
+- 优先使用 ALAPI 返回的音频直链，否则使用视频直链进入 FFmpeg；保留媒体大小、HTTPS、DNS/私网、跳转与超时防护。
+- 增加鉴权、余额、限流、非法 JSON、图文无音轨和媒体 URL 安全分类；没有真实语音时不生成假菜谱。
+- 版本更新为 `0.2.0-working.14`；代码回滚基线为 `483afad`。
+
 ### Milestone 3 / Checkpoint B1 抖音 MVP 实现
 
 - 确认真实抖音短链可展开，但直接 `yt-dlp` 需要新鲜匿名 Cookie；不引入用户 Cookie、浏览器抓取或登录绕过。
