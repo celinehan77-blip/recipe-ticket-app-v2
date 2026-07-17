@@ -1,0 +1,105 @@
+name: Android Beta
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - "mobile-shell/**"
+      - "capacitor.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/android-beta.yml"
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Publish a signed APK and AAB as a GitHub prerelease"
+        required: true
+        type: boolean
+        default: false
+      version_name:
+        description: "Android version name"
+        required: true
+        default: "0.2.0-beta.1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-beta-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install JavaScript dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Build installable debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug -PappVersionCode=${{ github.run_number }} -PappVersionName=${{ inputs.version_name || '0.2.0-beta.1' }}
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: rishibiji-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+      - name: Validate release signing configuration
+        if: ${{ inputs.publish_release == true }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$KEYSTORE_BASE64" || -z "$KEYSTORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+            echo "::error::Missing Android release signing secrets."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/rishibiji-release.p12"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/rishibiji-release.p12" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK and AAB
+        if: ${{ inputs.publish_release == true }}
+        working-directory: android
+        run: ./gradlew assembleRelease bundleRelease -PappVersionCode=${{ github.run_number }} -PappVersionName=${{ inputs.version_name }}
+
+      - name: Publish GitHub prerelease
+        if: ${{ inputs.publish_release == true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          set -euo pipefail
+          cp android/app/build/outputs/apk/release/app-release.apk "rishibiji-${VERSION_NAME}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "rishibiji-${VERSION_NAME}.aab"
+          gh release create "android-v${VERSION_NAME}" \
+            "rishibiji-${VERSION_NAME}.apk" \
+            "rishibiji-${VERSION_NAME}.aab" \
+            --prerelease \
+            --title "日食笔记 Android ${VERSION_NAME}" \
+            --notes "小范围 Android Beta。APK 可直接下载安装；AAB 用于后续应用市场提交。"
