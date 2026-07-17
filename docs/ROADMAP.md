@@ -119,8 +119,9 @@ Milestone 4：Downloadable App（进行中）
         ├── Task：GitHub Actions debug APK 构建（已完成）
         └── Task：APK Artifact 完整性记录（已完成）
     └── Checkpoint A2：签名与 GitHub Prerelease（进行中）
-        ├── Task：长期 Android 签名证书与 GitHub Secrets（需要一次人工授权）
-        └── Task：签名 APK GitHub Prerelease 与真机安装（待完成）
+        ├── Task：长期 Android 签名证书与 GitHub Secrets（已完成）
+        ├── Task：签名 APK / AAB 与 GitHub Prerelease（已完成）
+        └── Task：Android 真机下载安装与主流程验收（待人工真机）
 └── Phase B：Store Evaluation（待决策）
     ├── Checkpoint B1：Google Play 一次性费用与测试要求评估
     └── Checkpoint B2：中国大陆 Android 应用市场资质评估
@@ -131,7 +132,9 @@ Milestone 4：Downloadable App（进行中）
 - Current Checkpoint：`A2 - 签名与 GitHub Prerelease`
 - Current Version：`0.2.0-working.17`
 
-Checkpoint A1 已完成：GitHub Actions run `29582168527` 在 `24330c9` 上成功完成 Capacitor 同步、Gradle 编译和 debug APK 上传，产物约 3.58 MiB。下一步只处理长期签名和公开 Prerelease。
+Checkpoint A1 已完成：GitHub Actions run `29582168527` 在 `24330c9` 上成功完成 Capacitor 同步、Gradle 编译和 debug APK 上传，产物约 3.58 MiB。
+
+Checkpoint A2 发布部分已完成：run `29586070898` 使用长期 PKCS12 证书生成 `0.2.0-beta.1` 签名 APK 与 AAB，并创建 GitHub Prerelease。公开 APK 下载和压缩结构验证通过；只剩 Android 真机安装、启动和游客生成流程验收。
 
 首轮只做 Android APK。iOS 正式分发需要 Apple Developer Program 年费，不符合当前低成本约束；Google Play 和中国大陆应用市场等 GitHub Beta 验证后再决定。
 

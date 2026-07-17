@@ -10,7 +10,9 @@
 
 **Milestone 3：Real User Beta MVP 已完成。** Vercel Production 已具备正文、小红书与有限抖音公开视频生成、动态详情、云端收藏和再次查找闭环；完整四级进度以 ROADMAP 为准。
 
-**Milestone 4：Downloadable App 正在进行。** Android 使用 Capacitor 原生外壳复用 Vercel Production；GitHub Actions 首轮 debug APK 已构建通过，下一步生成长期签名并发布 GitHub Prerelease。
+**Milestone 4：Downloadable App 正在进行。** Android 使用 Capacitor 原生外壳复用 Vercel Production；长期签名 APK 与 AAB 已通过 GitHub Actions 发布，当前只剩 Android 真机安装和主流程验收。
+
+Android Beta 下载：[日食笔记 Android 0.2.0-beta.1](https://github.com/celinehan77-blip/recipe-ticket-app-v2/releases/tag/android-v0.2.0-beta.1)。Android 用户下载 `.apk` 后可直接安装；`.aab` 仅用于后续应用市场提交。
 
 ## 当前功能
 

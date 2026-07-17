@@ -63,6 +63,29 @@ ANDROID_KEY_PASSWORD
 
 ## 用户安装步骤
 
+当前 Beta 下载页：
+
+```text
+https://github.com/celinehan77-blip/recipe-ticket-app-v2/releases/tag/android-v0.2.0-beta.1
+```
+
+签名发布验证：
+
+- GitHub Actions run：`29586070898`
+- APK：`rishibiji-0.2.0-beta.1.apk`
+- AAB：`rishibiji-0.2.0-beta.1.aab`
+- APK 大小：`3,167,674 bytes`
+- APK SHA-256：`f8a479e8c20f0e828b7ac81d01c258ba791776093d69186da1a418b29d717edd`
+- 发布步骤：签名配置校验、release APK/AAB 构建和 GitHub Prerelease 均通过。
+
+长期证书和恢复信息只备份在本机：
+
+```text
+/Users/celine/Documents/日食笔记/mobile-signing-backup/android
+```
+
+该目录不属于 Git 仓库，文件权限为仅当前 macOS 用户可读。必须另做离线备份；不要把证书或密码发送到群聊、提交 Git 或放入公开云盘。
+
 1. 用 Android 手机打开 GitHub Prerelease 下载页；
 2. 下载 `.apk` 文件；
 3. 系统提示时，仅为当前浏览器开启“允许安装未知应用”；
@@ -74,4 +97,5 @@ ANDROID_KEY_PASSWORD
 - 第一版 Android App 本质上复用线上产品，因此必须联网。
 - Magic Link 从外部邮件 App 打开时，可能在系统浏览器建立登录状态，而不是回到 App；首轮 Beta 以游客主流程为准。
 - GitHub Actions 的 debug APK 只用于构建验证，不作为公开长期版本；公开给用户的版本必须使用长期证书签名。
+- `0.2.0-beta.1` 已使用长期证书签名；后续版本必须继续使用同一证书，才能覆盖升级。
 - 中国大陆应用市场通常还涉及实名认证、软件著作权、隐私政策或其他资质，本阶段不提前投入。
