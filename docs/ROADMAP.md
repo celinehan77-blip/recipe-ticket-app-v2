@@ -94,7 +94,7 @@ Milestone 3：Real User Beta
 - Current Milestone：`Milestone 3 - Real User Beta`
 - Current Phase：`Phase B - Platform Coverage`
 - Current Checkpoint：`B1 - 抖音公开链接能力边界与 MVP 方案`
-- Current Version：`0.2.0-working.14`
+- Current Version：`0.2.0-working.15`
 - Checkpoint A0 Rollback Commit：`a1303b6`
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。

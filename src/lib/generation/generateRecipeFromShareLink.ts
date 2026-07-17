@@ -43,7 +43,10 @@ export type ShareLinkTranscriptionResult = Omit<
   "diagnostics" | "draft"
 >;
 
-function validateGroundedRecipe(draft: ParsedRecipeDraft, transcript: string) {
+export function isGroundedShareRecipeUsable(
+  draft: ParsedRecipeDraft,
+  transcript: string,
+) {
   const quality = scoreParsedRecipeDraft(draft);
   const namedItems = [...draft.ingredients, ...draft.seasonings].filter((item) =>
     transcript.includes(item.name),
@@ -52,14 +55,18 @@ function validateGroundedRecipe(draft: ParsedRecipeDraft, transcript: string) {
     (step) => step.description.trim() === draft.titleZh.trim(),
   );
 
-  if (
+  return !(
     transcript.trim().length < 30 ||
     draft.ingredients.length < 2 ||
     draft.steps.length < 3 ||
     namedItems.length < 2 ||
     repeatedTitleSteps.length > 0 ||
-    !quality.passed
-  ) {
+    quality.score < 55
+  );
+}
+
+function validateGroundedRecipe(draft: ParsedRecipeDraft, transcript: string) {
+  if (!isGroundedShareRecipeUsable(draft, transcript)) {
     throw new ShareLinkGenerationError("recipe_quality_failed");
   }
 }
