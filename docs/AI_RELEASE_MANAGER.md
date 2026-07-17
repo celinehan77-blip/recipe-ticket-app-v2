@@ -29,6 +29,8 @@ RELEASE_MANAGER 以 Working Release 为单位管理版本，而不是把每个 C
 
 | Version | Commit | Phase | 状态 | Rollback |
 | --- | --- | --- | --- | --- |
+| `0.2.0-working.16` | 当前工作区 | Milestone 3 / D1 | Beta MVP 生产闭环验收完成；等待真实用户反馈，不创建 Stable Tag | `61deaff` |
+| `0.2.0-working.15` | `61deaff` | Milestone 3 / B1 | ALAPI 生产样本、短视频质量门槛修复；79 tests、lint、build 通过 | `76a6463` |
 | `0.2.0-working.14` | 当前工作区 | Milestone 3 / B1 | ALAPI 替换 TikHub；待抖音生产样本验收 | `483afad` |
 | `0.2.0-working.13` | 当前工作区 | Milestone 3 / B1 | 抖音公开媒体适配器与安全测试通过；待真实 TikHub Key 验收 | `0c7fa85` |
 | `0.2.0-working.12` | 当前 Checkpoint Commit | Milestone 3 / A3 | 新增小红书真实样本 7 / 7，合并完成率 83.3%，达到 Beta 门槛 | `c5d0c2d` |

@@ -8,7 +8,7 @@
 >
 > 产品战略最高层：[`MASTER_PLAN.md`](MASTER_PLAN.md)
 
-**Milestone 2：Production Ready MVP 已完成。** 当前进入 **Milestone 3：Real User Beta**，优先建立生产解析质量、耗时、fallback 与成本基线；完整四级进度以 ROADMAP 为准。
+**Milestone 3：Real User Beta MVP 已完成。** Vercel Production 已具备正文、小红书与有限抖音公开视频生成、动态详情、云端收藏和再次查找闭环；完整四级进度以 ROADMAP 为准。
 
 ## 当前功能
 
@@ -222,8 +222,8 @@ DEEPSEEK_MAX_TOKENS=3000
 ## 后续计划
 
 - 当前完整路线、Phase 状态和验收标准见 [`docs/ROADMAP.md`](docs/ROADMAP.md)。
-- Current Milestone：`Milestone 3 - Real User Beta`。
-- Current Phase：`Phase B - Platform Coverage`；正文完成率 100%，小红书合并样本完成率 83.3%，均已达到首轮 Beta 门槛。下一 Checkpoint 评估抖音公开链接的 MVP 能力边界，现有小红书、游客、登录与 fallback 路径保持不变。
+- Current Milestone：`Milestone 3 - Real User Beta` 已完成，等待小范围真实用户反馈后再启动下一轮产品优化。
+- 正文完成率 100%，小红书合并样本完成率 83.3%；抖音 ALAPI 路线已验证 2 条真实视频可生成并收藏，大文件、空音轨和图文 OCR 优化按 MVP 决策暂停。
 - 菜谱用量遵循来源优先：原文具体量最高优先；缺失时允许按 2 人份估算并标明 AI 估算。步骤时间、火候和重点提醒仍必须有原文依据。
 - Git commit、Git push、真实账号、API Key、付费和生产环境变更仍需人工授权。
 
