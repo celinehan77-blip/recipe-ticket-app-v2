@@ -24,6 +24,9 @@
 # misc
 .DS_Store
 *.pem
+*.jks
+*.keystore
+/android/keystore.properties
 
 # debug
 npm-debug.log*
@@ -44,3 +47,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android local build output
+/android/.gradle/
+/android/app/build/
+/android/build/

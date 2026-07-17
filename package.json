@@ -1,11 +1,13 @@
 {
   "name": "recipe-ticket-app-v2",
-  "version": "0.2.0-working.16",
+  "version": "0.2.0-working.17",
   "private": true,
   "scripts": {
     "postinstall": "node scripts/install-yt-dlp.mjs",
     "dev": "next dev",
     "build": "next build",
+    "mobile:sync": "cap sync android",
+    "mobile:debug": "npm run mobile:sync && cd android && ./gradlew assembleDebug",
     "start": "next start",
     "lint": "eslint",
     "test": "npm run test:ai && npm run test:asr && npm run test:auth && npm run test:data && npm run test:security && npm run test:source",
@@ -17,6 +19,8 @@
     "test:source": "tsx --test --test-concurrency=1 tests/source/*.test.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
     "@netlify/blobs": "^10.7.9",
     "@netlify/functions": "^5.3.0",
     "@supabase/supabase-js": "^2.108.2",
@@ -29,6 +33,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

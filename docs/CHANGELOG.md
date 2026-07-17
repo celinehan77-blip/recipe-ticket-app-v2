@@ -2,6 +2,15 @@
 
 ## 2026-07-17
 
+### Milestone 4 / Checkpoint A1 Android 可下载 Beta
+
+- 新增 Capacitor 8 Android 原生外壳，固定包名 `com.rishibiji.app`、应用名“日食笔记”，复用现有 Vercel Production 与游客优先业务流程。
+- 新增 GitHub Actions Android Beta 工作流：每次移动端相关提交构建可安装 debug APK；配置长期签名 Secret 后可生成 release APK、AAB 并创建 GitHub Prerelease。
+- Android 签名信息只从 GitHub Secrets 读取，仓库忽略 keystore、签名配置和构建产物；不复制任何 Supabase 或 AI Secret 到 App。
+- 保留 Vercel 和 Netlify 双平台服务端部署；Android App 不复制数据库、Auth 或 AI 后端。
+- iOS App Store 暂不实施，避免每年 99 美元会员成本；Google Play 暂不付费，先用 GitHub 下载验证真实需求。
+- 版本更新为 `0.2.0-working.17`；回滚基线为 `81e75b8`。
+
 ### Milestone 3 / Beta MVP 生产闭环完成
 
 - 按产品决策暂停抖音大文件、空音轨和图文 OCR 边界优化；保留 ALAPI 代码、生产能力与失败记录，不删除、不继续扩展。

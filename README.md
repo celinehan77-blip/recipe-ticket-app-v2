@@ -10,6 +10,8 @@
 
 **Milestone 3：Real User Beta MVP 已完成。** Vercel Production 已具备正文、小红书与有限抖音公开视频生成、动态详情、云端收藏和再次查找闭环；完整四级进度以 ROADMAP 为准。
 
+**Milestone 4：Downloadable App 正在进行。** Android 使用 Capacitor 原生外壳复用 Vercel Production，由 GitHub Actions 构建 APK；首轮通过 GitHub Releases 低成本分发。
+
 ## 当前功能
 
 - 首页粘贴菜谱正文、字幕或公开小红书做饭视频链接，使用真实语音识别和 DeepSeek 生成菜谱
@@ -23,6 +25,7 @@
 - Supabase 只读接入
 - Supabase Auth 游客优先
 - 云端收藏同步基础版
+- Android APK 云端构建与 GitHub Beta 分发骨架
 - 云端生成记录基础版
 - AI 解析接口骨架
 - mockData fallback
@@ -222,7 +225,7 @@ DEEPSEEK_MAX_TOKENS=3000
 ## 后续计划
 
 - 当前完整路线、Phase 状态和验收标准见 [`docs/ROADMAP.md`](docs/ROADMAP.md)。
-- Current Milestone：`Milestone 3 - Real User Beta` 已完成，等待小范围真实用户反馈后再启动下一轮产品优化。
+- Current Milestone：`Milestone 4 - Downloadable App`；先完成 Android 签名 APK 和 GitHub Release，再决定是否支付应用市场费用。
 - 正文完成率 100%，小红书合并样本完成率 83.3%；抖音 ALAPI 路线已验证 2 条真实视频可生成并收藏，大文件、空音轨和图文 OCR 优化按 MVP 决策暂停。
 - 菜谱用量遵循来源优先：原文具体量最高优先；缺失时允许按 2 人份估算并标明 AI 估算。步骤时间、火候和重点提醒仍必须有原文依据。
 - Git commit、Git push、真实账号、API Key、付费和生产环境变更仍需人工授权。

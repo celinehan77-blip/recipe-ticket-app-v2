@@ -109,7 +109,27 @@ Milestone 3：Real User Beta
 - Checkpoint A1 Working Rollback Commit：`07c54db`
 - 历史项目阶段编号 `Phase 12` 仅作为旧记录保留，不再作为当前执行层级。
 
-下一阶段需要真实用户进行小范围 Beta 体验并提供反馈；在反馈到达前，不继续扩展视频抓取、OCR 或其他非 MVP 能力。
+## Milestone 4：Downloadable App
+
+```text
+Milestone 4：Downloadable App（进行中）
+└── Phase A：Android Direct Distribution（进行中）
+    └── Checkpoint A1：GitHub APK Beta（进行中）
+        ├── Task：Capacitor Android 原生外壳（已完成）
+        ├── Task：GitHub Actions debug APK 构建（待云端验证）
+        ├── Task：长期 Android 签名证书与 GitHub Secrets（需要一次人工授权）
+        └── Task：签名 APK GitHub Prerelease 与真机安装（待完成）
+└── Phase B：Store Evaluation（待决策）
+    ├── Checkpoint B1：Google Play 一次性费用与测试要求评估
+    └── Checkpoint B2：中国大陆 Android 应用市场资质评估
+```
+
+- Current Milestone：`Milestone 4 - Downloadable App`
+- Current Phase：`Phase A - Android Direct Distribution`
+- Current Checkpoint：`A1 - GitHub APK Beta`
+- Current Version：`0.2.0-working.17`
+
+首轮只做 Android APK。iOS 正式分发需要 Apple Developer Program 年费，不符合当前低成本约束；Google Play 和中国大陆应用市场等 GitHub Beta 验证后再决定。
 
 Checkpoint B1 已完成：Vercel Production 已跑通游客真实小红书链路、登录用户云端菜谱写入、动态详情刷新、云端收藏和 `/me` 数据恢复。
 
