@@ -29,7 +29,7 @@ RELEASE_MANAGER 以 Working Release 为单位管理版本，而不是把每个 C
 
 | Version | Commit | Phase | 状态 | Rollback |
 | --- | --- | --- | --- | --- |
-| `0.2.0-working.17` | 当前工作区 | Milestone 4 / A1 | Capacitor Android 与 GitHub APK 构建骨架；待签名 Release | `81e75b8` |
+| `0.2.0-working.17` | `24330c9` | Milestone 4 / A1 | Capacitor Android 与 GitHub Actions debug APK 构建已验证；待签名 Release | `81e75b8` |
 | `0.2.0-working.16` | 当前工作区 | Milestone 3 / D1 | Beta MVP 生产闭环验收完成；等待真实用户反馈，不创建 Stable Tag | `61deaff` |
 | `0.2.0-working.15` | `61deaff` | Milestone 3 / B1 | ALAPI 生产样本、短视频质量门槛修复；79 tests、lint、build 通过 | `76a6463` |
 | `0.2.0-working.14` | 当前工作区 | Milestone 3 / B1 | ALAPI 替换 TikHub；待抖音生产样本验收 | `483afad` |

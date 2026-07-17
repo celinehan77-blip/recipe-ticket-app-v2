@@ -10,7 +10,7 @@
 
 **Milestone 3：Real User Beta MVP 已完成。** Vercel Production 已具备正文、小红书与有限抖音公开视频生成、动态详情、云端收藏和再次查找闭环；完整四级进度以 ROADMAP 为准。
 
-**Milestone 4：Downloadable App 正在进行。** Android 使用 Capacitor 原生外壳复用 Vercel Production，由 GitHub Actions 构建 APK；首轮通过 GitHub Releases 低成本分发。
+**Milestone 4：Downloadable App 正在进行。** Android 使用 Capacitor 原生外壳复用 Vercel Production；GitHub Actions 首轮 debug APK 已构建通过，下一步生成长期签名并发布 GitHub Prerelease。
 
 ## 当前功能
 
@@ -25,7 +25,7 @@
 - Supabase 只读接入
 - Supabase Auth 游客优先
 - 云端收藏同步基础版
-- Android APK 云端构建与 GitHub Beta 分发骨架
+- Android APK 云端构建已验证，GitHub Beta 正式签名分发准备中
 - 云端生成记录基础版
 - AI 解析接口骨架
 - mockData fallback

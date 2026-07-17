@@ -10,6 +10,8 @@
 - 保留 Vercel 和 Netlify 双平台服务端部署；Android App 不复制数据库、Auth 或 AI 后端。
 - iOS App Store 暂不实施，避免每年 99 美元会员成本；Google Play 暂不付费，先用 GitHub 下载验证真实需求。
 - 版本更新为 `0.2.0-working.17`；回滚基线为 `81e75b8`。
+- GitHub Actions run `29582168527` 已在提交 `24330c9` 上成功完成首轮云端编译，生成约 3.58 MiB 的 `rishibiji-android-debug` Artifact。
+- debug APK 仅用于构建验证；下一 Checkpoint 使用长期签名生成可持续覆盖升级的公开 Beta APK。
 
 ### Milestone 3 / Beta MVP 生产闭环完成
 

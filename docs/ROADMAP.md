@@ -114,9 +114,11 @@ Milestone 3：Real User Beta
 ```text
 Milestone 4：Downloadable App（进行中）
 └── Phase A：Android Direct Distribution（进行中）
-    └── Checkpoint A1：GitHub APK Beta（进行中）
+    ├── Checkpoint A1：Android 云端构建（已完成，2026-07-17）
         ├── Task：Capacitor Android 原生外壳（已完成）
-        ├── Task：GitHub Actions debug APK 构建（待云端验证）
+        ├── Task：GitHub Actions debug APK 构建（已完成）
+        └── Task：APK Artifact 完整性记录（已完成）
+    └── Checkpoint A2：签名与 GitHub Prerelease（进行中）
         ├── Task：长期 Android 签名证书与 GitHub Secrets（需要一次人工授权）
         └── Task：签名 APK GitHub Prerelease 与真机安装（待完成）
 └── Phase B：Store Evaluation（待决策）
@@ -126,8 +128,10 @@ Milestone 4：Downloadable App（进行中）
 
 - Current Milestone：`Milestone 4 - Downloadable App`
 - Current Phase：`Phase A - Android Direct Distribution`
-- Current Checkpoint：`A1 - GitHub APK Beta`
+- Current Checkpoint：`A2 - 签名与 GitHub Prerelease`
 - Current Version：`0.2.0-working.17`
+
+Checkpoint A1 已完成：GitHub Actions run `29582168527` 在 `24330c9` 上成功完成 Capacitor 同步、Gradle 编译和 debug APK 上传，产物约 3.58 MiB。下一步只处理长期签名和公开 Prerelease。
 
 首轮只做 Android APK。iOS 正式分发需要 Apple Developer Program 年费，不符合当前低成本约束；Google Play 和中国大陆应用市场等 GitHub Beta 验证后再决定。
 
