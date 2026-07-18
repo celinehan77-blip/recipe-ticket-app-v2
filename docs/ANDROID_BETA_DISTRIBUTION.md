@@ -66,17 +66,19 @@ ANDROID_KEY_PASSWORD
 当前 Beta 下载页：
 
 ```text
-https://github.com/celinehan77-blip/recipe-ticket-app-v2/releases/tag/android-v0.2.0-beta.1
+https://github.com/celinehan77-blip/recipe-ticket-app-v2/releases/tag/android-v0.2.0-beta.2
 ```
 
-签名发布验证：
+Beta 2 签名发布验证：
 
-- GitHub Actions run：`29586070898`
-- APK：`rishibiji-0.2.0-beta.1.apk`
-- AAB：`rishibiji-0.2.0-beta.1.aab`
-- APK 大小：`3,167,674 bytes`
-- APK SHA-256：`f8a479e8c20f0e828b7ac81d01c258ba791776093d69186da1a418b29d717edd`
+- GitHub Actions run：`29646310937`
+- Commit：`dc0b55a`
+- APK：`rishibiji-0.2.0-beta.2.apk`
+- AAB：`rishibiji-0.2.0-beta.2.aab`
+- APK 大小：约 `3.02 MB`
+- APK SHA-256：`0c32fac2ec640b0fde38efbcc0466e9e9f7febf1f1bd5b90e385c64d6ce15e9f`
 - 发布步骤：签名配置校验、release APK/AAB 构建和 GitHub Prerelease 均通过。
+- 本地完整下载后 SHA-256 与 GitHub Release 一致，APK 压缩结构无错误。
 
 长期证书和恢复信息只备份在本机：
 
@@ -97,6 +99,6 @@ https://github.com/celinehan77-blip/recipe-ticket-app-v2/releases/tag/android-v0
 - 第一版 Android App 本质上复用线上产品，因此必须联网。
 - Magic Link 从外部邮件 App 打开时，可能在系统浏览器建立登录状态，而不是回到 App；首轮 Beta 以游客主流程为准。
 - GitHub Actions 的 debug APK 只用于构建验证，不作为公开长期版本；公开给用户的版本必须使用长期证书签名。
-- `0.2.0-beta.1` 已使用长期证书签名；后续版本必须继续使用同一证书，才能覆盖升级。
+- `0.2.0-beta.1` 与 `0.2.0-beta.2` 已使用同一长期证书签名，可直接覆盖升级；后续版本必须继续使用同一证书。
 - `0.2.0-beta.1` 首轮真机出现启动白屏；`0.2.0-beta.2` 将浏览器兼容目标下调到 Chrome 90，并增加网络/WebView 加载失败页。若仍失败，需记录错误页代码、手机 Android 版本和 Android System WebView/Chrome 版本。
 - 中国大陆应用市场通常还涉及实名认证、软件著作权、隐私政策或其他资质，本阶段不提前投入。

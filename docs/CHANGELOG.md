@@ -7,6 +7,10 @@
 - Next.js 16 默认浏览器基线为 Chrome 111；将 Web 构建目标下调至 Chrome / Edge / Firefox 90 和 Safari 15，扩大旧 Android System WebView 兼容范围。
 - 为 Capacitor 增加本地 `errorPath`：主页面网络加载失败时显示中文检查说明和重试入口，不再保留无反馈白屏。
 - QA：79 项现有测试、lint、Next.js 生产 build 和 Capacitor sync 全部通过。
+- 修复提交 `dc0b55a` 已部署到 Vercel Production；首页和 `/api/deploy-health` 返回 200，Supabase 公共数据、FFmpeg 和 yt-dlp 健康信号正常。
+- GitHub Actions run `29646310937` 使用长期证书成功生成并发布 `0.2.0-beta.2` 签名 APK 与 AAB。
+- Beta 2 APK 大小约 3.02 MB，SHA-256 为 `0c32fac2ec640b0fde38efbcc0466e9e9f7febf1f1bd5b90e385c64d6ce15e9f`；本地重新下载后与 Release digest 一致，压缩结构无错误。
+- 下一步仅剩 Android 真机覆盖安装验证；在设备结果返回前，不把白屏根因标记为完全确认。
 
 ## 2026-07-17
 

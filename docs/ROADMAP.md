@@ -134,9 +134,9 @@ Milestone 4：Downloadable App（进行中）
 
 Checkpoint A1 已完成：GitHub Actions run `29582168527` 在 `24330c9` 上成功完成 Capacitor 同步、Gradle 编译和 debug APK 上传，产物约 3.58 MiB。
 
-Checkpoint A2 发布部分已完成：run `29586070898` 使用长期 PKCS12 证书生成 `0.2.0-beta.1` 签名 APK 与 AAB，并创建 GitHub Prerelease。公开 APK 下载和压缩结构验证通过；只剩 Android 真机安装、启动和游客生成流程验收。
+Checkpoint A2 发布部分已完成：run `29586070898` 发布首个长期签名 `0.2.0-beta.1`；真机安装成功但启动白屏。兼容修复提交 `dc0b55a` 已通过 79 项测试、lint、build、Capacitor sync 和 Vercel Production 健康检查，run `29646310937` 已发布 `0.2.0-beta.2` 签名 APK 与 AAB。公开 APK digest 和压缩结构验证通过；只剩 Android 真机覆盖安装、启动和游客生成流程验收。
 
-Android 首轮真机结果：`0.2.0-beta.1` 安装成功但启动白屏。APK 配置、权限、资源和 Vercel WebView 请求均正常，当前最可能是设备 WebView 低于 Next.js 16 的 Chrome 111 默认基线，或手机网络无法稳定载入 Vercel。已增加 Chrome 90 构建目标与本地加载失败页，进入 `0.2.0-beta.2` 覆盖安装复验。
+Android 首轮真机结果：`0.2.0-beta.1` 安装成功但启动白屏。APK 配置、权限、资源和 Vercel WebView 请求均正常，当前最可能是设备 WebView 低于 Next.js 16 的 Chrome 111 默认基线，或手机网络无法稳定载入 Vercel。`0.2.0-beta.2` 已增加 Chrome 90 构建目标与本地加载失败页并完成发布，等待覆盖安装复验。
 
 首轮只做 Android APK。iOS 正式分发需要 Apple Developer Program 年费，不符合当前低成本约束；Google Play 和中国大陆应用市场等 GitHub Beta 验证后再决定。
 

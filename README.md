@@ -10,9 +10,9 @@
 
 **Milestone 3：Real User Beta MVP 已完成。** Vercel Production 已具备正文、小红书与有限抖音公开视频生成、动态详情、云端收藏和再次查找闭环；完整四级进度以 ROADMAP 为准。
 
-**Milestone 4：Downloadable App 正在进行。** Android 使用 Capacitor 原生外壳复用 Vercel Production；长期签名 APK 与 AAB 已通过 GitHub Actions 发布，当前只剩 Android 真机安装和主流程验收。
+**Milestone 4：Downloadable App 正在进行。** Android 使用 Capacitor 原生外壳复用 Vercel Production；白屏兼容修复版 APK 与 AAB 已通过 GitHub Actions 发布，当前只剩 Android 真机覆盖安装和主流程验收。
 
-Android Beta 下载：[日食笔记 Android 0.2.0-beta.1](https://github.com/celinehan77-blip/recipe-ticket-app-v2/releases/tag/android-v0.2.0-beta.1)。Android 用户下载 `.apk` 后可直接安装；`.aab` 仅用于后续应用市场提交。
+Android Beta 下载：[日食笔记 Android 0.2.0-beta.2](https://github.com/celinehan77-blip/recipe-ticket-app-v2/releases/tag/android-v0.2.0-beta.2)。Android 用户下载 `.apk` 后可直接安装；`.aab` 仅用于后续应用市场提交。
 
 ## 当前功能
 
@@ -27,7 +27,7 @@ Android Beta 下载：[日食笔记 Android 0.2.0-beta.1](https://github.com/cel
 - Supabase 只读接入
 - Supabase Auth 游客优先
 - 云端收藏同步基础版
-- Android APK 云端构建已验证，GitHub Beta 正式签名分发准备中
+- Android APK 云端构建与 GitHub Beta 长期签名分发已验证
 - 云端生成记录基础版
 - AI 解析接口骨架
 - mockData fallback
