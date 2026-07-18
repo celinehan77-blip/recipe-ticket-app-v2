@@ -7,6 +7,7 @@ const config: CapacitorConfig = {
   server: {
     allowNavigation: ["recipe-ticket-app-v2.vercel.app"],
     cleartext: false,
+    errorPath: "error.html",
     url: "https://recipe-ticket-app-v2.vercel.app",
   },
 };

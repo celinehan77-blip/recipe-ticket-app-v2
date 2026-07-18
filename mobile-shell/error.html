@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light" />
+    <title>日食笔记加载失败</title>
+    <style>
+      :root {
+        color: #3f2d23;
+        background: #f8f2e9;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 28px;
+      }
+
+      main {
+        width: min(100%, 420px);
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0 0 12px;
+        color: #75675e;
+        font-size: 16px;
+        line-height: 1.7;
+      }
+
+      a {
+        display: block;
+        margin-top: 24px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: #fff;
+        background: #996238;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+      }
+
+      small {
+        display: block;
+        margin-top: 20px;
+        color: #9b8e84;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>暂时无法打开日食笔记</h1>
+      <p>请确认手机可以访问网络，然后更新 Chrome 或 Android System WebView。</p>
+      <p>更新完成后，重新打开 App 或点击下方按钮。</p>
+      <a href="https://recipe-ticket-app-v2.vercel.app">重新加载</a>
+      <small>错误代码：APP_WEBVIEW_LOAD_FAILED</small>
+    </main>
+  </body>
+</html>

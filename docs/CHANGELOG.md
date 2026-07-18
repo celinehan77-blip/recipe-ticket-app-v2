@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-18 - Android Beta 白屏兼容修复
+
+- 真实 Android 安装确认 `0.2.0-beta.1` 能下载安装，但启动后显示空白页。
+- APK 审计确认 Vercel Production 地址、HTTPS 配置、`INTERNET` 权限和打包资源均正确；Android WebView 请求生产首页返回 HTTP 200。
+- Next.js 16 默认浏览器基线为 Chrome 111；将 Web 构建目标下调至 Chrome / Edge / Firefox 90 和 Safari 15，扩大旧 Android System WebView 兼容范围。
+- 为 Capacitor 增加本地 `errorPath`：主页面网络加载失败时显示中文检查说明和重试入口，不再保留无反馈白屏。
+- QA：79 项现有测试、lint、Next.js 生产 build 和 Capacitor sync 全部通过。
+
 ## 2026-07-17
 
 ### Milestone 4 / Checkpoint A1 Android 可下载 Beta

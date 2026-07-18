@@ -2,6 +2,12 @@
   "name": "recipe-ticket-app-v2",
   "version": "0.2.0-working.17",
   "private": true,
+  "browserslist": [
+    "chrome >= 90",
+    "edge >= 90",
+    "firefox >= 90",
+    "safari >= 15"
+  ],
   "scripts": {
     "postinstall": "node scripts/install-yt-dlp.mjs",
     "dev": "next dev",
